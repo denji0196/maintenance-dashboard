@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Dashboard งานประจำวัน - พนักงานซ่อม</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #183153;
+      --muted: #5b708b;
+      --line: #dbe4f0;
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+      --danger: #dc2626;
+      --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+      --plan: #bfdbfe;
+      --actual: #86efac;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb 55%, #60a5fa);
+      color: white;
+      padding: 26px;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .hero p {
+      margin: 0;
+      line-height: 1.6;
+      opacity: 0.95;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      justify-items: end;
+    }
+
+    .hero-stat {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 18px;
+      padding: 16px 22px;
+      backdrop-filter: blur(4px);
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .hero-stat .label { font-size: 13px; opacity: 0.9; }
+    .hero-stat .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+
+    .hidden-meta { display: none; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
+      border: 1px solid rgba(191, 219, 254, 0.65);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,0.85);
+      padding: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .span-12 { grid-column: span 12; }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .sub {
+      color: #475569;
+      font-size: 13px;
+      margin-top: -4px;
+      margin-bottom: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-2); }
+    .btn-secondary { background: #e2e8f0; color: var(--text); }
+    .btn-danger { background: var(--danger); color: white; }
+
+    .timeline-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(239,246,255,0.9), rgba(224,231,255,0.7));
+      border: 1px solid rgba(147, 197, 253, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+    }
+
+    .timeline-table { overflow: auto; }
+    .timeline-table table {
+      min-width: 1120px;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(239,246,255,0.92));
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(37, 99, 235, 0.16), inset 0 1px 0 rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+    }
+
+    .timeline-table th,
+    .timeline-table td {
+      border-right: 1px solid rgba(148, 163, 184, 0.25);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      text-align: center;
+      padding: 8px;
+    }
+
+    .timeline-table td.hidden-merged {
+      display: none;
+    }
+
+    .timeline-table th {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
+      color: #e0f2fe;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+      box-shadow: inset 0 -1px 0 rgba(125, 211, 252, 0.22);
+    }
+
+    .timeline-table td.left {
+      text-align: center;
+      min-width: 110px;
+      font-weight: 700;
+      background: linear-gradient(180deg, rgba(239, 246, 255, 0.98), rgba(219, 234, 254, 0.9));
+      color: #0f172a;
+      vertical-align: middle;
+      box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.65);
+    }
+
+    .slot {
+      min-width: 76px;
+      height: 48px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      font-size: 11px;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal;
+      position: relative;
+      vertical-align: middle;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(241,245,249,0.92));
+    }
+
+    .slot::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(59,130,246,0.03));
+      pointer-events: none;
+    }
+
+    .slot:hover {
+      outline: 2px solid rgba(56, 189, 248, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25), 0 10px 24px rgba(59, 130, 246, 0.18);
+      z-index: 2;
+    }
+    .plan-on {
+      background: linear-gradient(135deg, rgba(125, 211, 252, 0.95), rgba(96, 165, 250, 0.92));
+      color: #082f49;
+      font-weight: 700;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      box-shadow: inset 0 0 0 1px rgba(224, 242, 254, 0.8), 0 0 18px rgba(56, 189, 248, 0.22);
+    }
+    .actual-on {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.96), rgba(16, 185, 129, 0.92));
+      box-shadow: inset 0 0 0 1px rgba(220, 252, 231, 0.8), 0 0 18px rgba(34, 197, 94, 0.2);
+    }
+
+    .footer-tips {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      width: min(560px, 100%);
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #eff6ff, #ffffff);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    select, textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+    }
+
+    textarea { min-height: 120px; resize: vertical; }
+
+    .close-btn {
+      background: #e2e8f0;
+      color: var(--text);
+      padding: 8px 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-stats { justify-items: start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div>
+        <h1>Dashboard งานประจำวัน - พนักงานซ่อม</h1>
+        <p>
+          ใช้บันทึกงานในตารางเวลาโดยตรง กดที่ช่อง PLAN เพื่อกรอกรายละเอียดงาน และกดที่ ACTUAL เพื่อทำเครื่องหมายว่างานได้ทำจริงแล้ว
+        </p>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="label">วันที่ทำงาน</div>
+          <div class="value" id="heroDate">-</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="hidden-meta" aria-hidden="true">
+      <input type="date" id="workDate" />
+      <input type="text" id="technician" value="-" />
+      <select id="shift"><option>เช้า</option><option>บ่าย</option><option>ดึก</option></select>
+      <input type="text" id="area" value="-" />
+    </div>
+
+    <section class="grid">
+      <div class="card span-12">
+        <h2>แผนงานเทียบงานจริงรายช่วงเวลา</h2>
+        <div class="sub">PLAN: คลิกเพื่อกรอกรายละเอียดและเลือกช่วงเวลาเป็นระยะ เช่น 7:30 - 9:30 / ACTUAL: คลิกเพื่อเปลี่ยนเป็นสีเขียว</div>
+        <div class="timeline-toolbar">
+          <div style="color:var(--muted); font-size:13px;">สีฟ้า = วางแผนไว้, สีเขียว = ทำจริงแล้ว</div>
+          <div class="actions" style="margin-top:0;">
+            <button class="btn-secondary" onclick="fillSampleTimeline()">ใส่ตัวอย่าง</button>
+            <button class="btn-secondary" onclick="clearTimeline()">ล้างตารางเวลา</button>
+          </div>
+        </div>
+        <div class="timeline-table" id="timelineWrap"></div>
+      </div>
+
+      <div class="card span-12">
+        <h2>คำแนะนำการใช้งาน</h2>
+        <div class="footer-tips">
+          1. เปิดไฟล์นี้ในเว็บเบราว์เซอร์ได้ทันทีโดยไม่ต้องติดตั้งโปรแกรมเพิ่ม<br>
+          2. ข้อมูลจะถูกเก็บอัตโนมัติไว้ในเบราว์เซอร์เครื่องที่ใช้งาน (Local Storage)<br>
+          3. คลิกช่อง PLAN เพื่อกรอก “ช่วงเวลา”, “ประเภทงาน” และ “รายละเอียดงาน”<br>
+          4. เมื่อเลือกช่วงเวลาเป็นระยะ ระบบจะระบายสีฟ้าตามช่วงที่เลือกทั้งหมด<br>
+          5. คลิกช่อง ACTUAL เพื่อทำเครื่องหมายสีเขียวว่างานช่วงเวลานั้นทำจริงแล้ว
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="taskModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="taskModalTitle">รายละเอียดงานในตารางเวลา</h3>
+          <div class="sub" id="taskModalSubtitle" style="margin:6px 0 0 0;">-</div>
+        </div>
+        <button class="close-btn" type="button" onclick="closeTaskModal()">ปิด</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>เวลาเริ่ม</label>
+          <select id="modalStartSlot"></select>
+        </div>
+        <div class="field">
+          <label>เวลาสิ้นสุด</label>
+          <select id="modalEndSlot"></select>
+        </div>
+        <div class="field">
+          <label>ประเภทงาน</label>
+          <select id="modalJobType">
+            <option>PM</option>
+            <option>Breakdown</option>
+            <option>Inspection</option>
+            <option>Calibration</option>
+            <option>Improvement</option>
+            <option>Support Production</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>รายละเอียดงาน</label>
+          <textarea id="modalDetail" placeholder="เช่น เปลี่ยนสายพาน ตรวจเช็กแรงดัน ทำความสะอาดหัวเซนเซอร์"></textarea>
+        </div>
+        <div class="actions" style="margin-top:0; justify-content:flex-end;">
+          <button class="btn-danger" type="button" onclick="clearTaskModalData()">ล้างข้อมูลช่องนี้</button>
+          <button class="btn-primary" type="button" onclick="saveTaskModal()">บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const technicians = ["ธนเทพ", "สงคราม", "สุทิวัส", "วีระพงษ์", "อาคม", "ณัฐพล", "ธีระ", "ธนัทดนัย", "วิโรจน์", "สุธี"];
+    const timeSlots = ["7:30/19:30", "8:30/20:30", "9:30/21:30", "10:30/22:30", "11:30/23:30", "12:00/24:00", "13:00/01:00", "14:30/02:30", "15:30/03:30", "16:30/04:30", "17:00/05:00", "18:30/06:30", "19:30/07:30"];
+
+    const state = {
+      timeline: {},
+      slotDetails: {}
+    };
+
+    const modalState = {
+      technician: '',
+      type: '',
+      index: -1,
+      originalIndex: -1,
+      originalEndIndex: -1
+    };
+
+    function byId(id) {
+      return document.getElementById(id);
+    }
+
+    function safeValue(id, fallback = '') {
+      const el = byId(id);
+      return el ? el.value : fallback;
+    }
+
+    function safeSetValue(id, value) {
+      const el = byId(id);
+      if (el) el.value = value;
+    }
+
+    function safeSetText(id, value) {
+      const el = byId(id);
+      if (el) el.textContent = value;
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function ensureMetaDefaults() {
+      const today = new Date().toISOString().split('T')[0];
+      if (!safeValue('workDate')) safeSetValue('workDate', today);
+      if (!safeValue('technician')) safeSetValue('technician', '-');
+      if (!safeValue('area')) safeSetValue('area', '-');
+      if (!safeValue('shift')) safeSetValue('shift', 'เช้า');
+      safeSetText('heroDate', safeValue('workDate', '-') || '-');
+    }
+
+    function getSlotKey(name, type, startIndex) {
+      return `${name}__${type}__${startIndex}`;
+    }
+
+    function getDefaultTimelineRow() {
+      return {
+        PLAN: Array(timeSlots.length).fill(false),
+        ACTUAL: Array(timeSlots.length).fill(false)
+      };
+    }
+
+    function normalizeTimeline(timeline) {
+      const normalized = {};
+      technicians.forEach((name) => {
+        const row = timeline && timeline[name] ? timeline[name] : {};
+        const plan = Array.isArray(row.PLAN) ? row.PLAN.slice(0, timeSlots.length) : [];
+        const actual = Array.isArray(row.ACTUAL) ? row.ACTUAL.slice(0, timeSlots.length) : [];
+        while (plan.length < timeSlots.length) plan.push(false);
+        while (actual.length < timeSlots.length) actual.push(false);
+        normalized[name] = { PLAN: plan, ACTUAL: actual };
+      });
+      return normalized;
+    }
+
+    function populateModalTimeSlots() {
+      const startSelect = byId('modalStartSlot');
+      const endSelect = byId('modalEndSlot');
+      if (!startSelect || !endSelect) return;
+      const options = timeSlots.map((slot, idx) => `<option value="${idx}">${slot}</option>`).join('');
+      startSelect.innerHTML = options;
+      endSelect.innerHTML = options;
+    }
+
+    function clampRange(startIndex, endIndex) {
+      const start = Math.max(0, Math.min(Number(startIndex), timeSlots.length - 1));
+      const rawEnd = Math.max(0, Math.min(Number(endIndex), timeSlots.length - 1));
+      return { start, end: Math.max(start, rawEnd) };
+    }
+
+    function initTimeline() {
+      state.timeline = normalizeTimeline(state.timeline);
+      if (!state.slotDetails || typeof state.slotDetails !== 'object') {
+        state.slotDetails = {};
+      }
+      renderTimeline();
+    }
+
+    function clearPlanRange(technician, startIndex, endIndex) {
+      if (!state.timeline[technician]) return;
+      for (let idx = startIndex; idx <= endIndex; idx += 1) {
+        state.timeline[technician].PLAN[idx] = false;
+      }
+      delete state.slotDetails[getSlotKey(technician, 'PLAN', startIndex)];
+    }
+
+    function applyPlanRange(technician, startIndex, endIndex, payload) {
+      if (!state.timeline[technician]) {
+        state.timeline[technician] = getDefaultTimelineRow();
+      }
+      for (let idx = startIndex; idx <= endIndex; idx += 1) {
+        state.timeline[technician].PLAN[idx] = true;
+      }
+      state.slotDetails[getSlotKey(technician, 'PLAN', startIndex)] = {
+        ...payload,
+        startIndex,
+        endIndex
+      };
+    }
+
+    function getRangeDetail(name, type, index) {
+      if (type !== 'PLAN') return null;
+      const keys = Object.keys(state.slotDetails);
+      for (const key of keys) {
+        const detail = state.slotDetails[key];
+        if (!detail) continue;
+        if (!key.startsWith(`${name}__${type}__`)) continue;
+        const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : Number(key.split('__').pop());
+        const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : startIndex;
+        if (index >= startIndex && index <= endIndex) {
+          return detail;
+        }
+      }
+      return null;
+    }
+
+    function getJobSummary(name, type, index) {
+      if (type !== 'PLAN') return '';
+      if (!state.timeline[name] || !state.timeline[name].PLAN[index]) return '';
+
+      const detail = getRangeDetail(name, type, index);
+      if (!detail) return '';
+
+      const rangeText = typeof detail.startIndex === 'number' && typeof detail.endIndex === 'number'
+        ? `${timeSlots[detail.startIndex]} - ${timeSlots[detail.endIndex]}`
+        : '';
+      const parts = [detail.jobType, detail.detail, rangeText].filter(Boolean);
+      return parts.join(' | ');
+    }
+
+    function renderTimeline() {
+      const wrap = byId('timelineWrap');
+      if (!wrap) return;
+
+      let html = '<table><thead><tr><th>ชื่อพนักงาน</th><th>สถานะ</th>';
+      timeSlots.forEach((time) => {
+        if (time.includes('/')) {
+          const parts = time.split('/');
+          html += `<th>${parts[0]}<br>${parts[1]}</th>`;
+        } else {
+          html += `<th>${time}</th>`;
+        }
+      });
+      html += '</tr></thead><tbody>';
+
+      technicians.forEach((name) => {
+        ['PLAN', 'ACTUAL'].forEach((type, rowIndex) => {
+          html += '<tr>';
+          if (rowIndex === 0) {
+            html += `<td class="left" rowspan="2">${escapeHtml(name)}</td>`;
+          }
+          html += `<td class="left">${type}</td>`;
+
+          if (type === 'PLAN') {
+            let index = 0;
+            while (index < timeSlots.length) {
+              const detail = getRangeDetail(name, type, index);
+              const isOn = Boolean(state.timeline[name][type][index]);
+
+              if (isOn && detail) {
+                const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : index;
+                const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : index;
+                const colSpan = Math.max(1, endIndex - startIndex + 1);
+                const rangeText = `${timeSlots[startIndex]} - ${timeSlots[endIndex]}`;
+                const mergedText = [detail.jobType, detail.detail].filter(Boolean).join(' | ');
+                html += `<td colspan="${colSpan}" class="slot plan-on" title="${escapeHtml(mergedText)}" onclick="openTaskModal('${name.replace(/'/g, "\'")}','${type}',${startIndex})">${escapeHtml(mergedText)}</td>`;
+                index = endIndex + 1;
+              } else {
+                html += `<td class="slot" onclick="openTaskModal('${name.replace(/'/g, "\'")}','${type}',${index})"></td>`;
+                index += 1;
+              }
+            }
+          } else {
+            state.timeline[name][type].forEach((isOn, index) => {
+              html += `<td class="slot ${isOn ? 'actual-on' : ''}" onclick="toggleActual('${name.replace(/'/g, "\'")}',${index})"></td>`;
+            });
+          }
+
+          html += '</tr>';
+        });
+      });
+
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    function openTaskModal(name, type, index) {
+      modalState.technician = name;
+      modalState.type = type;
+      modalState.index = index;
+
+      const detail = getRangeDetail(name, type, index) || {};
+      const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : index;
+      const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : index;
+      modalState.originalIndex = startIndex;
+      modalState.originalEndIndex = endIndex;
+
+      populateModalTimeSlots();
+      safeSetValue('modalStartSlot', String(startIndex));
+      safeSetValue('modalEndSlot', String(endIndex));
+      safeSetValue('modalJobType', detail.jobType || 'PM');
+      safeSetValue('modalDetail', detail.detail || '');
+      safeSetText('taskModalSubtitle', `${name} | ${type} | ${timeSlots[startIndex] || '-'} - ${timeSlots[endIndex] || '-'}`);
+
+      const backdrop = byId('taskModalBackdrop');
+      if (backdrop) backdrop.classList.add('show');
+    }
+
+    function closeTaskModal() {
+      const backdrop = byId('taskModalBackdrop');
+      if (backdrop) backdrop.classList.remove('show');
+    }
+
+    function saveTaskModal() {
+      const { technician, type, originalIndex, originalEndIndex } = modalState;
+      if (!technician || type !== 'PLAN') return;
+
+      const range = clampRange(safeValue('modalStartSlot', originalIndex), safeValue('modalEndSlot', originalEndIndex));
+      if (!state.timeline[technician]) {
+        state.timeline[technician] = getDefaultTimelineRow();
+      }
+
+      clearPlanRange(technician, originalIndex, originalEndIndex);
+      applyPlanRange(technician, range.start, range.end, {
+        jobType: safeValue('modalJobType', 'PM'),
+        detail: safeValue('modalDetail').trim()
+      });
+
+      modalState.index = range.start;
+      modalState.originalIndex = range.start;
+      modalState.originalEndIndex = range.end;
+      renderTimeline();
+      saveData();
+      closeTaskModal();
+    }
+
+    function clearTaskModalData() {
+
+  const { technician, originalIndex, originalEndIndex } = modalState;
+
+  clearPlanRange(technician, originalIndex, originalEndIndex);
+
+  renderTimeline();
+
+  const payload = {
+    action: "delete",
+    date: safeValue('workDate'),
+    technician: technician,
+    type: "PLAN",
+    start: originalIndex,
+    end: originalEndIndex
+  };
+  console.log("DELETE SEND:", payload);
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  closeTaskModal();
+}
+
+    function toggleActual(technician, slotIndex) {
+
+  const isActive =
+    state.timeline[technician].ACTUAL[slotIndex];
+
+  state.timeline[technician].ACTUAL[slotIndex] = !isActive;
+
+  renderTimeline();
+
+  const payload = {
+    action: isActive ? "deleteActual" : "save",
+    date: safeValue('workDate'),
+    technician: technician,
+    type: "ACTUAL",
+    start: slotIndex,
+    end: slotIndex,
+    actual: "done"
+  };
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+}
+
+    function fillSampleTimeline() {
+      clearTimeline(false);
+      const sampleNames = technicians.slice(0, 3);
+      sampleNames.forEach((name, personIndex) => {
+        const startIndex = personIndex * 2;
+        const endIndex = Math.min(startIndex + 2, timeSlots.length - 1);
+        applyPlanRange(name, startIndex, endIndex, {
+          jobType: personIndex === 0 ? 'PM' : personIndex === 1 ? 'Breakdown' : 'Inspection',
+          detail: personIndex === 0 ? 'ตรวจสอบมอเตอร์' : personIndex === 1 ? 'แก้ไขระบบลม' : 'ตรวจเช็กเซนเซอร์'
+        });
+        state.timeline[name].ACTUAL[startIndex] = true;
+      });
+      renderTimeline();
+      saveData();
+    }
+
+    function clearTimeline(shouldSave = true) {
+      state.timeline = normalizeTimeline({});
+      state.slotDetails = {};
+      renderTimeline();
+      if (shouldSave) saveData();
+    }
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbw9VJjoXSYd7vaYl1_vSy4JHhGiTJf35_TLh90c3B-XXhCc8itEDLEOyDbEoxavzayH/exec";
+
+    function saveData() {
+
+  ensureMetaDefaults();
+
+  const payload = {
+    date: safeValue('workDate'),
+    technician: modalState.technician,
+    type: modalState.type,
+    start: modalState.originalIndex,
+    end: modalState.originalEndIndex,
+    jobType: safeValue('modalJobType'),
+    detail: safeValue('modalDetail'),
+    actual: ""
+  };
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+    function loadData() {
+
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+
+      state.timeline = normalizeTimeline({});
+      state.slotDetails = {};
+
+      const selectedDate = safeValue('workDate');
+
+      data.slice(1).forEach(row => {
+
+        const date = new Date(row[0]).toISOString().split('T')[0];
+        const technician = row[1];
+        const type = row[2];
+        const start = Number(row[3]);
+        const end = Number(row[4]);
+        const jobType = row[5];
+        const detail = row[6];
+
+        if (!technician) return;
+        if (date !== selectedDate) return;
+
+        // PLAN
+        if (type === "PLAN") {
+
+          applyPlanRange(technician, start, end, {
+            jobType,
+            detail
+          });
+
+        }
+
+        // ACTUAL
+        if (type === "ACTUAL") {
+
+          if (!state.timeline[technician]) {
+            state.timeline[technician] = getDefaultTimelineRow();
+          }
+
+          for (let i = start; i <= end; i++) {
+            state.timeline[technician].ACTUAL[i] = true;
+          }
+
+        }
+
+      });
+
+      console.log("TIMELINE:", state.timeline);
+      console.log("DETAIL:", state.slotDetails);
+
+      renderTimeline();
+
+    })
+    .catch(err => console.error("LOAD ERROR:", err));
+
+}
+
+    function runSelfTests() {
+      console.assert(getSlotKey('ธนเทพ', 'PLAN', 2) === 'ธนเทพ__PLAN__2', 'Test failed: slot key should match format');
+
+      const range1 = clampRange(1, 3);
+      console.assert(range1.start === 1 && range1.end === 3, 'Test failed: clampRange should keep valid range');
+      const range2 = clampRange(4, 2);
+      console.assert(range2.start === 4 && range2.end === 4, 'Test failed: clampRange should prevent end before start');
+
+      const mockTimeline = {};
+      technicians.forEach((name) => {
+        mockTimeline[name] = getDefaultTimelineRow();
+      });
+      state.timeline = normalizeTimeline(mockTimeline);
+      state.slotDetails = {};
+
+      applyPlanRange(technicians[0], 1, 3, { jobType: 'PM', detail: 'ตรวจสอบมอเตอร์' });
+      console.assert(state.timeline[technicians[0]].PLAN[1] === true && state.timeline[technicians[0]].PLAN[3] === true, 'Test failed: applyPlanRange should fill range');
+      console.assert(getRangeDetail(technicians[0], 'PLAN', 2).detail === 'ตรวจสอบมอเตอร์', 'Test failed: getRangeDetail should resolve detail inside range');
+      console.assert(getJobSummary(technicians[0], 'PLAN', 2).includes('8:30 - 10:30'), 'Test failed: summary should include selected range text');
+      console.assert(getJobSummary(technicians[0], 'ACTUAL', 2) === '', 'Test failed: ACTUAL should not show detail');
+
+      clearPlanRange(technicians[0], 1, 3);
+      console.assert(state.timeline[technicians[0]].PLAN[1] === false && state.timeline[technicians[0]].PLAN[3] === false, 'Test failed: clearPlanRange should clear range');
+
+      populateModalTimeSlots();
+      const modalStartSlot = byId('modalStartSlot');
+      const modalEndSlot = byId('modalEndSlot');
+      console.assert(Boolean(modalStartSlot) && modalStartSlot.options.length === timeSlots.length, 'Test failed: modal start slot should contain all time slots');
+      console.assert(Boolean(modalEndSlot) && modalEndSlot.options.length === timeSlots.length, 'Test failed: modal end slot should contain all time slots');
+
+      applyPlanRange(technicians[0], 2, 4, { jobType: 'Inspection', detail: 'ทดสอบหลายช่วง' });
+      openTaskModal(technicians[0], 'PLAN', 3);
+      console.assert(safeValue('modalStartSlot') === '2', 'Test failed: modal start slot should match saved range');
+      console.assert(safeValue('modalEndSlot') === '4', 'Test failed: modal end slot should match saved range');
+      closeTaskModal();
+
+      clearTimeline(false);
+    }
+
+    document.addEventListener('click', (event) => {
+      const backdrop = byId('taskModalBackdrop');
+      if (event.target === backdrop) closeTaskModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeTaskModal();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      ensureMetaDefaults();
+      populateModalTimeSlots();
+      initTimeline();
+      loadData();
+      if(false) runSelfTests();
+    });
+  </script>
+</body>
+</html>
