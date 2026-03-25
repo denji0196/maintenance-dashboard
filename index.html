@@ -885,6 +885,9 @@
       initTimeline();
       loadData();
       if(false) runSelfTests();
+      setInterval(() => {
+  loadData();
+}, 3000); // ทุก 3 วินาที
     });
   </script>
 </body>
