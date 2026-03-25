@@ -700,10 +700,12 @@
   closeTaskModal();
 }
 
- function toggleActual(technician, slotIndex) {
+function toggleActual(technician, slotIndex) {
 
   const isActive =
     state.timeline[technician].ACTUAL[slotIndex];
+
+  const detail = getRangeDetail(technician, 'PLAN', slotIndex);
 
   const msg = isActive
     ? "ต้องการยกเลิกงานนี้ใช่ไหม?"
@@ -711,19 +713,21 @@
 
   openConfirmModal(msg, () => {
 
-    // ✅ ทำงานจริงเมื่อกด OK
     state.timeline[technician].ACTUAL[slotIndex] = !isActive;
 
     renderTimeline();
 
     const payload = {
-      action: isActive ? "deleteActual" : "save",
+      action: isActive ? "deleteActual" : "saveActual",
       date: safeValue('workDate'),
       technician: technician,
       type: "ACTUAL",
       start: slotIndex,
       end: slotIndex,
-      actual: "done"
+
+      // 🔥 ส่งข้อมูล PLAN ไปด้วย
+      jobType: detail ? detail.jobType : "",
+      detail: detail ? detail.detail : ""
     };
 
     fetch(API_URL, {
@@ -758,7 +762,7 @@
       if (shouldSave) saveData();
     }
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbw9VJjoXSYd7vaYl1_vSy4JHhGiTJf35_TLh90c3B-XXhCc8itEDLEOyDbEoxavzayH/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbz00DUayp4FfwPTcr1ydd3wf5Nj-dAQv45-TwaZPhHggkppFIC6eNIsIdUpH-snpn_L8A/exec";
 
     function saveData() {
 
@@ -916,7 +920,7 @@ function confirmOk() {
       if(false) runSelfTests();
       setInterval(() => {
   loadData();
-}, 30000); // ทุก 30 วินาที
+}, 3000); // ทุก 3 วินาที
     });
   </script>
   <div class="modal-backdrop" id="confirmModalBackdrop">
