@@ -700,28 +700,37 @@
   closeTaskModal();
 }
 
-    function toggleActual(technician, slotIndex) {
+ function toggleActual(technician, slotIndex) {
 
   const isActive =
     state.timeline[technician].ACTUAL[slotIndex];
 
-  state.timeline[technician].ACTUAL[slotIndex] = !isActive;
+  const msg = isActive
+    ? "ต้องการยกเลิกงานนี้ใช่ไหม?"
+    : "ยืนยันว่าทำงานเสร็จแล้วใช่ไหม?";
 
-  renderTimeline();
+  openConfirmModal(msg, () => {
 
-  const payload = {
-    action: isActive ? "deleteActual" : "save",
-    date: safeValue('workDate'),
-    technician: technician,
-    type: "ACTUAL",
-    start: slotIndex,
-    end: slotIndex,
-    actual: "done"
-  };
+    // ✅ ทำงานจริงเมื่อกด OK
+    state.timeline[technician].ACTUAL[slotIndex] = !isActive;
 
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(payload)
+    renderTimeline();
+
+    const payload = {
+      action: isActive ? "deleteActual" : "save",
+      date: safeValue('workDate'),
+      technician: technician,
+      type: "ACTUAL",
+      start: slotIndex,
+      end: slotIndex,
+      actual: "done"
+    };
+
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
   });
 
 }
@@ -830,6 +839,26 @@
     .catch(err => console.error("LOAD ERROR:", err));
 
 }
+let confirmCallback = null;
+
+function openConfirmModal(message, callback) {
+  document.getElementById("confirmMessage").innerText = message;
+  confirmCallback = callback;
+
+  document.getElementById("confirmModalBackdrop").classList.add("show");
+}
+
+function closeConfirmModal() {
+  document.getElementById("confirmModalBackdrop").classList.remove("show");
+  confirmCallback = null;
+}
+
+function confirmOk() {
+  if (confirmCallback) {
+    confirmCallback(); // 🔥 เรียก function ต่อ
+  }
+  closeConfirmModal();
+}
 
     function runSelfTests() {
       console.assert(getSlotKey('ธนเทพ', 'PLAN', 2) === 'ธนเทพ__PLAN__2', 'Test failed: slot key should match format');
@@ -885,10 +914,25 @@
       initTimeline();
       loadData();
       if(false) runSelfTests();
-//       setInterval(() => {
-//   loadData();
-// }, 3000); // ทุก 3 วินาที
+      setInterval(() => {
+  loadData();
+}, 5000); // ทุก 5 วินาที
     });
   </script>
+  <div class="modal-backdrop" id="confirmModalBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">ยืนยันการทำรายการ</h3>
+    </div>
+    <div class="modal-body">
+      <div id="confirmMessage" style="font-size:16px;"></div>
+
+      <div class="actions" style="justify-content:flex-end;">
+        <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn-primary" onclick="confirmOk()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
