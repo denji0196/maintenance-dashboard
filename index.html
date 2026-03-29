@@ -317,6 +317,45 @@
       color: var(--text);
       padding: 8px 12px;
     }
+    .overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+}
+
+.popup button {
+  margin: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.actual-ok {
+  background: linear-gradient(135deg, #00cd90    , #01af92    );
+}
+
+.actual-ng {
+  background: linear-gradient(135deg, #ee3c68 , #e4293e );
+}
+
+
+textarea {
+  width: 100%;
+  height: 80px;
+}
 
     @media (max-width: 1100px) {
       .hero { grid-template-columns: 1fr; }
@@ -417,12 +456,14 @@
   </div>
 
   <script>
-    const technicians = ["ธนเทพ", "สงคราม", "สุทิวัส", "วีระพงษ์", "อาคม", "ณัฐวุติ", "ธีระ", "ธนัทดนัย", "วิโรจน์", "สุธี"];
+    const technicians = ["ธนเทพ", "สงคราม", "สุทิวัส", "วีระพงษ์", "อาคม", "ณัฐพล", "ธีระ", "ธนัทดนัย", "วิโรจน์", "สุธี"];
     const timeSlots = ["7:30/19:30", "8:30/20:30", "9:30/21:30", "10:30/22:30", "11:30/23:30", "12:00/24:00", "13:00/01:00", "14:30/02:30", "15:30/03:30", "16:30/04:30", "17:00/05:00", "18:30/06:30", "19:30/07:30"];
 
     const state = {
       timeline: {},
-      slotDetails: {}
+      slotDetails: {},
+      actualStatus: {},
+      actualReason: {} 
     };
 
     const modalState = {
@@ -570,60 +611,171 @@
     }
 
     function renderTimeline() {
-      const wrap = byId('timelineWrap');
-      if (!wrap) return;
 
-      let html = '<table><thead><tr><th>ชื่อพนักงาน</th><th>สถานะ</th>';
-      timeSlots.forEach((time) => {
-        if (time.includes('/')) {
-          const parts = time.split('/');
-          html += `<th>${parts[0]}<br>${parts[1]}</th>`;
-        } else {
-          html += `<th>${time}</th>`;
-        }
-      });
-      html += '</tr></thead><tbody>';
+  const wrap = byId('timelineWrap');
+  if (!wrap) return;
 
-      technicians.forEach((name) => {
-        ['PLAN', 'ACTUAL'].forEach((type, rowIndex) => {
-          html += '<tr>';
-          if (rowIndex === 0) {
-            html += `<td class="left" rowspan="2">${escapeHtml(name)}</td>`;
-          }
-          html += `<td class="left">${type}</td>`;
+  let html = '<table><thead><tr><th>ชื่อพนักงาน</th><th>สถานะ</th>';
 
-          if (type === 'PLAN') {
-            let index = 0;
-            while (index < timeSlots.length) {
-              const detail = getRangeDetail(name, type, index);
-              const isOn = Boolean(state.timeline[name][type][index]);
-
-              if (isOn && detail) {
-                const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : index;
-                const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : index;
-                const colSpan = Math.max(1, endIndex - startIndex + 1);
-                const rangeText = `${timeSlots[startIndex]} - ${timeSlots[endIndex]}`;
-                const mergedText = [detail.jobType, detail.detail].filter(Boolean).join(' | ');
-                html += `<td colspan="${colSpan}" class="slot plan-on" title="${escapeHtml(mergedText)}" onclick="openTaskModal('${name.replace(/'/g, "\'")}','${type}',${startIndex})">${escapeHtml(mergedText)}</td>`;
-                index = endIndex + 1;
-              } else {
-                html += `<td class="slot" onclick="openTaskModal('${name.replace(/'/g, "\'")}','${type}',${index})"></td>`;
-                index += 1;
-              }
-            }
-          } else {
-            state.timeline[name][type].forEach((isOn, index) => {
-              html += `<td class="slot ${isOn ? 'actual-on' : ''}" onclick="toggleActual('${name.replace(/'/g, "\'")}',${index})"></td>`;
-            });
-          }
-
-          html += '</tr>';
-        });
-      });
-
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
+  timeSlots.forEach((time) => {
+    if (time.includes('/')) {
+      const parts = time.split('/');
+      html += `<th>${parts[0]}<br>${parts[1]}</th>`;
+    } else {
+      html += `<th>${time}</th>`;
     }
+  });
+
+  html += '</tr></thead><tbody>';
+
+  technicians.forEach((name) => {
+
+    // =======================
+    // 🔵 PLAN ROW
+    // =======================
+    html += '<tr>';
+    html += `<td class="left" rowspan="2">${escapeHtml(name)}</td>`;
+    html += `<td class="left">PLAN</td>`;
+
+    let index = 0;
+
+    while (index < timeSlots.length) {
+
+      const detail = getRangeDetail(name, 'PLAN', index);
+      const isOn = state.timeline[name].PLAN[index];
+
+      if (isOn && detail) {
+
+        const start = detail.startIndex;
+        const end = detail.endIndex;
+        const span = end - start + 1;
+
+        const text = [detail.jobType, detail.detail].filter(Boolean).join(' | ');
+
+        html += `
+          <td colspan="${span}" class="slot plan-on"
+            title="${escapeHtml(text)}"
+            onclick="openTaskModal('${name}', 'PLAN', ${start})"
+          >
+            ${escapeHtml(text)}
+          </td>
+        `;
+
+        index = end + 1;
+
+      } else {
+
+        html += `
+          <td class="slot"
+            onclick="openTaskModal('${name}','PLAN',${index})"
+          ></td>
+        `;
+
+        index++;
+      }
+    }
+
+    html += '</tr>';
+
+    // =======================
+    // 🟢 ACTUAL ROW (🔥 merge ตาม PLAN)
+    // =======================
+    html += '<tr>';
+    html += `<td class="left">ACTUAL</td>`;
+
+    index = 0;
+
+    while (index < timeSlots.length) {
+
+      const detail = getRangeDetail(name, 'PLAN', index);
+
+      // 🔥 ถ้ามี PLAN → ทำ block
+      if (detail) {
+
+        const start = detail.startIndex;
+        const end = detail.endIndex;
+        const span = end - start + 1;
+
+        let status = null;
+
+        for (let i = start; i <= end; i++) {
+
+          const s = state.actualStatus[`${name}_${i}`];
+
+          if (s === "NG") {
+            status = "ng";
+            break;
+          }
+
+          if (s === "OK") {
+            status = "ok";
+          }
+        }
+
+        let cls = '';
+
+        if (status === 'ng') cls = 'actual-ng';
+        else if (status === 'ok') cls = 'actual-ok';
+
+        html += `
+          <td class="slot ${cls}" colspan="${span}"
+            onclick="toggleActualBlock('${name}', ${start}, ${end})"
+          ></td>
+        `;
+
+        index = end + 1;
+
+      } else {
+
+        // ❌ ไม่มี PLAN → ห้ามกด
+        html += `<td class="slot"></td>`;
+        index++;
+      }
+    }
+
+    html += '</tr>';
+
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function toggleActualBlock(name, start, end) {
+  const existingStatus = state.actualStatus[`${name}_${start}`];
+  if (existingStatus) {
+    const existingReason = state.actualReason[`${name}_${start}`] || '';
+    showActualViewPopup(name, start, end, existingStatus, existingReason);
+    return;
+  }
+
+  showDecisionPopup().then(result => {
+    if (!result) return;
+    showReasonPopup(result).then(reason => {
+      if (reason === null) return;
+
+      for (let i = start; i <= end; i++) {
+        state.timeline[name].ACTUAL[i] = true;
+        state.actualStatus[`${name}_${i}`] = result;
+        state.actualReason[`${name}_${i}`] = reason;
+      }
+
+      const payload = {
+        action: "saveActual",
+        date: safeValue('workDate'),
+        technician: name,
+        start, end,
+        status: result,
+        reason: reason,
+        detail: state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || "",  // ✅ เพิ่มตรงนี้
+        timestamp: new Date().toISOString()
+      };
+
+      fetch(API_URL_SAVE, { method: "POST", body: JSON.stringify(payload) });
+      renderTimeline();
+    });
+  });
+}
 
     function openTaskModal(name, type, index) {
       modalState.technician = name;
@@ -700,39 +852,125 @@
   closeTaskModal();
 }
 
-function toggleActual(technician, slotIndex) {
+function showPopup(html) {
 
-  const isActive =
-    state.timeline[technician].ACTUAL[slotIndex];
+  const div = document.createElement("div");
+  div.id = "popupOverlay";
+  div.innerHTML = `
+    <div class="overlay">
+      ${html}
+    </div>
+  `;
 
-  const detail = getRangeDetail(technician, 'PLAN', slotIndex);
+  document.body.appendChild(div);
 
-  const msg = isActive
-    ? "ต้องการยกเลิกงานนี้ใช่ไหม?"
-    : "ยืนยันว่าทำงานเสร็จแล้วใช่ไหม?";
+}
 
-  openConfirmModal(msg, () => {
+function closePopup() {
+  const el = document.getElementById("popupOverlay");
+  if (el) el.remove();
+}
 
-    state.timeline[technician].ACTUAL[slotIndex] = !isActive;
+function showReasonPopup(status) {
 
-    renderTimeline();
+  return new Promise(resolve => {
 
-    const payload = {
-      action: isActive ? "deleteActual" : "saveActual",
-      date: safeValue('workDate'),
-      technician: technician,
-      type: "ACTUAL",
-      start: slotIndex,
-      end: slotIndex,
+    const html = `
+      <div class="popup">
+        <h3>${status} - Reason</h3>
+        <textarea id="reasonInput" placeholder="Enter reason..."></textarea>
+        <br><br>
+        <button onclick="submitReason()">OK</button>
+        <button onclick="cancelReason()">Cancel</button>
+      </div>
+    `;
 
-      // 🔥 ส่งข้อมูล PLAN ไปด้วย
-      jobType: detail ? detail.jobType : "",
-      detail: detail ? detail.detail : ""
+    showPopup(html);
+
+    window.submitReason = () => {
+      const val = document.getElementById("reasonInput").value;
+      closePopup();
+      resolve(val);
     };
 
-    fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
+    window.cancelReason = () => {
+      closePopup();
+      resolve(null);
+    };
+
+  });
+
+}
+
+function showDecisionPopup() {
+
+  return new Promise(resolve => {
+
+    const html = `
+      <div class="popup">
+        <h3>Result</h3>
+        <button onclick="choose('OK')">OK</button>
+        <button onclick="choose('NG')">NG</button>
+        <button onclick="choose(null)">Cancel</button>
+      </div>
+    `;
+
+    showPopup(html);
+
+    window.choose = (val) => {
+      closePopup();
+      resolve(val);
+    };
+
+  });
+
+}
+
+function toggleActual(technician, slotIndex) {
+
+  showDecisionPopup().then(result => {
+
+    if (!result) return;
+
+    showReasonPopup(result).then(reason => {
+
+      if (reason === null) return;
+
+      const payload = {
+        action: "saveActual",
+        date: safeValue('workDate'),
+        technician: name,
+        start: start,
+        end: end,
+        status: result,
+        reason: reason,
+        detail: state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || "",  // ← เพิ่มตรงนี้
+        timestamp: new Date().toISOString()
+      };
+
+      fetch(API_URL_SAVE, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+
+              // ✅ mark ช่องว่า active
+        state.timeline[technician].ACTUAL[slotIndex] = true;
+
+        // 🔥 ใส่ตัวนี้ (สำคัญมาก)
+        state.actualStatus[`${technician}_${slotIndex}`] = result;
+
+        state.actualReason[`${technician}_${slotIndex}`] = reason;
+
+        renderTimeline();
+
+      })
+      .catch(err => {
+        alert("Save error");
+        console.error(err);
+      });
+
     });
 
   });
@@ -761,9 +999,11 @@ function toggleActual(technician, slotIndex) {
       renderTimeline();
       if (shouldSave) saveData();
     }
+    
+    const API_URL = "https://script.google.com/macros/s/AKfycbx1CO42dFLerO2VSuwWInIKjG5BLToBwBvKsi17rUEpUl4vZ-xO52ksb_fhKqvtCJl8Yg/exec";
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbz00DUayp4FfwPTcr1ydd3wf5Nj-dAQv45-TwaZPhHggkppFIC6eNIsIdUpH-snpn_L8A/exec";
-
+    const API_URL_SAVE = API_URL;
+    
     function saveData() {
 
   ensureMetaDefaults();
@@ -791,59 +1031,238 @@ function toggleActual(technician, slotIndex) {
     .then(res => res.json())
     .then(data => {
 
-      state.timeline = normalizeTimeline({});
-      state.slotDetails = {};
+      const newTimeline = normalizeTimeline({});
+      const newDetails = {};
 
-      const selectedDate = safeValue('workDate');
+      state.actualStatus = {}; // reset
 
       data.slice(1).forEach(row => {
 
-        const date = new Date(row[0]).toISOString().split('T')[0];
+        const date = row[0];
         const technician = row[1];
         const type = row[2];
         const start = Number(row[3]);
         const end = Number(row[4]);
         const jobType = row[5];
         const detail = row[6];
+        const actual = row[7]; // ✅ เอาจาก x1 ตรงๆ
+        const reason = row[8];
 
-        if (!technician) return;
-        if (date !== selectedDate) return;
+        console.log("STATUS:", state.actualStatus);
+        if (type !== "PLAN") return; // 🔥 ไม่เอา ACTUAL แล้ว
 
-        // PLAN
-        if (type === "PLAN") {
-
-          applyPlanRange(technician, start, end, {
-            jobType,
-            detail
-          });
-
+        if (!newTimeline[technician]) {
+          newTimeline[technician] = getDefaultTimelineRow();
         }
 
-        // ACTUAL
-        if (type === "ACTUAL") {
+        for (let i = start; i <= end; i++) {
 
-          if (!state.timeline[technician]) {
-            state.timeline[technician] = getDefaultTimelineRow();
+          // ✅ PLAN
+          newTimeline[technician].PLAN[i] = true;
+
+          // 🔥 ACTUAL (สำคัญมาก)
+          if (actual) {
+            newTimeline[technician].ACTUAL[i] = true; // 👈 ต้องมีตัวนี้
+            state.actualStatus[`${technician}_${i}`] = actual;
+            state.actualReason[`${technician}_${i}`] = reason;
           }
-
-          for (let i = start; i <= end; i++) {
-            state.timeline[technician].ACTUAL[i] = true;
-          }
-
         }
+
+        newDetails[getSlotKey(technician, 'PLAN', start)] = {
+          startIndex: start,
+          endIndex: end,
+          jobType,
+          detail
+        };
 
       });
 
-      console.log("TIMELINE:", state.timeline);
-      console.log("DETAIL:", state.slotDetails);
+      state.timeline = newTimeline;
+      state.slotDetails = newDetails;
 
       renderTimeline();
 
     })
-    .catch(err => console.error("LOAD ERROR:", err));
-
+    .catch(err => console.error(err));
 }
 let confirmCallback = null;
+
+function showActualDetailBlock(event, name, start, end) {
+  event.preventDefault();
+
+  // หา status และ reason ปัจจุบัน
+  let currentStatus = null;
+  let currentReason = '';
+  for (let i = start; i <= end; i++) {
+    const s = state.actualStatus[`${name}_${i}`];
+    if (s) { currentStatus = s; currentReason = state.actualReason[`${name}_${i}`] || ''; break; }
+  }
+
+  // ถ้ายังไม่มี actual → ใช้ flow เดิม (กรอกใหม่)
+  if (!currentStatus) {
+    toggleActualBlock(name, start, end);
+    return;
+  }
+
+  // มี actual อยู่แล้ว → เปิด popup แสดงข้อมูล
+  showActualViewPopup(name, start, end, currentStatus, currentReason);
+}
+
+function showActualViewPopup(name, start, end, status, reason) {
+  const html = `
+    <div class="popup" style="width:340px; text-align:left;">
+      <h3 style="margin:0 0 12px; font-size:16px;">
+        ACTUAL: ${name} | ${timeSlots[start]} - ${timeSlots[end]}
+      </h3>
+      <div style="margin-bottom:8px; font-size:13px; color:#5b708b; font-weight:600;">
+        Status: <span id="viewStatusBadge" style="
+          padding:3px 10px; border-radius:8px; font-weight:700; font-size:13px;
+          background:${status==='OK'?'#00cd90':'#ee3c68'}; color:white;
+        ">${status}</span>
+      </div>
+      <div style="margin-bottom:8px; font-size:13px; color:#5b708b; font-weight:600;">Reason</div>
+      <textarea id="viewReasonInput" disabled
+        style="width:100%; height:80px; border-radius:8px; border:1px solid #cbd5e1; padding:8px; font:inherit;"
+      >${reason}</textarea>
+      <div style="display:flex; gap:8px; margin-top:14px; justify-content:flex-end;">
+        <button onclick="cancelViewActual()"
+          style="background:#e2e8f0; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
+          Cancel
+        </button>
+        <button id="saveEditBtn" onclick="saveEditActual('${name}',${start},${end})" disabled
+          style="background:#2563eb; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700; opacity:0.4;">
+          Save
+        </button>
+        <button onclick="enableEditActual()"
+          style="background:#d97706; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
+          Edit
+        </button>
+        <button onclick="updateStatusToOK('${name}',${start},${end})"
+          style="background:#00cd90; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
+          OK
+        </button>
+      </div>
+    </div>
+  `;
+  showPopup(html);
+}
+
+function enableEditActual() {
+  const ta = document.getElementById('viewReasonInput');
+  const saveBtn = document.getElementById('saveEditBtn');
+  if (ta) { ta.disabled = false; ta.focus(); }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = '1'; }
+}
+
+function saveEditActual(name, start, end) {
+  const newReason = (document.getElementById('viewReasonInput')?.value || '').trim();
+  closePopup();
+
+  // อัปเดต state
+  const currentStatus = state.actualStatus[`${name}_${start}`] || 'OK';
+  for (let i = start; i <= end; i++) {
+    state.actualReason[`${name}_${i}`] = newReason;
+  }
+
+  // ส่ง API
+  const payload = {
+    action: "saveActual",
+    date: safeValue('workDate'),
+    technician: name,
+    start: start,
+    end: end,
+    status: currentStatus,
+    reason: newReason,
+    timestamp: new Date().toISOString()
+  };
+  fetch(API_URL_SAVE, { method: "POST", body: JSON.stringify(payload) });
+  renderTimeline();
+}
+
+function updateStatusToOK(name, start, end) {
+  closePopup();
+  const reason = state.actualReason[`${name}_${start}`] || '';
+
+  // อัปเดต state
+  for (let i = start; i <= end; i++) {
+    state.actualStatus[`${name}_${i}`] = 'OK';
+    state.timeline[name].ACTUAL[i] = true;
+  }
+
+  // ส่ง API
+  const payload = {
+    action: "saveActual",
+    date: safeValue('workDate'),
+    technician: name,
+    start: start,
+    end: end,
+    status: 'OK',
+    reason: reason,
+    timestamp: new Date().toISOString()
+  };
+  fetch(API_URL_SAVE, { method: "POST", body: JSON.stringify(payload) });
+  renderTimeline();
+}
+
+function cancelViewActual() {
+  closePopup();
+}
+
+function onClickActual(btn) {
+
+  const payload = {
+    date: btn.dataset.date,
+    technician: btn.dataset.tech,
+    start: Number(btn.dataset.start),
+    end: Number(btn.dataset.end)
+  };
+
+  google.script.run
+    .withSuccessHandler(showPopupActual)
+    .getActualDetail(payload);
+}
+
+
+
+function showPopupActual(res) {
+
+  const html = `
+    <div style="padding:20px">
+      <h3>Status: <span id="statusTxt">${res.status}</span></h3>
+
+      <textarea id="reasonTxt" disabled style="width:100%">
+        ${res.reason || ""}
+      </textarea>
+
+      <br><br>
+
+      <button onclick="updateToOK()">OK</button>
+      <button onclick="enableEdit()">Edit</button>
+      <button onclick="closePopup()">Cancel</button>
+    </div>
+  `;
+
+  window.currentActual = res;
+
+  document.getElementById("popup").innerHTML = html;
+  document.getElementById("popup").style.display = "block";
+}
+
+function enableEdit() {
+  document.getElementById("reasonTxt").disabled = false;
+}
+
+function updateToOK() {
+
+  const payload = {
+    ...window.currentActual,
+    status: "OK"
+  };
+
+  google.script.run
+    .withSuccessHandler(() => location.reload())
+    .updateActual(payload);
+}
 
 function openConfirmModal(message, callback) {
   document.getElementById("confirmMessage").innerText = message;
