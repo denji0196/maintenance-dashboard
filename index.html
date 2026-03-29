@@ -994,13 +994,21 @@ function toggleActual(technician, slotIndex) {
     }
 
     function clearTimeline(shouldSave = true) {
-      state.timeline = normalizeTimeline({});
-      state.slotDetails = {};
-      renderTimeline();
-      if (shouldSave) saveData();
-    }
+  state.timeline = normalizeTimeline({});
+  state.slotDetails = {};
+  state.actualStatus = {};
+  state.actualReason = {};
+  renderTimeline();
+
+  if (shouldSave) {
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "clearOKPlan", date: safeValue('workDate') })
+    });
+  }
+}
     
-    const API_URL = "https://script.google.com/macros/s/AKfycbx1CO42dFLerO2VSuwWInIKjG5BLToBwBvKsi17rUEpUl4vZ-xO52ksb_fhKqvtCJl8Yg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyxgnQrDdqrD0A2lh5VLd3b2OGt9PUcHMWhBO6d1yxFlx3DnntZjfulzUJsy_Y0rFFA5Q/exec";
 
     const API_URL_SAVE = API_URL;
     
@@ -1263,6 +1271,7 @@ function updateToOK() {
     .withSuccessHandler(() => location.reload())
     .updateActual(payload);
 }
+
 
 function openConfirmModal(message, callback) {
   document.getElementById("confirmMessage").innerText = message;
