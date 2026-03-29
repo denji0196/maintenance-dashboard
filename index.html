@@ -778,26 +778,69 @@ function toggleActualBlock(name, start, end) {
 }
 
     function openTaskModal(name, type, index) {
-      modalState.technician = name;
-      modalState.type = type;
-      modalState.index = index;
+  modalState.technician = name;
+  modalState.type = type;
+  modalState.index = index;
 
-      const detail = getRangeDetail(name, type, index) || {};
-      const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : index;
-      const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : index;
-      modalState.originalIndex = startIndex;
-      modalState.originalEndIndex = endIndex;
+  const detail = getRangeDetail(name, type, index) || {};
+  const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : index;
+  const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : index;
+  modalState.originalIndex = startIndex;
+  modalState.originalEndIndex = endIndex;
 
-      populateModalTimeSlots();
-      safeSetValue('modalStartSlot', String(startIndex));
-      safeSetValue('modalEndSlot', String(endIndex));
-      safeSetValue('modalJobType', detail.jobType || 'PM');
-      safeSetValue('modalDetail', detail.detail || '');
-      safeSetText('taskModalSubtitle', `${name} | ${type} | ${timeSlots[startIndex] || '-'} - ${timeSlots[endIndex] || '-'}`);
-
-      const backdrop = byId('taskModalBackdrop');
-      if (backdrop) backdrop.classList.add('show');
+  // ── หาช่วงที่มี plan อื่นอยู่แล้ว (ไม่นับ plan ของตัวเอง) ──
+  const blockedSlots = new Set();
+  Object.keys(state.slotDetails).forEach(key => {
+    if (!key.startsWith(`${name}__PLAN__`)) return;
+    const d = state.slotDetails[key];
+    if (!d) return;
+    // ข้าม plan ตัวเองที่กำลังแก้อยู่
+    if (d.startIndex === startIndex && d.endIndex === endIndex) return;
+    for (let i = d.startIndex; i <= d.endIndex; i++) {
+      blockedSlots.add(i);
     }
+  });
+
+  // ── สร้าง options เฉพาะช่วงที่ไม่ชน ──
+  // หา "กลุ่ม" ที่ index นี้อยู่ได้ = ช่วงต่อเนื่องที่ไม่มี blocked
+  // เริ่มจาก index ปัจจุบัน หาซ้าย (start ที่เป็นไปได้) และขวา (end ที่เป็นไปได้)
+  let minAllowed = 0;
+  let maxAllowed = timeSlots.length - 1;
+
+  // หาขอบซ้าย: blocked slot แรกที่อยู่ก่อน index
+  for (let i = index - 1; i >= 0; i--) {
+    if (blockedSlots.has(i)) { minAllowed = i + 1; break; }
+  }
+
+  // หาขอบขวา: blocked slot แรกที่อยู่หลัง index
+  for (let i = index + 1; i < timeSlots.length; i++) {
+    if (blockedSlots.has(i)) { maxAllowed = i - 1; break; }
+  }
+
+  // ── populate selects ──
+  const startSelect = byId('modalStartSlot');
+  const endSelect = byId('modalEndSlot');
+  if (!startSelect || !endSelect) return;
+
+  // ── populate selects ──
+startSelect.innerHTML = `<option value="${index}">${timeSlots[index]}</option>`;
+
+endSelect.innerHTML = timeSlots
+  .map((slot, idx) => {
+    if (idx < index || idx > maxAllowed) return '';
+    return `<option value="${idx}">${slot}</option>`;
+  }).join('');
+
+startSelect.value = String(index);
+endSelect.value = String(endIndex <= maxAllowed ? endIndex : index);
+
+  safeSetValue('modalJobType', detail.jobType || 'PM');
+  safeSetValue('modalDetail', detail.detail || '');
+  safeSetText('taskModalSubtitle', `${name} | ${type} | ${timeSlots[startIndex] || '-'} - ${timeSlots[endIndex] || '-'}`);
+
+  const backdrop = byId('taskModalBackdrop');
+  if (backdrop) backdrop.classList.add('show');
+}
 
     function closeTaskModal() {
       const backdrop = byId('taskModalBackdrop');
