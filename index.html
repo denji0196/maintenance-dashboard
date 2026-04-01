@@ -351,6 +351,23 @@
   background: linear-gradient(135deg, #ee3c68 , #e4293e );
 }
 
+.cal-day {
+  border-radius: 10px;
+  padding: 10px 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.15s;
+  border: 1.5px solid transparent;
+}
+.cal-day:hover { border-color: #2563eb; }
+.cal-day.today { border-color: #2563eb; color: #2563eb; }
+.cal-day.selected { background: #1d4ed8; color: white; }
+.cal-day.holiday { background: #fee2e2; color: #991b1b; }
+.cal-day.holiday.selected { background: #dc2626; color: white; }
+.cal-day.empty { cursor: default; }
+.cal-day-header { font-size: 12px; color: #5b708b; font-weight: 700; padding: 4px; }
+
 
 textarea {
   width: 100%;
@@ -373,6 +390,11 @@ textarea {
         </p>
       </div>
       <div class="hero-stats">
+        <button id="holidayBtn" onclick="openCalendar()" style="
+    background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.35);
+    color:white; border-radius:16px; padding:12px 20px;
+    font-size:15px; font-weight:700; cursor:pointer; letter-spacing:0.03em;
+  ">📅 plan holiday</button>
         <div class="hero-stat">
           <div class="label">วันที่ทำงาน</div>
           <div class="value" id="heroDate">-</div>
@@ -760,21 +782,48 @@ function toggleActualBlock(name, start, end) {
         state.actualReason[`${name}_${i}`] = reason;
       }
 
-      const payload = {
-        action: "saveActual",
-        date: safeValue('workDate'),
-        technician: name,
-        start, end,
-        status: result,
-        reason: reason,
-        detail: state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || "",  // ✅ เพิ่มตรงนี้
-        timestamp: new Date().toISOString()
-      };
-
-      fetch(API_URL_SAVE, { method: "POST", body: JSON.stringify(payload) });
+      const detail = state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || '';
+      saveActualToSupabase(name, start, end, result, reason, detail); // ← เรียกตรงนี้
       renderTimeline();
     });
   });
+}
+function loadDataFromX4(date) {
+  Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${date}&type=eq.PLAN&order=start_slot`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    }).then(r => r.json()),
+
+    fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    }).then(r => r.json())
+
+  ]).then(([plans, actuals]) => {
+
+    const newTimeline = normalizeTimeline({});
+    const newDetails  = {};
+    state.actualStatus = {};
+    state.actualReason = {};
+
+    plans.forEach(row => {
+      const { technician, start_slot: start, end_slot: end, job_type: jobType, detail, status, reason } = row;
+      if (!newTimeline[technician]) newTimeline[technician] = getDefaultTimelineRow();
+      for (let i = start; i <= end; i++) {
+        newTimeline[technician].PLAN[i] = true;
+        if (status) {
+          newTimeline[technician].ACTUAL[i] = true;
+          state.actualStatus[`${technician}_${i}`] = status;
+          state.actualReason[`${technician}_${i}`]  = reason;
+        }
+      }
+      newDetails[getSlotKey(technician, 'PLAN', start)] = { startIndex: start, endIndex: end, jobType, detail };
+    });
+
+    state.timeline    = newTimeline;
+    state.slotDetails = newDetails;
+    renderTimeline();
+
+  }).catch(err => console.error(err));
 }
 
     function openTaskModal(name, type, index) {
@@ -871,42 +920,30 @@ endSelect.value = String(endIndex <= maxAllowed ? endIndex : index);
     }
 
     function clearTaskModalData() {
-
   const { technician, originalIndex, originalEndIndex } = modalState;
-
   clearPlanRange(technician, originalIndex, originalEndIndex);
-
   renderTimeline();
 
-  const payload = {
-    action: "delete",
-    date: safeValue('workDate'),
-    technician: technician,
-    type: "PLAN",
-    start: originalIndex,
-    end: originalEndIndex
-  };
-  console.log("DELETE SEND:", payload);
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(payload)
+  const table = holidayState.active ? 'holiday_plans' : 'plans';
+  const date  = holidayState.active ? holidayState.date : safeValue('workDate');
+
+  fetch(`${SUPABASE_URL}/rest/v1/${table}?date=eq.${date}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
   });
 
   closeTaskModal();
 }
 
 function showPopup(html) {
-
   const div = document.createElement("div");
   div.id = "popupOverlay";
   div.innerHTML = `
-    <div class="overlay">
+    <div class="overlay" style="z-index: 99999;">
       ${html}
     </div>
   `;
-
   document.body.appendChild(div);
-
 }
 
 function closePopup() {
@@ -969,55 +1006,47 @@ function showDecisionPopup() {
 
 }
 
-function toggleActual(technician, slotIndex) {
+function saveActualToSupabase(name, start, end, result, reason, detail) {
+  const date = holidayState.active && holidayState.date ? holidayState.date : safeValue('workDate');
+  const planTable = holidayState.active ? 'holiday_plans' : 'plans';
 
-  showDecisionPopup().then(result => {
+  const payload = {
+    date,
+    technician: name,
+    start_slot: start,
+    end_slot: end,
+    status: result,
+    reason: reason || '',
+    detail: detail || ''
+  };
 
-    if (!result) return;
-
-    showReasonPopup(result).then(reason => {
-
-      if (reason === null) return;
-
-      const payload = {
-        action: "saveActual",
-        date: safeValue('workDate'),
-        technician: name,
-        start: start,
-        end: end,
-        status: result,
-        reason: reason,
-        detail: state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || "",  // ← เพิ่มตรงนี้
-        timestamp: new Date().toISOString()
-      };
-
-      fetch(API_URL_SAVE, {
-        method: "POST",
+  // 1. upsert actuals
+  fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  })
+  .then(r => r.json())
+  .then(existing => {
+    if (existing.length > 0) {
+      return fetch(`${SUPABASE_URL}/rest/v1/actuals?id=eq.${existing[0].id}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(res => {
-
-              // ✅ mark ช่องว่า active
-        state.timeline[technician].ACTUAL[slotIndex] = true;
-
-        // 🔥 ใส่ตัวนี้ (สำคัญมาก)
-        state.actualStatus[`${technician}_${slotIndex}`] = result;
-
-        state.actualReason[`${technician}_${slotIndex}`] = reason;
-
-        renderTimeline();
-
-      })
-      .catch(err => {
-        alert("Save error");
-        console.error(err);
       });
-
-    });
-
+    } else {
+      return fetch(`${SUPABASE_URL}/rest/v1/actuals`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(payload)
+      });
+    }
   });
 
+  // 2. update status ใน plans (แยก fetch ไม่รอ actuals)
+  fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`, {
+    method: 'PATCH',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ status: result, reason: reason || '' })
+  });
 }
 
     function fillSampleTimeline() {
@@ -1044,98 +1073,82 @@ function toggleActual(technician, slotIndex) {
   renderTimeline();
 
   if (shouldSave) {
-    fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "clearOKPlan", date: safeValue('workDate') })
+    const date = safeValue('workDate');
+    fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&status=eq.OK`, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
   }
 }
     
-    const API_URL = "https://script.google.com/macros/s/AKfycbwbQ8XNfZ35Hf1-l2p1ZBs1ljYfIMuQyHVYA1MDjvPzD7xV8AiMapWiC4R1RPKytdBw4g/exec";
-
-    const API_URL_SAVE = API_URL;
+    const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8"; // จาก Settings → API
     
     function saveData() {
-
   ensureMetaDefaults();
+  const targetDate = holidayState.active && holidayState.date ? holidayState.date : safeValue('workDate');
+  const table = holidayState.active ? 'holiday_plans' : 'plans';
 
-  const payload = {
-    date: safeValue('workDate'),
-    technician: modalState.technician,
-    type: modalState.type,
-    start: modalState.originalIndex,
-    end: modalState.originalEndIndex,
-    jobType: safeValue('modalJobType'),
-    detail: safeValue('modalDetail'),
-    actual: ""
-  };
-
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(payload)
+  fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify({
+      date: targetDate,
+      technician: modalState.technician,
+      type: 'PLAN',
+      start_slot: modalState.originalIndex,
+      end_slot: modalState.originalEndIndex,
+      job_type: safeValue('modalJobType'),
+      detail: safeValue('modalDetail')
+    })
   });
 }
 
     function loadData() {
+  const date = safeValue('workDate');
 
-  fetch(API_URL)
-    .then(res => res.json())
-    .then(data => {
+  Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&type=eq.PLAN&order=start_slot`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    }).then(r => r.json()),
 
-      const newTimeline = normalizeTimeline({});
-      const newDetails = {};
+    fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    }).then(r => r.json())
 
-      state.actualStatus = {}; // reset
+  ]).then(([plans, actuals]) => {
 
-      data.slice(1).forEach(row => {
+    const newTimeline = normalizeTimeline({});
+    const newDetails  = {};
+    state.actualStatus = {};
+    state.actualReason = {};
 
-        const date = row[0];
-        const technician = row[1];
-        const type = row[2];
-        const start = Number(row[3]);
-        const end = Number(row[4]);
-        const jobType = row[5];
-        const detail = row[6];
-        const actual = row[7]; // ✅ เอาจาก x1 ตรงๆ
-        const reason = row[8];
-
-        console.log("STATUS:", state.actualStatus);
-        if (type !== "PLAN") return; // 🔥 ไม่เอา ACTUAL แล้ว
-
-        if (!newTimeline[technician]) {
-          newTimeline[technician] = getDefaultTimelineRow();
+    plans.forEach(row => {
+      const { technician, start_slot: start, end_slot: end, job_type: jobType, detail, status, reason } = row;
+      if (!newTimeline[technician]) newTimeline[technician] = getDefaultTimelineRow();
+      for (let i = start; i <= end; i++) {
+        newTimeline[technician].PLAN[i] = true;
+        if (status) {
+          newTimeline[technician].ACTUAL[i] = true;
+          state.actualStatus[`${technician}_${i}`] = status;
+          state.actualReason[`${technician}_${i}`]  = reason;
         }
+      }
+      newDetails[getSlotKey(technician, 'PLAN', start)] = { startIndex: start, endIndex: end, jobType, detail };
+    });
 
-        for (let i = start; i <= end; i++) {
+    state.timeline    = newTimeline;
+    state.slotDetails = newDetails;
+    renderTimeline();
 
-          // ✅ PLAN
-          newTimeline[technician].PLAN[i] = true;
-
-          // 🔥 ACTUAL (สำคัญมาก)
-          if (actual) {
-            newTimeline[technician].ACTUAL[i] = true; // 👈 ต้องมีตัวนี้
-            state.actualStatus[`${technician}_${i}`] = actual;
-            state.actualReason[`${technician}_${i}`] = reason;
-          }
-        }
-
-        newDetails[getSlotKey(technician, 'PLAN', start)] = {
-          startIndex: start,
-          endIndex: end,
-          jobType,
-          detail
-        };
-
-      });
-
-      state.timeline = newTimeline;
-      state.slotDetails = newDetails;
-
-      renderTimeline();
-
-    })
-    .catch(err => console.error(err));
+  }).catch(err => console.error(err));
 }
+
 let confirmCallback = null;
 
 function showActualDetailBlock(event, name, start, end) {
@@ -1198,11 +1211,18 @@ function showActualViewPopup(name, start, end, status, reason) {
   showPopup(html);
 }
 
-function enableEditActual() {
-  const ta = document.getElementById('viewReasonInput');
-  const saveBtn = document.getElementById('saveEditBtn');
-  if (ta) { ta.disabled = false; ta.focus(); }
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = '1'; }
+function saveEditActual(name, start, end) {
+  const newReason = (document.getElementById('viewReasonInput')?.value || '').trim();
+  closePopup();
+
+  const currentStatus = state.actualStatus[`${name}_${start}`] || 'OK';
+  for (let i = start; i <= end; i++) {
+    state.actualReason[`${name}_${i}`] = newReason;
+  }
+
+  const detail = state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || '';
+  saveActualToSupabase(name, start, end, currentStatus, newReason, detail); // ← เปลี่ยน
+  renderTimeline();
 }
 
 function saveEditActual(name, start, end) {
@@ -1234,24 +1254,13 @@ function updateStatusToOK(name, start, end) {
   closePopup();
   const reason = state.actualReason[`${name}_${start}`] || '';
 
-  // อัปเดต state
   for (let i = start; i <= end; i++) {
     state.actualStatus[`${name}_${i}`] = 'OK';
     state.timeline[name].ACTUAL[i] = true;
   }
 
-  // ส่ง API
-  const payload = {
-    action: "saveActual",
-    date: safeValue('workDate'),
-    technician: name,
-    start: start,
-    end: end,
-    status: 'OK',
-    reason: reason,
-    timestamp: new Date().toISOString()
-  };
-  fetch(API_URL_SAVE, { method: "POST", body: JSON.stringify(payload) });
+  const detail = state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || '';
+  saveActualToSupabase(name, start, end, 'OK', reason, detail); // ← เปลี่ยน
   renderTimeline();
 }
 
@@ -1315,7 +1324,204 @@ function updateToOK() {
     .updateActual(payload);
 }
 
+// ── Calendar State ──
+const calState = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(), // 0-based
+  holidays: new Set() // "yyyy-MM-dd"
+};
 
+function openCalendar() {
+  const d = new Date(safeValue('workDate') || new Date());
+  calState.year = d.getFullYear();
+  calState.month = d.getMonth();
+  loadHolidays().then(() => renderCalendar());
+  byId('calendarBackdrop').classList.add('show');
+}
+
+function closeCalendar() {
+  byId('calendarBackdrop').classList.remove('show');
+}
+
+function prevMonth() {
+  calState.month--;
+  if (calState.month < 0) { calState.month = 11; calState.year--; }
+  loadHolidays().then(() => renderCalendar());
+}
+
+function nextMonth() {
+  calState.month++;
+  if (calState.month > 11) { calState.month = 0; calState.year++; }
+  loadHolidays().then(() => renderCalendar());
+}
+
+function loadHolidays() {
+  return fetch(`${SUPABASE_URL}/rest/v1/holidays?select=date&date=gte.${calState.year}-${String(calState.month+1).padStart(2,'0')}-01&date=lte.${calState.year}-${String(calState.month+1).padStart(2,'0')}-31`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  })
+  .then(r => r.json())
+  .then(data => { calState.holidays = new Set(data.map(r => r.date)); })
+  .catch(() => { calState.holidays = new Set(); });
+}
+
+function renderCalendar() {
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  byId('calMonthLabel').textContent = `${monthNames[calState.month]} ${calState.year + 543}`;
+
+  // แสดง banner เมื่ออยู่ใน add mode
+  const banner = byId('calAddModeBanner');
+  if (banner) banner.style.display = holidayAddMode ? 'block' : 'none';
+
+  const today = new Date().toISOString().split('T')[0];
+  const selected = safeValue('workDate');
+  const firstDay = new Date(calState.year, calState.month, 1).getDay();
+  const daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
+
+  const dayHeaders = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  let html = dayHeaders.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calState.year}-${String(calState.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isHoliday = calState.holidays.has(dateStr);
+    const isToday = dateStr === today;
+    const isSelected = dateStr === selected;
+
+    let cls = 'cal-day';
+    let style = '';
+
+    if (isHoliday) {
+      cls += ' holiday';
+    } else if (holidayAddMode) {
+      // วันที่ยังไม่มี holiday → กรอบเขียว ชวนกด
+      style = 'border-color:#16a34a; background:#f0fdf4;';
+    }
+
+    if (isToday && !isHoliday) cls += ' today';
+    if (isSelected && !holidayAddMode) cls += ' selected';
+
+    const onclick = holidayAddMode && !isHoliday
+      ? `confirmAddHoliday('${dateStr}')`
+      : !holidayAddMode
+        ? `selectCalDay('${dateStr}')`
+        : ''; // วันที่เป็น holiday อยู่แล้ว → กดไม่ได้ใน add mode
+
+    html += `
+      <div class="${cls}" style="${style}" ${onclick ? `onclick="${onclick}"` : 'style="cursor:default;opacity:0.4;"'}>
+        ${d}
+        ${isHoliday ? '<br><span style="font-size:10px;">หยุด</span>' : ''}
+        ${holidayAddMode && !isHoliday ? '<br><span style="font-size:9px;color:#16a34a;">+ เพิ่ม</span>' : ''}
+      </div>
+    `;
+  }
+
+  byId('calGrid').innerHTML = html;
+}
+
+function confirmAddHoliday(dateStr) {
+  const d = new Date(dateStr);
+  const display = d.toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
+
+  const html = `
+    <div class="popup" style="width:320px; text-align:left;">
+      <h3 style="margin:0 0 10px;">เพิ่มวันหยุด</h3>
+      <div style="font-size:14px; margin-bottom:12px; color:#183153;">
+        📅 ${display}
+      </div>
+      <div style="font-size:13px; color:#5b708b; font-weight:600; margin-bottom:6px;">ชื่อวันหยุด (ถ้ามี)</div>
+      <input id="holidayNoteInput" type="text" placeholder="เช่น สงกรานต์, วันแรงงาน"
+        style="width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:9px 12px; font:inherit; margin-bottom:14px;">
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button onclick="closePopup()" 
+          style="background:#e2e8f0; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
+          Cancel
+        </button>
+        <button onclick="doAddHoliday('${dateStr}')"
+          style="background:#16a34a; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
+          OK
+        </button>
+      </div>
+    </div>
+  `;
+  showPopup(html);
+}
+
+function doAddHoliday(dateStr) {
+  const note = document.getElementById('holidayNoteInput')?.value || '';
+  closePopup();
+
+  fetch(`${SUPABASE_URL}/rest/v1/holidays`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify({ date: dateStr, note })
+  }).then(() => {
+    calState.holidays.add(dateStr);
+    renderCalendar();
+  });
+}
+
+// เพิ่ม state
+const holidayState = {
+  active: false,
+  date: null
+};
+
+function selectCalDay(dateStr) {
+  const isHoliday = calState.holidays.has(dateStr);
+
+  safeSetValue('workDate', dateStr);
+  safeSetText('heroDate', dateStr);
+  renderCalendar();
+
+  if (isHoliday) {
+    // เปิด holiday mode
+    holidayState.active = true;
+    holidayState.date = dateStr;
+    updateHolidayButton(dateStr);
+    loadDataFromX4(dateStr);
+  } else {
+    // ปิด holiday mode
+    holidayState.active = false;
+    holidayState.date = null;
+    updateHolidayButton(null);
+    loadData();
+  }
+
+  closeCalendar();
+}
+
+function updateHolidayButton(dateStr) {
+  const btn = byId('holidayBtn');
+  if (!btn) return;
+  if (dateStr) {
+    btn.innerHTML = `🏖️ Holiday: ${dateStr}`;
+    btn.style.background = 'rgba(220,38,38,0.25)';
+    btn.style.border = '1px solid rgba(252,165,165,0.6)';
+  } else {
+    btn.innerHTML = `📅 plan holiday`;
+    btn.style.background = 'rgba(255,255,255,0.2)';
+    btn.style.border = '1px solid rgba(255,255,255,0.35)';
+  }
+}
+
+let holidayAddMode = false;
+
+function addHolidayPlan() {
+  holidayAddMode = true;
+  renderCalendar(); // re-render ให้เห็น highlight
+}
+
+function exitHolidayAddMode() {
+  holidayAddMode = false;
+  renderCalendar();
+}
 function openConfirmModal(message, callback) {
   document.getElementById("confirmMessage").innerText = message;
   confirmCallback = callback;
@@ -1390,8 +1596,12 @@ function confirmOk() {
       loadData();
       if(false) runSelfTests();
       setInterval(() => {
-  loadData();
-}, 3000); // ทุก 3 วินาที
+  if (holidayState.active && holidayState.date) {
+    loadDataFromX4(holidayState.date);
+  } else {
+    loadData();
+  }
+}, 3000);
     });
   </script>
   <div class="modal-backdrop" id="confirmModalBackdrop">
@@ -1405,6 +1615,44 @@ function confirmOk() {
       <div class="actions" style="justify-content:flex-end;">
         <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
         <button class="btn-primary" onclick="confirmOk()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="calendarBackdrop">
+  <div class="modal" style="width:min(520px,100%); max-height:90vh; overflow:auto;">
+    <div class="modal-header" style="justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button onclick="prevMonth()" style="background:#e2e8f0; color:#183153; border-radius:8px; padding:6px 12px;">◀</button>
+        <span id="calMonthLabel" style="font-size:17px; font-weight:800;"></span>
+        <button onclick="nextMonth()" style="background:#e2e8f0; color:#183153; border-radius:8px; padding:6px 12px;">▶</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button onclick="addHolidayPlan()" style="background:#2563eb; color:white; border-radius:10px; padding:8px 14px; font-weight:700; font-size:13px;">+ Add Plan วันหยุด</button>
+        <button onclick="closeCalendar()" style="background:#e2e8f0; color:#183153; border-radius:8px; padding:8px 12px;">ปิด</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+      <div id="calAddModeBanner" style="
+  display:none; background:#f0fdf4; border:1px solid #86efac;
+  border-radius:10px; padding:10px 14px; margin-bottom:12px;
+  font-size:13px; color:#166534; font-weight:600;
+  justify-content:space-between; align-items:center;
+">
+  <span>🟢 กดวันที่ต้องการเพิ่มเป็นวันหยุด</span>
+  <button onclick="exitHolidayAddMode()"
+    style="background:#dcfce7; border:1px solid #86efac; border-radius:8px;
+    padding:4px 10px; cursor:pointer; font-size:12px; font-weight:700; color:#166534;">
+    ยกเลิก
+  </button>
+</div>
+      <div id="calGrid" style="
+        display:grid; grid-template-columns:repeat(7,1fr); gap:6px; text-align:center;
+      "></div>
+      <div style="display:flex; gap:14px; margin-top:14px; font-size:12px; color:#5b708b;">
+        <span>🟦 วันทำงานปกติ</span>
+        <span>🟥 วันหยุด / Holiday</span>
+        <span>⬛ วันที่เลือกอยู่</span>
       </div>
     </div>
   </div>
