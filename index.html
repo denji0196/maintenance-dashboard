@@ -929,8 +929,12 @@ endSelect.value = String(endIndex <= maxAllowed ? endIndex : index);
 
   const table = holidayState.active ? 'holiday_plans' : 'plans';
 
-  // 🔥 ไม่กรองวัน — ลบทุก row ที่ตรง technician + slot
-  fetch(`${SUPABASE_URL}/rest/v1/${table}?technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`, {
+  // holiday mode → กรองวัน, ปกติ → ไม่กรองวัน
+  const dateFilter = holidayState.active
+    ? `date=eq.${holidayState.date}&`
+    : '';
+
+  fetch(`${SUPABASE_URL}/rest/v1/${table}?${dateFilter}technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`, {
     method: 'DELETE',
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'return=minimal' }
   }).then(() => {
