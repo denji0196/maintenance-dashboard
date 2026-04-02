@@ -1109,11 +1109,11 @@ function saveActualToSupabase(name, start, end, result, reason, detail) {
   });
 }
 
-    function loadData() {
+ function loadData() {
   const date = safeValue('workDate');
 
   Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&type=eq.PLAN&order=start_slot`, {
+    fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     }).then(r => r.json()),
 
@@ -1136,10 +1136,20 @@ function saveActualToSupabase(name, start, end, result, reason, detail) {
         if (status) {
           newTimeline[technician].ACTUAL[i] = true;
           state.actualStatus[`${technician}_${i}`] = status;
-          state.actualReason[`${technician}_${i}`]  = reason;
+          state.actualReason[`${technician}_${i}`] = reason;
         }
       }
       newDetails[getSlotKey(technician, 'PLAN', start)] = { startIndex: start, endIndex: end, jobType, detail };
+    });
+
+    // โหลด actual ของวันนี้แยก
+    actuals.forEach(row => {
+      const { technician, start_slot: start, end_slot: end, status, reason } = row;
+      for (let i = start; i <= end; i++) {
+        state.actualStatus[`${technician}_${i}`] = status;
+        state.actualReason[`${technician}_${i}`] = reason;
+        if (newTimeline[technician]) newTimeline[technician].ACTUAL[i] = true;
+      }
     });
 
     state.timeline    = newTimeline;
