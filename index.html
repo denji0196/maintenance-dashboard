@@ -478,6 +478,8 @@ textarea {
   </div>
 
   <script>
+    const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8"; // จาก Settings → API
     const technicians = ["ธนเทพ", "สงคราม", "สุทิวัส", "วีระพงษ์", "อาคม", "ณัฐวุฒิ", "ธีระ", "ธนัทดนัย", "วิโรจน์", "สุธี"];
     const timeSlots = ["7:30/19:30", "8:30/20:30", "9:30/21:30", "10:30/22:30", "11:30/23:30", "12:00/24:00", "13:00/01:00", "14:30/02:30", "15:30/03:30", "16:30/04:30", "17:00/05:00", "18:30/06:30", "19:30/07:30"];
 
@@ -923,16 +925,21 @@ endSelect.value = String(endIndex <= maxAllowed ? endIndex : index);
   const { technician, originalIndex, originalEndIndex } = modalState;
   clearPlanRange(technician, originalIndex, originalEndIndex);
   renderTimeline();
+  closeTaskModal();
 
   const table = holidayState.active ? 'holiday_plans' : 'plans';
-  const date  = holidayState.active ? holidayState.date : safeValue('workDate');
 
-  fetch(`${SUPABASE_URL}/rest/v1/${table}?date=eq.${date}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`, {
+  // 🔥 ไม่กรองวัน — ลบทุก row ที่ตรง technician + slot
+  fetch(`${SUPABASE_URL}/rest/v1/${table}?technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`, {
     method: 'DELETE',
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'return=minimal' }
+  }).then(() => {
+    if (holidayState.active && holidayState.date) {
+      loadDataFromX4(holidayState.date);
+    } else {
+      loadData();
+    }
   });
-
-  closeTaskModal();
 }
 
 function showPopup(html) {
@@ -1081,8 +1088,6 @@ function saveActualToSupabase(name, start, end, result, reason, detail) {
   }
 }
     
-    const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8"; // จาก Settings → API
     
     function saveData() {
   ensureMetaDefaults();
@@ -1235,30 +1240,7 @@ function saveEditActual(name, start, end) {
   renderTimeline();
 }
 
-function saveEditActual(name, start, end) {
-  const newReason = (document.getElementById('viewReasonInput')?.value || '').trim();
-  closePopup();
 
-  // อัปเดต state
-  const currentStatus = state.actualStatus[`${name}_${start}`] || 'OK';
-  for (let i = start; i <= end; i++) {
-    state.actualReason[`${name}_${i}`] = newReason;
-  }
-
-  // ส่ง API
-  const payload = {
-    action: "saveActual",
-    date: safeValue('workDate'),
-    technician: name,
-    start: start,
-    end: end,
-    status: currentStatus,
-    reason: newReason,
-    timestamp: new Date().toISOString()
-  };
-  fetch(API_URL_SAVE, { method: "POST", body: JSON.stringify(payload) });
-  renderTimeline();
-}
 
 function updateStatusToOK(name, start, end) {
   closePopup();
