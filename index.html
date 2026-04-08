@@ -1094,72 +1094,43 @@ function saveActualToSupabase(name, start, end, result, reason, detail) {
 }
     
     
-    function saveData() {
-  ensureMetaDefaults();
-  const targetDate = holidayState.active && holidayState.date ? holidayState.date : safeValue('workDate');
-  const table = holidayState.active ? 'holiday_plans' : 'plans';
-
-  fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({
-      date: targetDate,
-      technician: modalState.technician,
-      type: 'PLAN',
-      start_slot: modalState.originalIndex,
-      end_slot: modalState.originalEndIndex,
-      job_type: safeValue('modalJobType'),
-      detail: safeValue('modalDetail')
-    })
-  });
-}
-
- function loadData() {
-  const date = safeValue('workDate');
-
-  Promise.all([
-    // template - ดึงทั้งหมด ไม่สนวัน
-    fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    }).then(r => r.json()),
-
-    // status - filter เฉพาะวันที่เลือก
-    fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&type=eq.PLAN`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    }).then(r => r.json())
-
-  ]).then(([allPlans, datePlans]) => {
+    function loadData() {
+  fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  })
+  .then(r => r.json())
+  .then(plans => {
 
     const newTimeline = normalizeTimeline({});
     const newDetails  = {};
     state.actualStatus = {};
     state.actualReason = {};
 
-    // โหลด template
-    allPlans.forEach(row => {
-      const { technician, start_slot: start, end_slot: end, job_type: jobType, detail } = row;
+    const seenKeys = new Set();
+
+    plans.forEach(row => {
+      const { technician, start_slot: start, end_slot: end,
+              job_type: jobType, detail, status, reason } = row;
+
+      const key = getSlotKey(technician, 'PLAN', start);
+      if (seenKeys.has(key)) return;
+      seenKeys.add(key);
+
       if (!newTimeline[technician]) newTimeline[technician] = getDefaultTimelineRow();
+
       for (let i = start; i <= end; i++) {
         newTimeline[technician].PLAN[i] = true;
       }
-      newDetails[getSlotKey(technician, 'PLAN', start)] = {
-        startIndex: start, endIndex: end, jobType, detail
-      };
-    });
 
-    // ✅ status ดึงจาก plans ของวันนั้น
-    datePlans.forEach(row => {
-      const { technician, start_slot: start, end_slot: end, status, reason } = row;
-      if (!status) return;
-      for (let i = start; i <= end; i++) {
-        if (newTimeline[technician]) newTimeline[technician].ACTUAL[i] = true;
-        state.actualStatus[`${technician}_${i}`] = status;
-        state.actualReason[`${technician}_${i}`] = reason || '';
+      newDetails[key] = { startIndex: start, endIndex: end, jobType, detail };
+
+      // ✅ โชว์ status ตามที่อยู่ใน plans row นั้นเลย ไม่สนวัน
+      if (status) {
+        for (let i = start; i <= end; i++) {
+          newTimeline[technician].ACTUAL[i] = true;
+          state.actualStatus[`${technician}_${i}`] = status;
+          state.actualReason[`${technician}_${i}`] = reason || '';
+        }
       }
     });
 
@@ -1169,7 +1140,6 @@ function saveActualToSupabase(name, start, end, result, reason, detail) {
 
   }).catch(err => console.error(err));
 }
-
 let confirmCallback = null;
 
 function showActualDetailBlock(event, name, start, end) {
