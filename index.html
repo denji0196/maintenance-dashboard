@@ -313,6 +313,40 @@ function normalizeTimeline(timeline){
   return n;
 }
 
+function getTimeRange(startSlot, endSlot){
+
+  const startRaw =
+    timeSlots[startSlot];
+
+  const endRaw =
+    timeSlots[endSlot];
+
+  if(!startRaw || !endRaw){
+    return "-";
+  }
+
+  // เอาฝั่งกลางวัน
+  const startPart =
+    startRaw.split("/")[0];
+
+  const endPart =
+    endRaw.split("/")[0];
+
+  // start time
+  const startTime =
+    startPart
+      .replace("(","")
+      .split("-")[0];
+
+  // end time
+  const endTime =
+    endPart
+      .replace(")","")
+      .split("-")[1];
+
+  return `${startTime} - ${endTime}`;
+}
+
 function updateHolidayPrintButton(){
 
   const btn =
@@ -385,8 +419,12 @@ async function printHolidayPlan() {
           <td>${item.machine || "-"}</td>
           <td>${item.job_type || "-"}</td>
           <td>${item.detail || "-"}</td>
-          <td>${item.start_slot || "-"}</td>
-          <td>${item.end_slot || "-"}</td>
+          <td colspan="2">
+  ${getTimeRange(
+    item.start_slot,
+    item.end_slot
+  )}
+</td>
           <td>${item.technician || "-"}</td>
           <td>${item.request_qc ? "YES" : "-"}</td>
           <td>${item.request_mfg ? "YES" : "-"}</td>
@@ -433,8 +471,7 @@ async function printHolidayPlan() {
               <th>Machine</th>
               <th>Job Type</th>
               <th>Detail</th>
-              <th>Start</th>
-              <th>End</th>
+              <th colspan="2">Time</th>
               <th>Technician</th>
               <th>QC</th>
               <th>MFG</th>
@@ -735,6 +772,15 @@ async function saveTaskModal(){
     originalEndIndex
   );
 
+  // ลบ detail เดิม
+delete state.slotDetails[
+  getSlotKey(
+    technician,
+    'PLAN',
+    originalIndex
+  )
+];
+
   // เพิ่มช่วงใหม่
   applyPlanRange(
     technician,
@@ -758,10 +804,12 @@ async function saveTaskModal(){
 
   // SAVE SUPABASE
   await saveData(
-    technician,
-    r.start,
-    r.end
-  );
+  technician,
+  r.start,
+  r.end,
+  originalIndex,
+  originalEndIndex
+);
 
   closeTaskModal();
 }
@@ -849,7 +897,9 @@ function cancelViewActual(){closePopup();}
 async function saveData(
   technician,
   startSlot,
-  endSlot
+  endSlot,
+  oldStartSlot = startSlot,
+  oldEndSlot = endSlot
 ){
 
   try{
@@ -891,7 +941,7 @@ async function saveData(
 
     // CHECK EXIST
     const checkRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/${table}?date=eq.${targetDate}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${startSlot}&end_slot=eq.${endSlot}`,
+  `${SUPABASE_URL}/rest/v1/${table}?date=eq.${targetDate}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${oldStartSlot}&end_slot=eq.${oldEndSlot}`,
       {
         headers:{
           apikey: SUPABASE_KEY,
