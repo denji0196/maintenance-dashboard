@@ -6,1603 +6,800 @@
   <title>Dashboard งานประจำวัน - พนักงานซ่อม</title>
   <style>
     :root {
-      --bg: #f4f7fb;
-      --card: #ffffff;
-      --text: #183153;
-      --muted: #5b708b;
-      --line: #dbe4f0;
-      --primary: #2563eb;
-      --primary-2: #1d4ed8;
-      --danger: #dc2626;
-      --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-      --radius: 18px;
-      --plan: #bfdbfe;
-      --actual: #86efac;
+      --bg: #f4f7fb; --card: #ffffff; --text: #183153; --muted: #5b708b;
+      --line: #dbe4f0; --primary: #2563eb; --primary-2: #1d4ed8;
+      --danger: #dc2626; --shadow: 0 12px 28px rgba(15,23,42,0.08);
+      --radius: 18px; --plan: #bfdbfe; --actual: #86efac;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
-      color: var(--text);
-    }
-
-    .container {
-      max-width: 1450px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, #1d4ed8, #2563eb 55%, #60a5fa);
-      color: white;
-      padding: 26px;
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      display: grid;
-      grid-template-columns: 1.7fr 1fr;
-      gap: 18px;
-      align-items: center;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: 30px;
-    }
-
-    .hero p {
-      margin: 0;
-      line-height: 1.6;
-      opacity: 0.95;
-    }
-
-    .hero-stats {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      justify-items: end;
-    }
-
-    .hero-stat {
-      background: rgba(255,255,255,0.14);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 18px;
-      padding: 16px 22px;
-      backdrop-filter: blur(4px);
-      min-width: 180px;
-      text-align: center;
-    }
-
-    .hero-stat .label { font-size: 13px; opacity: 0.9; }
-    .hero-stat .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
-
-    .hidden-meta { display: none; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 18px;
-      margin-top: 20px;
-    }
-
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
-      border: 1px solid rgba(191, 219, 254, 0.65);
-      border-radius: var(--radius);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255,255,255,0.85);
-      padding: 18px;
-      backdrop-filter: blur(8px);
-    }
-
-    .span-12 { grid-column: span 12; }
-
-    .card h2 {
-      margin: 0 0 14px;
-      font-size: 20px;
-    }
-
-    .sub {
-      color: #475569;
-      font-size: 13px;
-      margin-top: -4px;
-      margin-bottom: 14px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 11px 16px;
-      cursor: pointer;
-      transition: 0.2s ease;
-      font: inherit;
-      font-weight: 700;
-    }
-
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-2); }
-    .btn-secondary { background: #e2e8f0; color: var(--text); }
-    .btn-danger { background: var(--danger); color: white; }
-
-    .timeline-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(239,246,255,0.9), rgba(224,231,255,0.7));
-      border: 1px solid rgba(147, 197, 253, 0.45);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
-    }
-
-    .timeline-table { overflow: auto; }
-    .timeline-table table {
-      min-width: 1120px;
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-size: 13px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(239,246,255,0.92));
-      border: 1px solid rgba(96, 165, 250, 0.35);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 20px 45px rgba(37, 99, 235, 0.16), inset 0 1px 0 rgba(255,255,255,0.75);
-      backdrop-filter: blur(10px);
-    }
-
-    .timeline-table th,
-    .timeline-table td {
-      border-right: 1px solid rgba(148, 163, 184, 0.25);
-      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-      text-align: center;
-      padding: 8px;
-    }
-
-    .timeline-table td.hidden-merged {
-      display: none;
-    }
-
-    .timeline-table th {
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
-      color: #e0f2fe;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      font-weight: 800;
-      font-size: 18px;
-      letter-spacing: 0.04em;
-      text-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
-      box-shadow: inset 0 -1px 0 rgba(125, 211, 252, 0.22);
-    }
-
-    .timeline-table td.left {
-      text-align: center;
-      min-width: 110px;
-      font-weight: 700;
-      background: linear-gradient(180deg, rgba(239, 246, 255, 0.98), rgba(219, 234, 254, 0.9));
-      color: #0f172a;
-      vertical-align: middle;
-      box-shadow: inset 0 0 0 1px rgba(191, 219, 254, 0.65);
-    }
-
-    .slot {
-      min-width: 76px;
-      height: 48px;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-      font-size: 11px;
-      line-height: 1.25;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: normal;
-      position: relative;
-      vertical-align: middle;
-      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(241,245,249,0.92));
-    }
-
-    .slot::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(59,130,246,0.03));
-      pointer-events: none;
-    }
-
-    .slot:hover {
-      outline: 2px solid rgba(56, 189, 248, 0.9);
-      transform: translateY(-1px);
-      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.25), 0 10px 24px rgba(59, 130, 246, 0.18);
-      z-index: 2;
-    }
-    .plan-on {
-      background: linear-gradient(135deg, rgba(125, 211, 252, 0.95), rgba(96, 165, 250, 0.92));
-      color: #082f49;
-      font-weight: 700;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      box-shadow: inset 0 0 0 1px rgba(224, 242, 254, 0.8), 0 0 18px rgba(56, 189, 248, 0.22);
-    }
-    .actual-on {
-      background: linear-gradient(135deg, rgba(74, 222, 128, 0.96), rgba(16, 185, 129, 0.92));
-      box-shadow: inset 0 0 0 1px rgba(220, 252, 231, 0.8), 0 0 18px rgba(34, 197, 94, 0.2);
-    }
-
-    .footer-tips {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 20px;
-    }
-
-    .modal-backdrop.show { display: flex; }
-
-    .modal {
-      width: min(560px, 100%);
-      background: #ffffff;
-      border-radius: 22px;
-      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
-      border: 1px solid var(--line);
-      overflow: hidden;
-    }
-
-    .modal-header {
-      padding: 18px 20px;
-      background: linear-gradient(135deg, #eff6ff, #ffffff);
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 800;
-      margin: 0;
-    }
-
-    .modal-body {
-      padding: 20px;
-      display: grid;
-      gap: 14px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .field label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    select, textarea {
-      width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: white;
-      color: var(--text);
-      font: inherit;
-    }
-
-    textarea { min-height: 120px; resize: vertical; }
-
-    .close-btn {
-      background: #e2e8f0;
-      color: var(--text);
-      padding: 8px 12px;
-    }
-    .overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.popup {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 300px;
-  text-align: center;
-}
-
-.popup button {
-  margin: 5px;
-  padding: 10px 15px;
-  cursor: pointer;
-}
-
-.actual-ok {
-  background: linear-gradient(135deg, #00cd90    , #01af92    );
-}
-
-.actual-ng {
-  background: linear-gradient(135deg, #ee3c68 , #e4293e );
-}
-
-.cal-day {
-  border-radius: 10px;
-  padding: 10px 4px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: 0.15s;
-  border: 1.5px solid transparent;
-}
-.cal-day:hover { border-color: #2563eb; }
-.cal-day.today { border-color: #2563eb; color: #2563eb; }
-.cal-day.selected { background: #1d4ed8; color: white; }
-.cal-day.holiday { background: #fee2e2; color: #991b1b; }
-.cal-day.holiday.selected { background: #dc2626; color: white; }
-.cal-day.empty { cursor: default; }
-.cal-day-header { font-size: 12px; color: #5b708b; font-weight: 700; padding: 4px; }
-
-
-textarea {
-  width: 100%;
-  height: 80px;
-}
-
-    @media (max-width: 1100px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-stats { justify-items: start; }
-    }
+    body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; background:linear-gradient(180deg,#eef4ff 0%,var(--bg) 100%); color:var(--text); }
+    .container { max-width:1450px; margin:0 auto; padding:24px; }
+    .hero { background:linear-gradient(135deg,#1d4ed8,#2563eb 55%,#60a5fa); color:white; padding:26px; border-radius:24px; box-shadow:var(--shadow); display:grid; grid-template-columns:1.7fr 1fr; gap:18px; align-items:center; }
+    .hero h1 { margin:0 0 8px; font-size:30px; }
+    .hero p { margin:0; line-height:1.6; opacity:0.95; }
+    .hero-stats { display:grid; grid-template-columns:1fr; gap:12px; justify-items:end; }
+    .hero-stat { background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.18); border-radius:18px; padding:16px 22px; backdrop-filter:blur(4px); min-width:180px; text-align:center; }
+    .hero-stat .label { font-size:13px; opacity:0.9; }
+    .hero-stat .value { font-size:28px; font-weight:700; margin-top:6px; }
+    .hidden-meta { display:none; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:18px; margin-top:20px; }
+    .card { background:linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92)); border:1px solid rgba(191,219,254,0.65); border-radius:var(--radius); box-shadow:0 18px 40px rgba(15,23,42,0.08),inset 0 1px 0 rgba(255,255,255,0.85); padding:18px; backdrop-filter:blur(8px); }
+    .span-12 { grid-column:span 12; }
+    .card h2 { margin:0 0 14px; font-size:20px; }
+    .sub { color:#475569; font-size:13px; margin-top:-4px; margin-bottom:14px; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+    button { border:0; border-radius:12px; padding:11px 16px; cursor:pointer; transition:0.2s ease; font:inherit; font-weight:700; }
+    .btn-primary { background:var(--primary); color:white; }
+    .btn-primary:hover { background:var(--primary-2); }
+    .btn-secondary { background:#e2e8f0; color:var(--text); }
+    .btn-danger { background:var(--danger); color:white; }
+    .timeline-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; padding:12px 14px; border-radius:16px; background:linear-gradient(135deg,rgba(239,246,255,0.9),rgba(224,231,255,0.7)); border:1px solid rgba(147,197,253,0.45); box-shadow:inset 0 1px 0 rgba(255,255,255,0.75); }
+    .timeline-table { overflow:auto; }
+    .timeline-table table { min-width:1120px; width:100%; border-collapse:separate; border-spacing:0; font-size:13px; background:linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,246,255,0.92)); border:1px solid rgba(96,165,250,0.35); border-radius:20px; overflow:hidden; box-shadow:0 20px 45px rgba(37,99,235,0.16),inset 0 1px 0 rgba(255,255,255,0.75); backdrop-filter:blur(10px); }
+    .timeline-table th, .timeline-table td { border-right:1px solid rgba(148,163,184,0.25); border-bottom:1px solid rgba(148,163,184,0.22); text-align:center; padding:8px; }
+    .timeline-table th { background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(30,41,59,0.92)); color:#e0f2fe; position:sticky; top:0; z-index:1; font-weight:800; font-size:18px; letter-spacing:0.04em; text-shadow:0 0 12px rgba(56,189,248,0.35); box-shadow:inset 0 -1px 0 rgba(125,211,252,0.22); }
+    .timeline-table td.left { text-align:center; min-width:110px; font-weight:700; background:linear-gradient(180deg,rgba(239,246,255,0.98),rgba(219,234,254,0.9)); color:#0f172a; vertical-align:middle; box-shadow:inset 0 0 0 1px rgba(191,219,254,0.65); }
+    .slot { min-width:76px; height:48px; cursor:pointer; user-select:none; transition:transform 0.18s ease,box-shadow 0.18s ease,background 0.18s ease; font-size:11px; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:normal; position:relative; vertical-align:middle; background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(241,245,249,0.92)); }
+    .slot::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.16),rgba(59,130,246,0.03)); pointer-events:none; }
+    .slot:hover { outline:2px solid rgba(56,189,248,0.9); transform:translateY(-1px); box-shadow:0 0 0 1px rgba(96,165,250,0.25),0 10px 24px rgba(59,130,246,0.18); z-index:2; }
+    .plan-on { background:linear-gradient(135deg,rgba(125,211,252,0.95),rgba(96,165,250,0.92)); color:#082f49; font-weight:700; text-shadow:0 1px 0 rgba(255,255,255,0.35); box-shadow:inset 0 0 0 1px rgba(224,242,254,0.8),0 0 18px rgba(56,189,248,0.22); }
+    .actual-on { background:linear-gradient(135deg,rgba(74,222,128,0.96),rgba(16,185,129,0.92)); box-shadow:inset 0 0 0 1px rgba(220,252,231,0.8),0 0 18px rgba(34,197,94,0.2); }
+    .footer-tips { color:var(--muted); font-size:13px; line-height:1.7; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,0.45); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px; }
+    .modal-backdrop.show { display:flex; }
+    .modal { width:min(580px,100%); background:#ffffff; border-radius:22px; box-shadow:0 30px 80px rgba(15,23,42,0.25); border:1px solid var(--line); overflow:hidden; }
+    .modal-header { padding:18px 20px; background:linear-gradient(135deg,#eff6ff,#ffffff); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .modal-title { font-size:18px; font-weight:800; margin:0; }
+    .modal-body { padding:20px; display:grid; gap:14px; max-height:82vh; overflow-y:auto; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label { font-size:13px; color:var(--muted); font-weight:600; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    select, textarea, input[type="text"] { width:100%; border:1px solid #cbd5e1; border-radius:12px; padding:10px 12px; background:white; color:var(--text); font:inherit; }
+    select:focus, textarea:focus, input[type="text"]:focus { outline:none; border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,0.18); }
+    textarea { min-height:90px; resize:vertical; }
+    .checkbox-group { display:flex; gap:20px; flex-wrap:wrap; padding:12px 16px; background:linear-gradient(135deg,#f8faff,#eef4ff); border:1px solid #bfdbfe; border-radius:12px; }
+    .checkbox-item { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text); user-select:none; }
+    .checkbox-item input[type="checkbox"] { width:18px; height:18px; accent-color:#2563eb; cursor:pointer; flex-shrink:0; }
+    .checkbox-item.qc  { color:#7c3aed; }
+    .checkbox-item.mfg { color:#b45309; }
+    .badge { display:inline-block; font-size:9px; font-weight:800; border-radius:4px; padding:1px 4px; margin-left:3px; vertical-align:middle; line-height:1.4; }
+    .badge-qc  { background:#ede9fe; color:#6d28d9; }
+    .badge-mfg { background:#fef3c7; color:#92400e; }
+    .close-btn { background:#e2e8f0; color:var(--text); padding:8px 12px; }
+    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; }
+    .popup { background:white; padding:20px; border-radius:10px; width:300px; text-align:center; }
+    .popup button { margin:5px; padding:10px 15px; cursor:pointer; }
+    .actual-ok { background:linear-gradient(135deg,#00cd90,#01af92); }
+    .actual-ng { background:linear-gradient(135deg,#ee3c68,#e4293e); }
+    .cal-day { border-radius:10px; padding:10px 4px; cursor:pointer; font-size:13px; font-weight:600; transition:0.15s; border:1.5px solid transparent; }
+    .cal-day:hover { border-color:#2563eb; }
+    .cal-day.today { border-color:#2563eb; color:#2563eb; }
+    .cal-day.selected { background:#1d4ed8; color:white; }
+    .cal-day.holiday { background:#fee2e2; color:#991b1b; }
+    .cal-day.holiday.selected { background:#dc2626; color:white; }
+    .cal-day.empty { cursor:default; }
+    .cal-day-header { font-size:12px; color:#5b708b; font-weight:700; padding:4px; }
+    @media (max-width:1100px) { .hero { grid-template-columns:1fr; } .hero-stats { justify-items:start; } }
+    @media (max-width:480px) { .field-row { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <section class="hero">
+<div class="container">
+  <section class="hero">
+    <div>
+      <h1>Dashboard งานประจำวัน - พนักงานซ่อม</h1>
+      <p>ใช้บันทึกงานในตารางเวลาโดยตรง กดที่ช่อง PLAN เพื่อกรอกรายละเอียดงาน และกดที่ ACTUAL เพื่อทำเครื่องหมายว่างานได้ทำจริงแล้ว</p>
+    </div>
+    <div class="hero-stats">
+      <button id="holidayBtn" onclick="openCalendar()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);color:white;border-radius:16px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.03em;">📅 plan holiday</button>
+      <div class="hero-stat"><div class="label">วันที่ทำงาน</div><div class="value" id="heroDate">-</div></div>
+    </div>
+  </section>
+
+  <div class="hidden-meta" aria-hidden="true">
+    <input type="date" id="workDate" />
+    <input type="text" id="technician" value="-" />
+    <select id="shift"><option>เช้า</option><option>บ่าย</option><option>ดึก</option></select>
+    <input type="text" id="area" value="-" />
+  </div>
+
+  <section class="grid">
+    <div class="card span-12">
+      <h2>แผนงานเทียบงานจริงรายช่วงเวลา</h2>
+      <div class="sub">PLAN: คลิกเพื่อกรอกรายละเอียดและเลือกช่วงเวลาเป็นระยะ / ACTUAL: คลิกเพื่อเปลี่ยนเป็นสีเขียว</div>
+      <div class="timeline-toolbar">
+        <div style="color:var(--muted);font-size:13px;">สีฟ้า = วางแผนไว้, สีเขียว = ทำจริงแล้ว</div>
+        <div class="actions" style="margin-top:0;">
+          <button class="btn-secondary" onclick="fillSampleTimeline()">ใส่ตัวอย่าง</button>
+          <button class="btn-secondary" onclick="clearTimeline()">ล้างตารางเวลา</button>
+        </div>
+      </div>
+      <div class="timeline-table" id="timelineWrap"></div>
+    </div>
+    <div class="card span-12">
+      <h2>คำแนะนำการใช้งาน</h2>
+      <div class="footer-tips">
+        1. เปิดไฟล์นี้ในเว็บเบราว์เซอร์ได้ทันทีโดยไม่ต้องติดตั้งโปรแกรมเพิ่ม<br>
+        2. ข้อมูลจะถูกเก็บอัตโนมัติไว้ในเบราว์เซอร์เครื่องที่ใช้งาน (Local Storage)<br>
+        3. คลิกช่อง PLAN เพื่อกรอก "เวลา", "Line", "Machine", "ประเภทงาน" และ "รายละเอียดงาน"<br>
+        4. ติ๊ก <strong>Request QC</strong> หรือ <strong>Request MFG</strong> เพื่อแสดง badge บนตารางเวลา<br>
+        5. คลิกช่อง ACTUAL เพื่อทำเครื่องหมายสีเขียวว่างานช่วงเวลานั้นทำจริงแล้ว
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-backdrop" id="taskModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+    <div class="modal-header">
       <div>
-        <h1>Dashboard งานประจำวัน - พนักงานซ่อม</h1>
-        <p>
-          ใช้บันทึกงานในตารางเวลาโดยตรง กดที่ช่อง PLAN เพื่อกรอกรายละเอียดงาน และกดที่ ACTUAL เพื่อทำเครื่องหมายว่างานได้ทำจริงแล้ว
-        </p>
+        <h3 class="modal-title" id="taskModalTitle">รายละเอียดงานในตารางเวลา</h3>
+        <div class="sub" id="taskModalSubtitle" style="margin:6px 0 0 0;">-</div>
       </div>
-      <div class="hero-stats">
-        <button id="holidayBtn" onclick="openCalendar()" style="
-    background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.35);
-    color:white; border-radius:16px; padding:12px 20px;
-    font-size:15px; font-weight:700; cursor:pointer; letter-spacing:0.03em;
-  ">📅 plan holiday</button>
-        <div class="hero-stat">
-          <div class="label">วันที่ทำงาน</div>
-          <div class="value" id="heroDate">-</div>
-        </div>
-      </div>
-    </section>
-
-    <div class="hidden-meta" aria-hidden="true">
-      <input type="date" id="workDate" />
-      <input type="text" id="technician" value="-" />
-      <select id="shift"><option>เช้า</option><option>บ่าย</option><option>ดึก</option></select>
-      <input type="text" id="area" value="-" />
+      <button class="close-btn" type="button" onclick="closeTaskModal()">ปิด</button>
     </div>
-
-    <section class="grid">
-      <div class="card span-12">
-        <h2>แผนงานเทียบงานจริงรายช่วงเวลา</h2>
-        <div class="sub">PLAN: คลิกเพื่อกรอกรายละเอียดและเลือกช่วงเวลาเป็นระยะ เช่น 7:30 - 9:30 / ACTUAL: คลิกเพื่อเปลี่ยนเป็นสีเขียว</div>
-        <div class="timeline-toolbar">
-          <div style="color:var(--muted); font-size:13px;">สีฟ้า = วางแผนไว้, สีเขียว = ทำจริงแล้ว</div>
-          <div class="actions" style="margin-top:0;">
-            <button class="btn-secondary" onclick="fillSampleTimeline()">ใส่ตัวอย่าง</button>
-            <button class="btn-secondary" onclick="clearTimeline()">ล้างตารางเวลา</button>
-          </div>
-        </div>
-        <div class="timeline-table" id="timelineWrap"></div>
+    <div class="modal-body">
+      <!-- Time range -->
+      <div class="field">
+        <label>เวลาเริ่ม</label>
+        <select id="modalStartSlot"></select>
       </div>
-
-      <div class="card span-12">
-        <h2>คำแนะนำการใช้งาน</h2>
-        <div class="footer-tips">
-          1. เปิดไฟล์นี้ในเว็บเบราว์เซอร์ได้ทันทีโดยไม่ต้องติดตั้งโปรแกรมเพิ่ม<br>
-          2. ข้อมูลจะถูกเก็บอัตโนมัติไว้ในเบราว์เซอร์เครื่องที่ใช้งาน (Local Storage)<br>
-          3. คลิกช่อง PLAN เพื่อกรอก “ช่วงเวลา”, “ประเภทงาน” และ “รายละเอียดงาน”<br>
-          4. เมื่อเลือกช่วงเวลาเป็นระยะ ระบบจะระบายสีฟ้าตามช่วงที่เลือกทั้งหมด<br>
-          5. คลิกช่อง ACTUAL เพื่อทำเครื่องหมายสีเขียวว่างานช่วงเวลานั้นทำจริงแล้ว
+      <div class="field">
+        <label>เวลาสิ้นสุด</label>
+        <select id="modalEndSlot"></select>
+      </div>
+      <!-- NEW: Line & Machine side by side -->
+      <div class="field-row">
+        <div class="field">
+          <label>Line</label>
+          <input type="text" id="modalLine" placeholder="เช่น Line A, Line 1" />
+        </div>
+        <div class="field">
+          <label>Machine</label>
+          <input type="text" id="modalMachine" placeholder="เช่น CNC-01, Press-02" />
         </div>
       </div>
-    </section>
-  </div>
-
-  <div class="modal-backdrop" id="taskModalBackdrop">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
-      <div class="modal-header">
-        <div>
-          <h3 class="modal-title" id="taskModalTitle">รายละเอียดงานในตารางเวลา</h3>
-          <div class="sub" id="taskModalSubtitle" style="margin:6px 0 0 0;">-</div>
-        </div>
-        <button class="close-btn" type="button" onclick="closeTaskModal()">ปิด</button>
+      <!-- Job type -->
+      <div class="field">
+        <label>ประเภทงาน</label>
+        <select id="modalJobType">
+          <option>PM</option><option>Breakdown</option><option>Inspection</option>
+          <option>Calibration</option><option>Improvement</option><option>Support Production</option>
+        </select>
       </div>
-      <div class="modal-body">
-        <div class="field">
-          <label>เวลาเริ่ม</label>
-          <select id="modalStartSlot"></select>
+      <!-- Detail -->
+      <div class="field">
+        <label>รายละเอียดงาน</label>
+        <textarea id="modalDetail" placeholder="เช่น เปลี่ยนสายพาน ตรวจเช็กแรงดัน ทำความสะอาดหัวเซนเซอร์"></textarea>
+      </div>
+      <!-- NEW: Request checkboxes -->
+      <div class="field">
+        <label>Request</label>
+        <div class="checkbox-group">
+          <label class="checkbox-item qc">
+            <input type="checkbox" id="modalRequestQC" />
+            🔬 Request QC
+          </label>
+          <label class="checkbox-item mfg">
+            <input type="checkbox" id="modalRequestMFG" />
+            🏭 Request MFG
+          </label>
         </div>
-        <div class="field">
-          <label>เวลาสิ้นสุด</label>
-          <select id="modalEndSlot"></select>
-        </div>
-        <div class="field">
-          <label>ประเภทงาน</label>
-          <select id="modalJobType">
-            <option>PM</option>
-            <option>Breakdown</option>
-            <option>Inspection</option>
-            <option>Calibration</option>
-            <option>Improvement</option>
-            <option>Support Production</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>รายละเอียดงาน</label>
-          <textarea id="modalDetail" placeholder="เช่น เปลี่ยนสายพาน ตรวจเช็กแรงดัน ทำความสะอาดหัวเซนเซอร์"></textarea>
-        </div>
-        <div class="actions" style="margin-top:0; justify-content:flex-end;">
-          <button class="btn-danger" type="button" onclick="clearTaskModalData()">ล้างข้อมูลช่องนี้</button>
-          <button class="btn-primary" type="button" onclick="saveTaskModal()">บันทึก</button>
-        </div>
+      </div>
+      <div class="actions" style="margin-top:0;justify-content:flex-end;">
+        <button class="btn-danger" type="button" onclick="clearTaskModalData()">ล้างข้อมูลช่องนี้</button>
+        <button class="btn-primary" type="button" onclick="saveTaskModal()">บันทึก</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8"; // จาก Settings → API
-    const technicians = ["ธนเทพ", "สงคราม", "สุทิวัส", "วีระพงษ์", "อาคม", "ณัฐวุฒิ", "ธีระ", "ธนัทดนัย", "วิโรจน์", "New operator"];
-    const timeSlots = ["7:30/19:30", "8:30/20:30", "9:30/21:30", "10:30/22:30", "11:30/23:30", "12:00/24:00", "13:00/01:00", "14:30/02:30", "15:30/03:30", "16:30/04:30", "17:00/05:00", "18:30/06:30", "19:30/07:30"];
+<script>
+const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8";
+const technicians = ["ธนเทพ","สงคราม","สุทิวัส","วีระพงษ์","อาคม","ณัฐวุฒิ","ธีระ","ธนัทดนัย","วิโรจน์","New operator"];
+const timeSlots = ["(7:30-8:30)/(19:30-20:30)","(8:30-9:30)/(20:30-21:30)","(9:30-10:30)/(21:30-22:30)","(10:30-11:30)/(22:30-23:30)","(11:30-12:00)/(23:30-24:00)","(12:00-13:00)/(24:00-01:00)","(13:00-14:00)/(01:00-02:00)","(14:00-14:30)/(02:00-02:30)","(14:30-15:30)/(02:30-03:30)","(15:30-16:30)/(03:30-04:30)","(17:00-17:30)/(05:00-05:30)","(17:30-18:30)/(05:30-06:30)","(18:30-19:30)/(06:30-07:30)"];
 
-    const state = {
-      timeline: {},
-      slotDetails: {},
-      actualReason: {},
-      actualStatus: {},
-      planStatus: {}
-    };
+const state = { timeline:{}, slotDetails:{}, actualReason:{}, actualStatus:{}, planStatus:{} };
+const modalState = { technician:'', type:'', index:-1, originalIndex:-1, originalEndIndex:-1 };
 
-    const modalState = {
-      technician: '',
-      type: '',
-      index: -1,
-      originalIndex: -1,
-      originalEndIndex: -1
-    };
+function byId(id){return document.getElementById(id);}
+function safeValue(id,fb=''){const el=byId(id);return el?el.value:fb;}
+function safeSetValue(id,v){const el=byId(id);if(el)el.value=v;}
+function safeSetText(id,v){const el=byId(id);if(el)el.textContent=v;}
+function escapeHtml(t){return String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-    function byId(id) {
-      return document.getElementById(id);
-    }
-
-    function safeValue(id, fallback = '') {
-      const el = byId(id);
-      return el ? el.value : fallback;
-    }
-
-    function safeSetValue(id, value) {
-      const el = byId(id);
-      if (el) el.value = value;
-    }
-
-    function safeSetText(id, value) {
-      const el = byId(id);
-      if (el) el.textContent = value;
-    }
-
-    function escapeHtml(text) {
-      return String(text ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-
-    function ensureMetaDefaults() {
-      const today = new Date().toISOString().split('T')[0];
-      if (!safeValue('workDate')) safeSetValue('workDate', today);
-      if (!safeValue('technician')) safeSetValue('technician', '-');
-      if (!safeValue('area')) safeSetValue('area', '-');
-      if (!safeValue('shift')) safeSetValue('shift', 'เช้า');
-      safeSetText('heroDate', safeValue('workDate', '-') || '-');
-    }
-
-    function getSlotKey(name, type, startIndex) {
-      return `${name}__${type}__${startIndex}`;
-    }
-
-    function getDefaultTimelineRow() {
-      return {
-        PLAN: Array(timeSlots.length).fill(false),
-        ACTUAL: Array(timeSlots.length).fill(false)
-      };
-    }
-
-    function normalizeTimeline(timeline) {
-      const normalized = {};
-      technicians.forEach((name) => {
-        const row = timeline && timeline[name] ? timeline[name] : {};
-        const plan = Array.isArray(row.PLAN) ? row.PLAN.slice(0, timeSlots.length) : [];
-        const actual = Array.isArray(row.ACTUAL) ? row.ACTUAL.slice(0, timeSlots.length) : [];
-        while (plan.length < timeSlots.length) plan.push(false);
-        while (actual.length < timeSlots.length) actual.push(false);
-        normalized[name] = { PLAN: plan, ACTUAL: actual };
-      });
-      return normalized;
-    }
-
-    function populateModalTimeSlots() {
-      const startSelect = byId('modalStartSlot');
-      const endSelect = byId('modalEndSlot');
-      if (!startSelect || !endSelect) return;
-      const options = timeSlots.map((slot, idx) => `<option value="${idx}">${slot}</option>`).join('');
-      startSelect.innerHTML = options;
-      endSelect.innerHTML = options;
-    }
-
-    function clampRange(startIndex, endIndex) {
-      const start = Math.max(0, Math.min(Number(startIndex), timeSlots.length - 1));
-      const rawEnd = Math.max(0, Math.min(Number(endIndex), timeSlots.length - 1));
-      return { start, end: Math.max(start, rawEnd) };
-    }
-
-    function initTimeline() {
-      state.timeline = normalizeTimeline(state.timeline);
-      if (!state.slotDetails || typeof state.slotDetails !== 'object') {
-        state.slotDetails = {};
-      }
-      renderTimeline();
-    }
-
-    function clearPlanRange(technician, startIndex, endIndex) {
-      if (!state.timeline[technician]) return;
-      for (let idx = startIndex; idx <= endIndex; idx += 1) {
-        state.timeline[technician].PLAN[idx] = false;
-      }
-      delete state.slotDetails[getSlotKey(technician, 'PLAN', startIndex)];
-    }
-
-    function applyPlanRange(technician, startIndex, endIndex, payload) {
-      if (!state.timeline[technician]) {
-        state.timeline[technician] = getDefaultTimelineRow();
-      }
-      for (let idx = startIndex; idx <= endIndex; idx += 1) {
-        state.timeline[technician].PLAN[idx] = true;
-      }
-      state.slotDetails[getSlotKey(technician, 'PLAN', startIndex)] = {
-        ...payload,
-        startIndex,
-        endIndex
-      };
-    }
-
-    function getRangeDetail(name, type, index) {
-      if (type !== 'PLAN') return null;
-      const keys = Object.keys(state.slotDetails);
-      for (const key of keys) {
-        const detail = state.slotDetails[key];
-        if (!detail) continue;
-        if (!key.startsWith(`${name}__${type}__`)) continue;
-        const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : Number(key.split('__').pop());
-        const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : startIndex;
-        if (index >= startIndex && index <= endIndex) {
-          return detail;
-        }
-      }
-      return null;
-    }
-
-    function getJobSummary(name, type, index) {
-      if (type !== 'PLAN') return '';
-      if (!state.timeline[name] || !state.timeline[name].PLAN[index]) return '';
-
-      const detail = getRangeDetail(name, type, index);
-      if (!detail) return '';
-
-      const rangeText = typeof detail.startIndex === 'number' && typeof detail.endIndex === 'number'
-        ? `${timeSlots[detail.startIndex]} - ${timeSlots[detail.endIndex]}`
-        : '';
-      const parts = [detail.jobType, detail.detail, rangeText].filter(Boolean);
-      return parts.join(' | ');
-    }
-
-    function renderTimeline() {
-
-  const wrap = byId('timelineWrap');
-  if (!wrap) return;
-
-  let html = '<table><thead><tr><th>ชื่อพนักงาน</th><th>สถานะ</th>';
-
-  timeSlots.forEach((time) => {
-    if (time.includes('/')) {
-      const parts = time.split('/');
-      html += `<th>${parts[0]}<br>${parts[1]}</th>`;
-    } else {
-      html += `<th>${time}</th>`;
-    }
-  });
-
-  html += '</tr></thead><tbody>';
-
-  technicians.forEach((name) => {
-
-    // =======================
-    // 🔵 PLAN ROW
-    // =======================
-    html += '<tr>';
-    html += `<td class="left" rowspan="2">${escapeHtml(name)}</td>`;
-    html += `<td class="left">PLAN</td>`;
-
-    let index = 0;
-
-    while (index < timeSlots.length) {
-
-      const detail = getRangeDetail(name, 'PLAN', index);
-      const isOn = state.timeline[name].PLAN[index];
-
-      if (isOn && detail) {
-
-        const start = detail.startIndex;
-        const end = detail.endIndex;
-        const span = end - start + 1;
-
-        const text = [detail.jobType, detail.detail].filter(Boolean).join(' | ');
-
-        html += `
-          <td colspan="${span}" class="slot plan-on"
-            title="${escapeHtml(text)}"
-            onclick="openTaskModal('${name}', 'PLAN', ${start})"
-          >
-            ${escapeHtml(text)}
-          </td>
-        `;
-
-        index = end + 1;
-
-      } else {
-
-        html += `
-          <td class="slot"
-            onclick="openTaskModal('${name}','PLAN',${index})"
-          ></td>
-        `;
-
-        index++;
-      }
-    }
-
-    html += '</tr>';
-
-    // =======================
-    // 🟢 ACTUAL ROW (🔥 merge ตาม PLAN)
-    // =======================
-    html += '<tr>';
-    html += `<td class="left">ACTUAL</td>`;
-
-    index = 0;
-
-    while (index < timeSlots.length) {
-
-      const detail = getRangeDetail(name, 'PLAN', index);
-
-      // 🔥 ถ้ามี PLAN → ทำ block
-      if (detail) {
-
-        const start = detail.startIndex;
-        const end = detail.endIndex;
-        const span = end - start + 1;
-
-        let status = null;
-
-        for (let i = start; i <= end; i++) {
-
-          const s = state.actualStatus[`${name}_${i}`];
-
-          if (s === "NG") {
-            status = "ng";
-            break;
-          }
-
-          if (s === "OK") {
-            status = "ok";
-          }
-        }
-
-        let cls = '';
-
-        if (status === 'ng') cls = 'actual-ng';
-        else if (status === 'ok') cls = 'actual-ok';
-
-        html += `
-          <td class="slot ${cls}" colspan="${span}"
-            onclick="toggleActualBlock('${name}', ${start}, ${end})"
-          ></td>
-        `;
-
-        index = end + 1;
-
-      } else {
-
-        // ❌ ไม่มี PLAN → ห้ามกด
-        html += `<td class="slot"></td>`;
-        index++;
-      }
-    }
-
-    html += '</tr>';
-
-  });
-
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
+function ensureMetaDefaults(){
+  const today=new Date().toISOString().split('T')[0];
+  if(!safeValue('workDate'))safeSetValue('workDate',today);
+  if(!safeValue('technician'))safeSetValue('technician','-');
+  if(!safeValue('area'))safeSetValue('area','-');
+  if(!safeValue('shift'))safeSetValue('shift','เช้า');
+  safeSetText('heroDate',safeValue('workDate','-')||'-');
 }
 
-function toggleActualBlock(name, start, end) {
-  const existingStatus = state.actualStatus[`${name}_${start}`];
-  if (existingStatus) {
-    const existingReason = state.actualReason[`${name}_${start}`] || '';
-    showActualViewPopup(name, start, end, existingStatus, existingReason);
-    return;
-  }
+function getSlotKey(name,type,si){return `${name}__${type}__${si}`;}
+function getDefaultTimelineRow(){return{PLAN:Array(timeSlots.length).fill(false),ACTUAL:Array(timeSlots.length).fill(false)};}
 
-  showDecisionPopup().then(result => {
-    if (!result) return;
-    showReasonPopup(result).then(reason => {
-      if (reason === null) return;
-
-      for (let i = start; i <= end; i++) {
-        state.timeline[name].ACTUAL[i] = true;
-        state.actualStatus[`${name}_${i}`] = result;
-        state.actualReason[`${name}_${i}`] = reason;
-      }
-
-      const detail = state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || '';
-      saveActualToSupabase(name, start, end, result, reason, detail); // ← เรียกตรงนี้
-      renderTimeline();
-    });
+function normalizeTimeline(timeline){
+  const n={};
+  technicians.forEach(name=>{
+    const row=timeline&&timeline[name]?timeline[name]:{};
+    const plan=Array.isArray(row.PLAN)?row.PLAN.slice(0,timeSlots.length):[];
+    const actual=Array.isArray(row.ACTUAL)?row.ACTUAL.slice(0,timeSlots.length):[];
+    while(plan.length<timeSlots.length)plan.push(false);
+    while(actual.length<timeSlots.length)actual.push(false);
+    n[name]={PLAN:plan,ACTUAL:actual};
   });
-}
-function loadDataFromX4(date) {
-  Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${date}&type=eq.PLAN&order=start_slot`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    }).then(r => r.json()),
-
-    fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-    }).then(r => r.json())
-
-  ]).then(([plans, actuals]) => {
-
-    const newTimeline = normalizeTimeline({});
-    const newDetails  = {};
-    state.actualStatus = {};
-    state.actualReason = {};
-
-    plans.forEach(row => {
-      const { technician, start_slot: start, end_slot: end, job_type: jobType, detail, status, reason } = row;
-      if (!newTimeline[technician]) newTimeline[technician] = getDefaultTimelineRow();
-      for (let i = start; i <= end; i++) {
-        newTimeline[technician].PLAN[i] = true;
-        if (status) {
-          newTimeline[technician].ACTUAL[i] = true;
-          state.actualStatus[`${technician}_${i}`] = status;
-          state.actualReason[`${technician}_${i}`]  = reason;
-        }
-      }
-      newDetails[getSlotKey(technician, 'PLAN', start)] = { startIndex: start, endIndex: end, jobType, detail };
-    });
-
-    state.timeline    = newTimeline;
-    state.slotDetails = newDetails;
-    renderTimeline();
-
-  }).catch(err => console.error(err));
+  return n;
 }
 
-    function openTaskModal(name, type, index) {
-  modalState.technician = name;
-  modalState.type = type;
-  modalState.index = index;
-
-  const detail = getRangeDetail(name, type, index) || {};
-  const startIndex = typeof detail.startIndex === 'number' ? detail.startIndex : index;
-  const endIndex = typeof detail.endIndex === 'number' ? detail.endIndex : index;
-  modalState.originalIndex = startIndex;
-  modalState.originalEndIndex = endIndex;
-
-  // ── หาช่วงที่มี plan อื่นอยู่แล้ว (ไม่นับ plan ของตัวเอง) ──
-  const blockedSlots = new Set();
-  Object.keys(state.slotDetails).forEach(key => {
-    if (!key.startsWith(`${name}__PLAN__`)) return;
-    const d = state.slotDetails[key];
-    if (!d) return;
-    // ข้าม plan ตัวเองที่กำลังแก้อยู่
-    if (d.startIndex === startIndex && d.endIndex === endIndex) return;
-    for (let i = d.startIndex; i <= d.endIndex; i++) {
-      blockedSlots.add(i);
-    }
-  });
-
-  // ── สร้าง options เฉพาะช่วงที่ไม่ชน ──
-  // หา "กลุ่ม" ที่ index นี้อยู่ได้ = ช่วงต่อเนื่องที่ไม่มี blocked
-  // เริ่มจาก index ปัจจุบัน หาซ้าย (start ที่เป็นไปได้) และขวา (end ที่เป็นไปได้)
-  let minAllowed = 0;
-  let maxAllowed = timeSlots.length - 1;
-
-  // หาขอบซ้าย: blocked slot แรกที่อยู่ก่อน index
-  for (let i = index - 1; i >= 0; i--) {
-    if (blockedSlots.has(i)) { minAllowed = i + 1; break; }
-  }
-
-  // หาขอบขวา: blocked slot แรกที่อยู่หลัง index
-  for (let i = index + 1; i < timeSlots.length; i++) {
-    if (blockedSlots.has(i)) { maxAllowed = i - 1; break; }
-  }
-
-  // ── populate selects ──
-  const startSelect = byId('modalStartSlot');
-  const endSelect = byId('modalEndSlot');
-  if (!startSelect || !endSelect) return;
-
-  // ── populate selects ──
-startSelect.innerHTML = `<option value="${index}">${timeSlots[index]}</option>`;
-
-endSelect.innerHTML = timeSlots
-  .map((slot, idx) => {
-    if (idx < index || idx > maxAllowed) return '';
-    return `<option value="${idx}">${slot}</option>`;
-  }).join('');
-
-startSelect.value = String(index);
-endSelect.value = String(endIndex <= maxAllowed ? endIndex : index);
-
-  safeSetValue('modalJobType', detail.jobType || 'PM');
-  safeSetValue('modalDetail', detail.detail || '');
-  safeSetText('taskModalSubtitle', `${name} | ${type} | ${timeSlots[startIndex] || '-'} - ${timeSlots[endIndex] || '-'}`);
-
-  const backdrop = byId('taskModalBackdrop');
-  if (backdrop) backdrop.classList.add('show');
+function populateModalTimeSlots(){
+  const ss=byId('modalStartSlot'),es=byId('modalEndSlot');
+  if(!ss||!es)return;
+  const opts=timeSlots.map((s,i)=>`<option value="${i}">${s}</option>`).join('');
+  ss.innerHTML=opts; es.innerHTML=opts;
 }
 
-    function closeTaskModal() {
-      const backdrop = byId('taskModalBackdrop');
-      if (backdrop) backdrop.classList.remove('show');
-    }
+function clampRange(si,ei){
+  const s=Math.max(0,Math.min(Number(si),timeSlots.length-1));
+  const e=Math.max(0,Math.min(Number(ei),timeSlots.length-1));
+  return{start:s,end:Math.max(s,e)};
+}
 
-    function saveTaskModal() {
-      const { technician, type, originalIndex, originalEndIndex } = modalState;
-      if (!technician || type !== 'PLAN') return;
-
-      const range = clampRange(safeValue('modalStartSlot', originalIndex), safeValue('modalEndSlot', originalEndIndex));
-      if (!state.timeline[technician]) {
-        state.timeline[technician] = getDefaultTimelineRow();
-      }
-
-      clearPlanRange(technician, originalIndex, originalEndIndex);
-      applyPlanRange(technician, range.start, range.end, {
-        jobType: safeValue('modalJobType', 'PM'),
-        detail: safeValue('modalDetail').trim()
-      });
-
-      modalState.index = range.start;
-      modalState.originalIndex = range.start;
-      modalState.originalEndIndex = range.end;
-      renderTimeline();
-      saveData();
-      closeTaskModal();
-    }
-
-    function clearTaskModalData() {
-  const { technician, originalIndex, originalEndIndex } = modalState;
-  clearPlanRange(technician, originalIndex, originalEndIndex);
+function initTimeline(){
+  state.timeline=normalizeTimeline(state.timeline);
+  if(!state.slotDetails||typeof state.slotDetails!=='object')state.slotDetails={};
   renderTimeline();
-  closeTaskModal();
-
-  const table = holidayState.active ? 'holiday_plans' : 'plans';
-
-  // holiday mode → กรองวัน, ปกติ → ไม่กรองวัน
-  const dateFilter = holidayState.active
-    ? `date=eq.${holidayState.date}&`
-    : '';
-
-  fetch(`${SUPABASE_URL}/rest/v1/${table}?${dateFilter}technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`, {
-    method: 'DELETE',
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'return=minimal' }
-  }).then(() => {
-    if (holidayState.active && holidayState.date) {
-      loadDataFromX4(holidayState.date);
-    } else {
-      loadData();
-    }
-  });
 }
 
-function showPopup(html) {
-  const div = document.createElement("div");
-  div.id = "popupOverlay";
-  div.innerHTML = `
-    <div class="overlay" style="z-index: 99999;">
-      ${html}
-    </div>
-  `;
+function clearPlanRange(tech,si,ei){
+  if(!state.timeline[tech])return;
+  for(let i=si;i<=ei;i++)state.timeline[tech].PLAN[i]=false;
+  delete state.slotDetails[getSlotKey(tech,'PLAN',si)];
+}
+
+function applyPlanRange(tech,si,ei,payload){
+  if(!state.timeline[tech])state.timeline[tech]=getDefaultTimelineRow();
+  for(let i=si;i<=ei;i++)state.timeline[tech].PLAN[i]=true;
+  state.slotDetails[getSlotKey(tech,'PLAN',si)]={...payload,startIndex:si,endIndex:ei};
+}
+
+function getRangeDetail(name,type,index){
+  if(type!=='PLAN')return null;
+  for(const key of Object.keys(state.slotDetails)){
+    const d=state.slotDetails[key];
+    if(!d||!key.startsWith(`${name}__${type}__`))continue;
+    const s=typeof d.startIndex==='number'?d.startIndex:Number(key.split('__').pop());
+    const e=typeof d.endIndex==='number'?d.endIndex:s;
+    if(index>=s&&index<=e)return d;
+  }
+  return null;
+}
+
+function buildBadges(d){
+  if(!d)return'';
+  let o='';
+  if(d.requestQC) o+='<span class="badge badge-qc">QC</span>';
+  if(d.requestMFG)o+='<span class="badge badge-mfg">MFG</span>';
+  return o;
+}
+
+function renderTimeline(){
+  const wrap=byId('timelineWrap');
+  if(!wrap)return;
+  let html='<table><thead><tr><th>ชื่อพนักงาน</th><th>สถานะ</th>';
+  timeSlots.forEach(t=>{const p=t.includes('/')?t.split('/'):([t]);html+=`<th>${p.join('<br>')}</th>`;});
+  html+='</tr></thead><tbody>';
+
+  technicians.forEach(name=>{
+    // PLAN row
+    html+='<tr>';
+    html+=`<td class="left" rowspan="2">${escapeHtml(name)}</td><td class="left">PLAN</td>`;
+    let idx=0;
+    while(idx<timeSlots.length){
+      const d=getRangeDetail(name,'PLAN',idx);
+      const on=state.timeline[name].PLAN[idx];
+      if(on&&d){
+        const span=d.endIndex-d.startIndex+1;
+        const lbl=[d.line,d.machine,d.jobType,d.detail].filter(Boolean).join(' | ');
+        const badges=buildBadges(d);
+        html+=`<td colspan="${span}" class="slot plan-on" title="${escapeHtml(lbl)}" onclick="openTaskModal('${name}','PLAN',${d.startIndex})">${escapeHtml(lbl)}${badges}</td>`;
+        idx=d.endIndex+1;
+      } else {
+        html+=`<td class="slot" onclick="openTaskModal('${name}','PLAN',${idx})"></td>`;
+        idx++;
+      }
+    }
+    html+='</tr>';
+
+    // ACTUAL row
+    html+='<tr><td class="left">ACTUAL</td>';
+    idx=0;
+    while(idx<timeSlots.length){
+      const d=getRangeDetail(name,'PLAN',idx);
+      if(d){
+        const span=d.endIndex-d.startIndex+1;
+        let st=null;
+        for(let i=d.startIndex;i<=d.endIndex;i++){
+          const s=state.actualStatus[`${name}_${i}`];
+          if(s==='NG'){st='ng';break;}
+          if(s==='OK')st='ok';
+        }
+        const cls=st==='ng'?'actual-ng':st==='ok'?'actual-ok':'';
+        html+=`<td class="slot ${cls}" colspan="${span}" onclick="toggleActualBlock('${name}',${d.startIndex},${d.endIndex})"></td>`;
+        idx=d.endIndex+1;
+      } else {
+        html+=`<td class="slot"></td>`;
+        idx++;
+      }
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// ── Modal open ──
+function openTaskModal(name,type,index){
+  modalState.technician=name; modalState.type=type; modalState.index=index;
+  const d=getRangeDetail(name,type,index)||{};
+  const si=typeof d.startIndex==='number'?d.startIndex:index;
+  const ei=typeof d.endIndex==='number'?d.endIndex:index;
+  modalState.originalIndex=si; modalState.originalEndIndex=ei;
+
+  const blocked=new Set();
+  Object.keys(state.slotDetails).forEach(key=>{
+    if(!key.startsWith(`${name}__PLAN__`))return;
+    const dd=state.slotDetails[key];
+    if(!dd||(dd.startIndex===si&&dd.endIndex===ei))return;
+    for(let i=dd.startIndex;i<=dd.endIndex;i++)blocked.add(i);
+  });
+
+  let minA=0,maxA=timeSlots.length-1;
+  for(let i=index-1;i>=0;i--){if(blocked.has(i)){minA=i+1;break;}}
+  for(let i=index+1;i<timeSlots.length;i++){if(blocked.has(i)){maxA=i-1;break;}}
+
+  const ss=byId('modalStartSlot'),es=byId('modalEndSlot');
+  if(!ss||!es)return;
+  ss.innerHTML=`<option value="${index}">${timeSlots[index]}</option>`;
+  es.innerHTML=timeSlots.map((s,i)=>(i<index||i>maxA)?'': `<option value="${i}">${s}</option>`).join('');
+  ss.value=String(index);
+  es.value=String(ei<=maxA?ei:index);
+
+  safeSetValue('modalJobType',d.jobType||'PM');
+  safeSetValue('modalDetail', d.detail ||'');
+  safeSetValue('modalLine',   d.line   ||'');
+  safeSetValue('modalMachine',d.machine||'');
+  const qc=byId('modalRequestQC'), mfg=byId('modalRequestMFG');
+  if(qc) qc.checked =d.requestQC ||false;
+  if(mfg)mfg.checked=d.requestMFG||false;
+
+  safeSetText('taskModalSubtitle',`${name} | ${type} | ${timeSlots[si]||'-'} - ${timeSlots[ei]||'-'}`);
+  byId('taskModalBackdrop').classList.add('show');
+}
+
+function closeTaskModal(){byId('taskModalBackdrop').classList.remove('show');}
+
+async function saveTaskModal(){
+
+  const { technician, type, originalIndex, originalEndIndex } = modalState;
+
+  if(!technician || type !== 'PLAN') return;
+
+  const r = clampRange(
+    safeValue('modalStartSlot', originalIndex),
+    safeValue('modalEndSlot', originalEndIndex)
+  );
+
+  if(!state.timeline[technician]){
+    state.timeline[technician] = getDefaultTimelineRow();
+  }
+
+  // ลบช่วงเดิม
+  clearPlanRange(
+    technician,
+    originalIndex,
+    originalEndIndex
+  );
+
+  // เพิ่มช่วงใหม่
+  applyPlanRange(
+    technician,
+    r.start,
+    r.end,
+    {
+      jobType: safeValue('modalJobType','PM'),
+      detail: safeValue('modalDetail').trim(),
+      line: safeValue('modalLine').trim(),
+      machine: safeValue('modalMachine').trim(),
+      requestQC: byId('modalRequestQC')?.checked || false,
+      requestMFG: byId('modalRequestMFG')?.checked || false,
+    }
+  );
+
+  modalState.index = r.start;
+  modalState.originalIndex = r.start;
+  modalState.originalEndIndex = r.end;
+
+  renderTimeline();
+
+  // SAVE SUPABASE
+  await saveData(
+    technician,
+    r.start,
+    r.end
+  );
+
+  closeTaskModal();
+}
+
+function clearTaskModalData(){
+  const{technician,originalIndex,originalEndIndex}=modalState;
+  clearPlanRange(technician,originalIndex,originalEndIndex);
+  renderTimeline(); closeTaskModal();
+  const table=holidayState.active?'holiday_plans':'plans';
+  const df=holidayState.active?`date=eq.${holidayState.date}&`:'';
+  fetch(`${SUPABASE_URL}/rest/v1/${table}?${df}technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'}})
+  .then(()=>{if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();});
+}
+
+// ── Popup helpers ──
+function showPopup(html){
+  const div=document.createElement('div');div.id='popupOverlay';
+  div.innerHTML=`<div class="overlay" style="z-index:99999;">${html}</div>`;
   document.body.appendChild(div);
 }
+function closePopup(){const el=byId('popupOverlay');if(el)el.remove();}
 
-function closePopup() {
-  const el = document.getElementById("popupOverlay");
-  if (el) el.remove();
-}
-
-function showReasonPopup(status) {
-
-  return new Promise(resolve => {
-
-    const html = `
-      <div class="popup">
-        <h3>${status} - Reason</h3>
-        <textarea id="reasonInput" placeholder="Enter reason..."></textarea>
-        <br><br>
-        <button onclick="submitReason()">OK</button>
-        <button onclick="cancelReason()">Cancel</button>
-      </div>
-    `;
-
-    showPopup(html);
-
-    window.submitReason = () => {
-      const val = document.getElementById("reasonInput").value;
-      closePopup();
-      resolve(val);
-    };
-
-    window.cancelReason = () => {
-      closePopup();
-      resolve(null);
-    };
-
-  });
-
-}
-
-function showDecisionPopup() {
-
-  return new Promise(resolve => {
-
-    const html = `
-      <div class="popup">
-        <h3>Result</h3>
-        <button onclick="choose('OK')">OK</button>
-        <button onclick="choose('NG')">NG</button>
-        <button onclick="choose(null)">Cancel</button>
-      </div>
-    `;
-
-    showPopup(html);
-
-    window.choose = (val) => {
-      closePopup();
-      resolve(val);
-    };
-
-  });
-
-}
-
-function saveActualToSupabase(name, start, end, result, reason, detail) {
-  const date = holidayState.active && holidayState.date ? holidayState.date : safeValue('workDate');
-  const planTable = holidayState.active ? 'holiday_plans' : 'plans';
-
-  const payload = {
-    date,
-    technician: name,
-    start_slot: start,
-    end_slot: end,
-    status: result,
-    reason: reason || '',
-    detail: detail || ''
-  };
-
-  // 1. upsert actuals
-  fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  })
-  .then(r => r.json())
-  .then(existing => {
-    if (existing.length > 0) {
-      return fetch(`${SUPABASE_URL}/rest/v1/actuals?id=eq.${existing[0].id}`, {
-        method: 'PATCH',
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      return fetch(`${SUPABASE_URL}/rest/v1/actuals`, {
-        method: 'POST',
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-        body: JSON.stringify(payload)
-      });
-    }
-  });
-
-  // 2. update status ใน plans (แยก fetch ไม่รอ actuals)
-  fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`, {
-    method: 'PATCH',
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({ status: result, reason: reason || '' })
+function showReasonPopup(status){
+  return new Promise(resolve=>{
+    showPopup(`<div class="popup"><h3>${status} - Reason</h3><textarea id="reasonInput" placeholder="Enter reason..."></textarea><br><br><button onclick="submitReason()">OK</button><button onclick="cancelReason()">Cancel</button></div>`);
+    window.submitReason=()=>{const v=byId('reasonInput').value;closePopup();resolve(v);};
+    window.cancelReason=()=>{closePopup();resolve(null);};
   });
 }
 
-    function fillSampleTimeline() {
-      clearTimeline(false);
-      const sampleNames = technicians.slice(0, 3);
-      sampleNames.forEach((name, personIndex) => {
-        const startIndex = personIndex * 2;
-        const endIndex = Math.min(startIndex + 2, timeSlots.length - 1);
-        applyPlanRange(name, startIndex, endIndex, {
-          jobType: personIndex === 0 ? 'PM' : personIndex === 1 ? 'Breakdown' : 'Inspection',
-          detail: personIndex === 0 ? 'ตรวจสอบมอเตอร์' : personIndex === 1 ? 'แก้ไขระบบลม' : 'ตรวจเช็กเซนเซอร์'
-        });
-        state.timeline[name].ACTUAL[startIndex] = true;
-      });
+function showDecisionPopup(){
+  return new Promise(resolve=>{
+    showPopup(`<div class="popup"><h3>Result</h3><button onclick="choose('OK')">OK</button><button onclick="choose('NG')">NG</button><button onclick="choose(null)">Cancel</button></div>`);
+    window.choose=val=>{closePopup();resolve(val);};
+  });
+}
+
+function toggleActualBlock(name,start,end){
+  const ex=state.actualStatus[`${name}_${start}`];
+  if(ex){showActualViewPopup(name,start,end,ex,state.actualReason[`${name}_${start}`]||'');return;}
+  showDecisionPopup().then(res=>{
+    if(!res)return;
+    showReasonPopup(res).then(reason=>{
+      if(reason===null)return;
+      for(let i=start;i<=end;i++){state.timeline[name].ACTUAL[i]=true;state.actualStatus[`${name}_${i}`]=res;state.actualReason[`${name}_${i}`]=reason;}
+      const det=state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'';
+      saveActualToSupabase(name,start,end,res,reason,det);
       renderTimeline();
-      saveData();
-    }
-
-    function clearTimeline(shouldSave = true) {
-  state.timeline = normalizeTimeline({});
-  state.slotDetails = {};
-  state.actualStatus = {};
-  state.actualReason = {};
-  renderTimeline();
-
-  if (shouldSave) {
-    const date = safeValue('workDate');
-    fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&status=eq.OK`, {
-      method: 'DELETE',
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
-  }
-}
-      function saveData() {
-  ensureMetaDefaults();
-  const targetDate = holidayState.active && holidayState.date ? holidayState.date : safeValue('workDate');
-  const table = holidayState.active ? 'holiday_plans' : 'plans';
-
-  fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({
-      date: targetDate,
-      technician: modalState.technician,
-      type: 'PLAN',
-      start_slot: modalState.originalIndex,
-      end_slot: modalState.originalEndIndex,
-      job_type: safeValue('modalJobType'),
-      detail: safeValue('modalDetail')
-    })
   });
 }
-    
-    function loadData() {
-  fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  })
-  .then(r => r.json())
-  .then(plans => {
 
-    const newTimeline = normalizeTimeline({});
-    const newDetails  = {};
-    state.actualStatus = {};
-    state.actualReason = {};
+function saveActualToSupabase(name,start,end,result,reason,detail){
+  const date=holidayState.active&&holidayState.date?holidayState.date:safeValue('workDate');
+  const planTable=holidayState.active?'holiday_plans':'plans';
+  const payload={date,technician:name,start_slot:start,end_slot:end,status:result,reason:reason||'',detail:detail||''};
+  fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.json()).then(existing=>{
+    if(existing.length>0)return fetch(`${SUPABASE_URL}/rest/v1/actuals?id=eq.${existing[0].id}`,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
+    return fetch(`${SUPABASE_URL}/rest/v1/actuals`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
+  });
+  fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({status:result,reason:reason||''})});
+}
 
-    const seenKeys = new Set();
+function showActualViewPopup(name,start,end,status,reason){
+  showPopup(`<div class="popup" style="width:340px;text-align:left;">
+    <h3 style="margin:0 0 12px;font-size:16px;">ACTUAL: ${name} | ${timeSlots[start]} - ${timeSlots[end]}</h3>
+    <div style="margin-bottom:8px;font-size:13px;color:#5b708b;font-weight:600;">Status: <span style="padding:3px 10px;border-radius:8px;font-weight:700;font-size:13px;background:${status==='OK'?'#00cd90':'#ee3c68'};color:white;">${status}</span></div>
+    <div style="font-size:13px;color:#5b708b;font-weight:600;margin-bottom:6px;">Reason</div>
+    <textarea id="viewReasonInput" disabled style="width:100%;height:80px;border-radius:8px;border:1px solid #cbd5e1;padding:8px;font:inherit;">${reason}</textarea>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+      <button onclick="cancelViewActual()" style="background:#e2e8f0;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;">Cancel</button>
+      <button id="saveEditBtn" onclick="saveEditActual('${name}',${start},${end})" disabled style="background:#2563eb;color:white;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;opacity:0.4;">Save</button>
+      <button onclick="enableEditActual()" style="background:#d97706;color:white;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;">Edit</button>
+      <button onclick="updateStatusToOK('${name}',${start},${end})" style="background:#00cd90;color:white;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;">OK</button>
+    </div>
+  </div>`);
+}
+function enableEditActual(){const ta=byId('viewReasonInput'),btn=byId('saveEditBtn');if(ta)ta.disabled=false;if(btn){btn.disabled=false;btn.style.opacity='1';}}
+function saveEditActual(name,start,end){const r=(byId('viewReasonInput')?.value||'').trim();const cs=state.actualStatus[`${name}_${start}`]||'OK';closePopup();for(let i=start;i<=end;i++)state.actualReason[`${name}_${i}`]=r;saveActualToSupabase(name,start,end,cs,r,state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'');renderTimeline();}
+function updateStatusToOK(name,start,end){closePopup();const r=state.actualReason[`${name}_${start}`]||'';for(let i=start;i<=end;i++){state.actualStatus[`${name}_${i}`]='OK';state.timeline[name].ACTUAL[i]=true;}saveActualToSupabase(name,start,end,'OK',r,state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'');renderTimeline();}
+function cancelViewActual(){closePopup();}
 
-    plans.forEach(row => {
-      const { technician, start_slot: start, end_slot: end,
-              job_type: jobType, detail, status, reason } = row;
+// ── Supabase save / load ──
+async function saveData(
+  technician,
+  startSlot,
+  endSlot
+){
 
-      const key = getSlotKey(technician, 'PLAN', start);
-      if (seenKeys.has(key)) return;
-      seenKeys.add(key);
+  try{
 
-      if (!newTimeline[technician]) newTimeline[technician] = getDefaultTimelineRow();
+    ensureMetaDefaults();
 
-      for (let i = start; i <= end; i++) {
-        newTimeline[technician].PLAN[i] = true;
-      }
+    const targetDate =
+      holidayState.active && holidayState.date
+      ? holidayState.date
+      : safeValue('workDate');
 
-      newDetails[key] = { startIndex: start, endIndex: end, jobType, detail };
+    const table =
+      holidayState.active
+      ? 'holiday_plans'
+      : 'plans';
 
-      // ✅ โชว์ status ตามที่อยู่ใน plans row นั้นเลย ไม่สนวัน
-      if (status) {
-        for (let i = start; i <= end; i++) {
-          newTimeline[technician].ACTUAL[i] = true;
-          state.actualStatus[`${technician}_${i}`] = status;
-          state.actualReason[`${technician}_${i}`] = reason || '';
+    const payload = {
+      date: targetDate,
+      technician: technician,
+      type: 'PLAN',
+
+      start_slot: startSlot,
+      end_slot: endSlot,
+
+      job_type: safeValue('modalJobType'),
+      detail: safeValue('modalDetail'),
+
+      line: safeValue('modalLine'),
+      machine: safeValue('modalMachine'),
+
+      request_qc:
+        byId('modalRequestQC')?.checked || false,
+
+      request_mfg:
+        byId('modalRequestMFG')?.checked || false
+    };
+
+    console.log("SAVE PAYLOAD:", payload);
+
+    // CHECK EXIST
+    const checkRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/${table}?date=eq.${targetDate}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${startSlot}&end_slot=eq.${endSlot}`,
+      {
+        headers:{
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
         }
       }
-    });
+    );
 
-    state.timeline    = newTimeline;
-    state.slotDetails = newDetails;
-    renderTimeline();
+    const existing = await checkRes.json();
 
-  }).catch(err => console.error(err));
-}
-let confirmCallback = null;
+    console.log("EXISTING:", existing);
 
-function showActualDetailBlock(event, name, start, end) {
-  event.preventDefault();
+    let saveRes;
 
-  // หา status และ reason ปัจจุบัน
-  let currentStatus = null;
-  let currentReason = '';
-  for (let i = start; i <= end; i++) {
-    const s = state.actualStatus[`${name}_${i}`];
-    if (s) { currentStatus = s; currentReason = state.actualReason[`${name}_${i}`] || ''; break; }
-  }
+    // UPDATE
+    if(existing.length > 0){
 
-  // ถ้ายังไม่มี actual → ใช้ flow เดิม (กรอกใหม่)
-  if (!currentStatus) {
-    toggleActualBlock(name, start, end);
-    return;
-  }
+      const id = existing[0].id;
 
-  // มี actual อยู่แล้ว → เปิด popup แสดงข้อมูล
-  showActualViewPopup(name, start, end, currentStatus, currentReason);
-}
+      saveRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,
+        {
+          method:'PATCH',
+          headers:{
+            apikey: SUPABASE_KEY,
+            Authorization:`Bearer ${SUPABASE_KEY}`,
+            'Content-Type':'application/json',
+            Prefer:'return=representation'
+          },
+          body: JSON.stringify(payload)
+        }
+      );
 
-function showActualViewPopup(name, start, end, status, reason) {
-  const html = `
-    <div class="popup" style="width:340px; text-align:left;">
-      <h3 style="margin:0 0 12px; font-size:16px;">
-        ACTUAL: ${name} | ${timeSlots[start]} - ${timeSlots[end]}
-      </h3>
-      <div style="margin-bottom:8px; font-size:13px; color:#5b708b; font-weight:600;">
-        Status: <span id="viewStatusBadge" style="
-          padding:3px 10px; border-radius:8px; font-weight:700; font-size:13px;
-          background:${status==='OK'?'#00cd90':'#ee3c68'}; color:white;
-        ">${status}</span>
-      </div>
-      <div style="margin-bottom:8px; font-size:13px; color:#5b708b; font-weight:600;">Reason</div>
-      <textarea id="viewReasonInput" disabled
-        style="width:100%; height:80px; border-radius:8px; border:1px solid #cbd5e1; padding:8px; font:inherit;"
-      >${reason}</textarea>
-      <div style="display:flex; gap:8px; margin-top:14px; justify-content:flex-end;">
-        <button onclick="cancelViewActual()"
-          style="background:#e2e8f0; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
-          Cancel
-        </button>
-        <button id="saveEditBtn" onclick="saveEditActual('${name}',${start},${end})" disabled
-          style="background:#2563eb; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700; opacity:0.4;">
-          Save
-        </button>
-        <button onclick="enableEditActual()"
-          style="background:#d97706; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
-          Edit
-        </button>
-        <button onclick="updateStatusToOK('${name}',${start},${end})"
-          style="background:#00cd90; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
-          OK
-        </button>
-      </div>
-    </div>
-  `;
-  showPopup(html);
-}
+    }else{
 
-function saveEditActual(name, start, end) {
-  const newReason = (document.getElementById('viewReasonInput')?.value || '').trim();
-  closePopup();
+      // INSERT
+      saveRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/${table}`,
+        {
+          method:'POST',
+          headers:{
+            apikey: SUPABASE_KEY,
+            Authorization:`Bearer ${SUPABASE_KEY}`,
+            'Content-Type':'application/json',
+            Prefer:'return=representation'
+          },
+          body: JSON.stringify(payload)
+        }
+      );
 
-  const currentStatus = state.actualStatus[`${name}_${start}`] || 'OK';
-  for (let i = start; i <= end; i++) {
-    state.actualReason[`${name}_${i}`] = newReason;
-  }
-
-  const detail = state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || '';
-  saveActualToSupabase(name, start, end, currentStatus, newReason, detail); // ← เปลี่ยน
-  renderTimeline();
-}
-
-
-
-function updateStatusToOK(name, start, end) {
-  closePopup();
-  const reason = state.actualReason[`${name}_${start}`] || '';
-
-  for (let i = start; i <= end; i++) {
-    state.actualStatus[`${name}_${i}`] = 'OK';
-    state.timeline[name].ACTUAL[i] = true;
-  }
-
-  const detail = state.slotDetails[getSlotKey(name, 'PLAN', start)]?.detail || '';
-  saveActualToSupabase(name, start, end, 'OK', reason, detail); // ← เปลี่ยน
-  renderTimeline();
-}
-
-function cancelViewActual() {
-  closePopup();
-}
-
-function onClickActual(btn) {
-
-  const payload = {
-    date: btn.dataset.date,
-    technician: btn.dataset.tech,
-    start: Number(btn.dataset.start),
-    end: Number(btn.dataset.end)
-  };
-
-  google.script.run
-    .withSuccessHandler(showPopupActual)
-    .getActualDetail(payload);
-}
-
-
-
-function showPopupActual(res) {
-
-  const html = `
-    <div style="padding:20px">
-      <h3>Status: <span id="statusTxt">${res.status}</span></h3>
-
-      <textarea id="reasonTxt" disabled style="width:100%">
-        ${res.reason || ""}
-      </textarea>
-
-      <br><br>
-
-      <button onclick="updateToOK()">OK</button>
-      <button onclick="enableEdit()">Edit</button>
-      <button onclick="closePopup()">Cancel</button>
-    </div>
-  `;
-
-  window.currentActual = res;
-
-  document.getElementById("popup").innerHTML = html;
-  document.getElementById("popup").style.display = "block";
-}
-
-function enableEdit() {
-  document.getElementById("reasonTxt").disabled = false;
-}
-
-function updateToOK() {
-
-  const payload = {
-    ...window.currentActual,
-    status: "OK"
-  };
-
-  google.script.run
-    .withSuccessHandler(() => location.reload())
-    .updateActual(payload);
-}
-
-// ── Calendar State ──
-const calState = {
-  year: new Date().getFullYear(),
-  month: new Date().getMonth(), // 0-based
-  holidays: new Set() // "yyyy-MM-dd"
-};
-
-function openCalendar() {
-  const d = new Date(safeValue('workDate') || new Date());
-  calState.year = d.getFullYear();
-  calState.month = d.getMonth();
-  loadHolidays().then(() => renderCalendar());
-  byId('calendarBackdrop').classList.add('show');
-}
-
-function closeCalendar() {
-  byId('calendarBackdrop').classList.remove('show');
-}
-
-function prevMonth() {
-  calState.month--;
-  if (calState.month < 0) { calState.month = 11; calState.year--; }
-  loadHolidays().then(() => renderCalendar());
-}
-
-function nextMonth() {
-  calState.month++;
-  if (calState.month > 11) { calState.month = 0; calState.year++; }
-  loadHolidays().then(() => renderCalendar());
-}
-
-function loadHolidays() {
-  return fetch(`${SUPABASE_URL}/rest/v1/holidays?select=date&date=gte.${calState.year}-${String(calState.month+1).padStart(2,'0')}-01&date=lte.${calState.year}-${String(calState.month+1).padStart(2,'0')}-31`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  })
-  .then(r => r.json())
-  .then(data => { calState.holidays = new Set(data.map(r => r.date)); })
-  .catch(() => { calState.holidays = new Set(); });
-}
-
-function renderCalendar() {
-  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-                      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  byId('calMonthLabel').textContent = `${monthNames[calState.month]} ${calState.year + 543}`;
-
-  // แสดง banner เมื่ออยู่ใน add mode
-  const banner = byId('calAddModeBanner');
-  if (banner) banner.style.display = holidayAddMode ? 'block' : 'none';
-
-  const today = new Date().toISOString().split('T')[0];
-  const selected = safeValue('workDate');
-  const firstDay = new Date(calState.year, calState.month, 1).getDay();
-  const daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
-
-  const dayHeaders = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-  let html = dayHeaders.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-
-  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${calState.year}-${String(calState.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isHoliday = calState.holidays.has(dateStr);
-    const isToday = dateStr === today;
-    const isSelected = dateStr === selected;
-
-    let cls = 'cal-day';
-    let style = '';
-
-    if (isHoliday) {
-      cls += ' holiday';
-    } else if (holidayAddMode) {
-      // วันที่ยังไม่มี holiday → กรอบเขียว ชวนกด
-      style = 'border-color:#16a34a; background:#f0fdf4;';
     }
 
-    if (isToday && !isHoliday) cls += ' today';
-    if (isSelected && !holidayAddMode) cls += ' selected';
+    const responseText = await saveRes.text();
 
-    const onclick = holidayAddMode && !isHoliday
-      ? `confirmAddHoliday('${dateStr}')`
-      : !holidayAddMode
-        ? `selectCalDay('${dateStr}')`
-        : ''; // วันที่เป็น holiday อยู่แล้ว → กดไม่ได้ใน add mode
+    console.log(
+      "SUPABASE STATUS:",
+      saveRes.status
+    );
 
-    html += `
-      <div class="${cls}" style="${style}" ${onclick ? `onclick="${onclick}"` : 'style="cursor:default;opacity:0.4;"'}>
-        ${d}
-        ${isHoliday ? '<br><span style="font-size:10px;">หยุด</span>' : ''}
-        ${holidayAddMode && !isHoliday ? '<br><span style="font-size:9px;color:#16a34a;">+ เพิ่ม</span>' : ''}
-      </div>
-    `;
+    console.log(
+      "SUPABASE RESPONSE:",
+      responseText
+    );
+
+    if(!saveRes.ok){
+
+      alert(
+        "SAVE FAILED\n\n" +
+        responseText
+      );
+
+      return;
+    }
+
+    console.log("SAVE SUCCESS");
+
+    // reload
+    if(
+      holidayState.active &&
+      holidayState.date
+    ){
+      await loadDataFromX4(
+        holidayState.date
+      );
+    }else{
+      await loadData();
+    }
+
+  }catch(err){
+
+    console.error(err);
+
+    alert(
+      "SAVE ERROR\n\n" +
+      err.message
+    );
   }
-
-  byId('calGrid').innerHTML = html;
 }
 
-function confirmAddHoliday(dateStr) {
-  const d = new Date(dateStr);
-  const display = d.toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
-
-  const html = `
-    <div class="popup" style="width:320px; text-align:left;">
-      <h3 style="margin:0 0 10px;">เพิ่มวันหยุด</h3>
-      <div style="font-size:14px; margin-bottom:12px; color:#183153;">
-        📅 ${display}
-      </div>
-      <div style="font-size:13px; color:#5b708b; font-weight:600; margin-bottom:6px;">ชื่อวันหยุด (ถ้ามี)</div>
-      <input id="holidayNoteInput" type="text" placeholder="เช่น สงกรานต์, วันแรงงาน"
-        style="width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:9px 12px; font:inherit; margin-bottom:14px;">
-      <div style="display:flex; gap:8px; justify-content:flex-end;">
-        <button onclick="closePopup()" 
-          style="background:#e2e8f0; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
-          Cancel
-        </button>
-        <button onclick="doAddHoliday('${dateStr}')"
-          style="background:#16a34a; color:white; border:0; border-radius:8px; padding:9px 16px; cursor:pointer; font-weight:700;">
-          OK
-        </button>
-      </div>
-    </div>
-  `;
-  showPopup(html);
+function loadData(){
+  fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.json()).then(plans=>{
+    const nt=normalizeTimeline({}),nd={};
+    state.actualStatus={}; state.actualReason={};
+    const seen=new Set();
+    plans.forEach(row=>{
+      const{technician,start_slot:start,end_slot:end,job_type:jobType,detail,status,reason,line,machine,request_qc,request_mfg}=row;
+      const key=getSlotKey(technician,'PLAN',start);
+      if(seen.has(key))return; seen.add(key);
+      if(!nt[technician])nt[technician]=getDefaultTimelineRow();
+      for(let i=start;i<=end;i++)nt[technician].PLAN[i]=true;
+      nd[key]={startIndex:start,endIndex:end,jobType,detail,line:line||'',machine:machine||'',requestQC:request_qc||false,requestMFG:request_mfg||false};
+      if(status){for(let i=start;i<=end;i++){nt[technician].ACTUAL[i]=true;state.actualStatus[`${technician}_${i}`]=status;state.actualReason[`${technician}_${i}`]=reason||'';}}
+    });
+    state.timeline=nt; state.slotDetails=nd; renderTimeline();
+  }).catch(e=>console.error(e));
 }
 
-function doAddHoliday(dateStr) {
-  const note = document.getElementById('holidayNoteInput')?.value || '';
-  closePopup();
+function loadDataFromX4(date){
+  Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${date}&type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()),
+    fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json())
+  ]).then(([plans])=>{
+    const nt=normalizeTimeline({}),nd={};
+    state.actualStatus={}; state.actualReason={};
+    plans.forEach(row=>{
+      const{technician,start_slot:start,end_slot:end,job_type:jobType,detail,status,reason,line,machine,request_qc,request_mfg}=row;
+      if(!nt[technician])nt[technician]=getDefaultTimelineRow();
+      for(let i=start;i<=end;i++){
+        nt[technician].PLAN[i]=true;
+        if(status){nt[technician].ACTUAL[i]=true;state.actualStatus[`${technician}_${i}`]=status;state.actualReason[`${technician}_${i}`]=reason;}
+      }
+      nd[getSlotKey(technician,'PLAN',start)]={startIndex:start,endIndex:end,jobType,detail,line:line||'',machine:machine||'',requestQC:request_qc||false,requestMFG:request_mfg||false};
+    });
+    state.timeline=nt; state.slotDetails=nd; renderTimeline();
+  }).catch(e=>console.error(e));
+}
 
-  fetch(`${SUPABASE_URL}/rest/v1/holidays`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal'
-    },
-    body: JSON.stringify({ date: dateStr, note })
-  }).then(() => {
-    calState.holidays.add(dateStr);
-    renderCalendar();
+function fillSampleTimeline(){
+  clearTimeline(false);
+  technicians.slice(0,3).forEach((name,pi)=>{
+    const si=pi*2, ei=Math.min(si+2,timeSlots.length-1);
+    applyPlanRange(name,si,ei,{
+      jobType:pi===0?'PM':pi===1?'Breakdown':'Inspection',
+      detail:pi===0?'ตรวจสอบมอเตอร์':pi===1?'แก้ไขระบบลม':'ตรวจเช็กเซนเซอร์',
+      line:`Line ${pi+1}`, machine:`M-0${pi+1}`,
+      requestQC:pi===1, requestMFG:pi===2,
+    });
+    state.timeline[name].ACTUAL[si]=true;
   });
+  renderTimeline(); saveData();
 }
 
-// เพิ่ม state
-const holidayState = {
-  active: false,
-  date: null
-};
+function clearTimeline(shouldSave=true){
+  state.timeline=normalizeTimeline({}); state.slotDetails={}; state.actualStatus={}; state.actualReason={};
+  renderTimeline();
+  if(shouldSave){const date=safeValue('workDate');fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&status=eq.OK`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});}
+}
 
-function selectCalDay(dateStr) {
-  const isHoliday = calState.holidays.has(dateStr);
+// ── Calendar ──
+const calState={year:new Date().getFullYear(),month:new Date().getMonth(),holidays:new Set()};
+const holidayState={active:false,date:null};
+let holidayAddMode=false, confirmCallback=null;
 
-  safeSetValue('workDate', dateStr);
-  safeSetText('heroDate', dateStr);
-  renderCalendar();
+function openCalendar(){const d=new Date(safeValue('workDate')||new Date());calState.year=d.getFullYear();calState.month=d.getMonth();loadHolidays().then(()=>renderCalendar());byId('calendarBackdrop').classList.add('show');}
+function closeCalendar(){byId('calendarBackdrop').classList.remove('show');}
+function prevMonth(){calState.month--;if(calState.month<0){calState.month=11;calState.year--;}loadHolidays().then(()=>renderCalendar());}
+function nextMonth(){calState.month++;if(calState.month>11){calState.month=0;calState.year++;}loadHolidays().then(()=>renderCalendar());}
 
-  if (isHoliday) {
-    // เปิด holiday mode
-    holidayState.active = true;
-    holidayState.date = dateStr;
-    updateHolidayButton(dateStr);
-    loadDataFromX4(dateStr);
-  } else {
-    // ปิด holiday mode
-    holidayState.active = false;
-    holidayState.date = null;
-    updateHolidayButton(null);
-    loadData();
+function loadHolidays(){
+  return fetch(`${SUPABASE_URL}/rest/v1/holidays?select=date&date=gte.${calState.year}-${String(calState.month+1).padStart(2,'0')}-01&date=lte.${calState.year}-${String(calState.month+1).padStart(2,'0')}-31`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.json()).then(data=>{calState.holidays=new Set(data.map(r=>r.date));}).catch(()=>{calState.holidays=new Set();});
+}
+
+function renderCalendar(){
+  const mn=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  byId('calMonthLabel').textContent=`${mn[calState.month]} ${calState.year+543}`;
+  const banner=byId('calAddModeBanner');if(banner)banner.style.display=holidayAddMode?'block':'none';
+  const today=new Date().toISOString().split('T')[0],selected=safeValue('workDate');
+  const fd=new Date(calState.year,calState.month,1).getDay(),dim=new Date(calState.year,calState.month+1,0).getDate();
+  let html=['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+  for(let i=0;i<fd;i++)html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calState.year}-${String(calState.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ih=calState.holidays.has(ds),it=ds===today,is=ds===selected;
+    let cls='cal-day',sty='';
+    if(ih)cls+=' holiday'; else if(holidayAddMode)sty='border-color:#16a34a;background:#f0fdf4;';
+    if(it&&!ih)cls+=' today'; if(is&&!holidayAddMode)cls+=' selected';
+    const oc=holidayAddMode&&!ih?`confirmAddHoliday('${ds}')`:!holidayAddMode?`selectCalDay('${ds}')`:'' ;
+    html+=`<div class="${cls}" style="${sty}" ${oc?`onclick="${oc}"`:''}>${d}${ih?'<br><span style="font-size:10px;">หยุด</span>':''}${holidayAddMode&&!ih?'<br><span style="font-size:9px;color:#16a34a;">+ เพิ่ม</span>':''}</div>`;
   }
+  byId('calGrid').innerHTML=html;
+}
 
+function confirmAddHoliday(ds){
+  const dp=new Date(ds).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  showPopup(`<div class="popup" style="width:320px;text-align:left;"><h3 style="margin:0 0 10px;">เพิ่มวันหยุด</h3><div style="font-size:14px;margin-bottom:12px;color:#183153;">📅 ${dp}</div><div style="font-size:13px;color:#5b708b;font-weight:600;margin-bottom:6px;">ชื่อวันหยุด (ถ้ามี)</div><input id="holidayNoteInput" type="text" placeholder="เช่น สงกรานต์" style="width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:9px 12px;font:inherit;margin-bottom:14px;"><div style="display:flex;gap:8px;justify-content:flex-end;"><button onclick="closePopup()" style="background:#e2e8f0;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;">Cancel</button><button onclick="doAddHoliday('${ds}')" style="background:#16a34a;color:white;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;">OK</button></div></div>`);
+}
+
+function doAddHoliday(ds){
+  const note=byId('holidayNoteInput')?.value||''; closePopup();
+  fetch(`${SUPABASE_URL}/rest/v1/holidays`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({date:ds,note})})
+  .then(()=>{calState.holidays.add(ds);renderCalendar();});
+}
+
+function selectCalDay(ds){
+  const ih=calState.holidays.has(ds);
+  safeSetValue('workDate',ds); safeSetText('heroDate',ds); renderCalendar();
+  if(ih){holidayState.active=true;holidayState.date=ds;updateHolidayButton(ds);loadDataFromX4(ds);}
+  else{holidayState.active=false;holidayState.date=null;updateHolidayButton(null);loadData();}
   closeCalendar();
 }
 
-function updateHolidayButton(dateStr) {
-  const btn = byId('holidayBtn');
-  if (!btn) return;
-  if (dateStr) {
-    btn.innerHTML = `🏖️ Holiday: ${dateStr}`;
-    btn.style.background = 'rgba(220,38,38,0.25)';
-    btn.style.border = '1px solid rgba(252,165,165,0.6)';
-  } else {
-    btn.innerHTML = `📅 plan holiday`;
-    btn.style.background = 'rgba(255,255,255,0.2)';
-    btn.style.border = '1px solid rgba(255,255,255,0.35)';
-  }
+function updateHolidayButton(ds){
+  const btn=byId('holidayBtn');if(!btn)return;
+  if(ds){btn.innerHTML=`🏖️ Holiday: ${ds}`;btn.style.background='rgba(220,38,38,0.25)';btn.style.border='1px solid rgba(252,165,165,0.6)';}
+  else{btn.innerHTML='📅 plan holiday';btn.style.background='rgba(255,255,255,0.2)';btn.style.border='1px solid rgba(255,255,255,0.35)';}
 }
 
-let holidayAddMode = false;
+function addHolidayPlan(){holidayAddMode=true;renderCalendar();}
+function exitHolidayAddMode(){holidayAddMode=false;renderCalendar();}
+function openConfirmModal(msg,cb){byId('confirmMessage').innerText=msg;confirmCallback=cb;byId('confirmModalBackdrop').classList.add('show');}
+function closeConfirmModal(){byId('confirmModalBackdrop').classList.remove('show');confirmCallback=null;}
+function confirmOk(){if(confirmCallback)confirmCallback();closeConfirmModal();}
 
-function addHolidayPlan() {
-  holidayAddMode = true;
-  renderCalendar(); // re-render ให้เห็น highlight
-}
+document.addEventListener('click',e=>{if(e.target===byId('taskModalBackdrop'))closeTaskModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTaskModal();});
+document.addEventListener('DOMContentLoaded',()=>{
+  ensureMetaDefaults(); populateModalTimeSlots(); initTimeline(); loadData();
+  setInterval(()=>{if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();},10000);
+});
+</script>
 
-function exitHolidayAddMode() {
-  holidayAddMode = false;
-  renderCalendar();
-}
-function openConfirmModal(message, callback) {
-  document.getElementById("confirmMessage").innerText = message;
-  confirmCallback = callback;
-
-  document.getElementById("confirmModalBackdrop").classList.add("show");
-}
-
-function closeConfirmModal() {
-  document.getElementById("confirmModalBackdrop").classList.remove("show");
-  confirmCallback = null;
-}
-
-function confirmOk() {
-  if (confirmCallback) {
-    confirmCallback(); // 🔥 เรียก function ต่อ
-  }
-  closeConfirmModal();
-}
-
-    function runSelfTests() {
-      console.assert(getSlotKey('ธนเทพ', 'PLAN', 2) === 'ธนเทพ__PLAN__2', 'Test failed: slot key should match format');
-
-      const range1 = clampRange(1, 3);
-      console.assert(range1.start === 1 && range1.end === 3, 'Test failed: clampRange should keep valid range');
-      const range2 = clampRange(4, 2);
-      console.assert(range2.start === 4 && range2.end === 4, 'Test failed: clampRange should prevent end before start');
-
-      const mockTimeline = {};
-      technicians.forEach((name) => {
-        mockTimeline[name] = getDefaultTimelineRow();
-      });
-      state.timeline = normalizeTimeline(mockTimeline);
-      state.slotDetails = {};
-
-      applyPlanRange(technicians[0], 1, 3, { jobType: 'PM', detail: 'ตรวจสอบมอเตอร์' });
-      console.assert(state.timeline[technicians[0]].PLAN[1] === true && state.timeline[technicians[0]].PLAN[3] === true, 'Test failed: applyPlanRange should fill range');
-      console.assert(getRangeDetail(technicians[0], 'PLAN', 2).detail === 'ตรวจสอบมอเตอร์', 'Test failed: getRangeDetail should resolve detail inside range');
-      console.assert(getJobSummary(technicians[0], 'PLAN', 2).includes('8:30 - 10:30'), 'Test failed: summary should include selected range text');
-      console.assert(getJobSummary(technicians[0], 'ACTUAL', 2) === '', 'Test failed: ACTUAL should not show detail');
-
-      clearPlanRange(technicians[0], 1, 3);
-      console.assert(state.timeline[technicians[0]].PLAN[1] === false && state.timeline[technicians[0]].PLAN[3] === false, 'Test failed: clearPlanRange should clear range');
-
-      populateModalTimeSlots();
-      const modalStartSlot = byId('modalStartSlot');
-      const modalEndSlot = byId('modalEndSlot');
-      console.assert(Boolean(modalStartSlot) && modalStartSlot.options.length === timeSlots.length, 'Test failed: modal start slot should contain all time slots');
-      console.assert(Boolean(modalEndSlot) && modalEndSlot.options.length === timeSlots.length, 'Test failed: modal end slot should contain all time slots');
-
-      applyPlanRange(technicians[0], 2, 4, { jobType: 'Inspection', detail: 'ทดสอบหลายช่วง' });
-      openTaskModal(technicians[0], 'PLAN', 3);
-      console.assert(safeValue('modalStartSlot') === '2', 'Test failed: modal start slot should match saved range');
-      console.assert(safeValue('modalEndSlot') === '4', 'Test failed: modal end slot should match saved range');
-      closeTaskModal();
-
-      clearTimeline(false);
-    }
-
-    document.addEventListener('click', (event) => {
-      const backdrop = byId('taskModalBackdrop');
-      if (event.target === backdrop) closeTaskModal();
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closeTaskModal();
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      ensureMetaDefaults();
-      populateModalTimeSlots();
-      initTimeline();
-      loadData();
-      if(false) runSelfTests();
-      setInterval(() => {
-  if (holidayState.active && holidayState.date) {
-    loadDataFromX4(holidayState.date);
-  } else {
-    loadData();
-  }
-}, 10000);
-    });
-  </script>
-  <div class="modal-backdrop" id="confirmModalBackdrop">
+<!-- Confirm Modal -->
+<div class="modal-backdrop" id="confirmModalBackdrop">
   <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">ยืนยันการทำรายการ</h3>
-    </div>
+    <div class="modal-header"><h3 class="modal-title">ยืนยันการทำรายการ</h3></div>
     <div class="modal-body">
       <div id="confirmMessage" style="font-size:16px;"></div>
-
       <div class="actions" style="justify-content:flex-end;">
         <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
         <button class="btn-primary" onclick="confirmOk()">OK</button>
@@ -1610,40 +807,29 @@ function confirmOk() {
     </div>
   </div>
 </div>
+
+<!-- Calendar Modal -->
 <div class="modal-backdrop" id="calendarBackdrop">
-  <div class="modal" style="width:min(520px,100%); max-height:90vh; overflow:auto;">
+  <div class="modal" style="width:min(520px,100%);max-height:90vh;overflow:auto;">
     <div class="modal-header" style="justify-content:space-between;">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <button onclick="prevMonth()" style="background:#e2e8f0; color:#183153; border-radius:8px; padding:6px 12px;">◀</button>
-        <span id="calMonthLabel" style="font-size:17px; font-weight:800;"></span>
-        <button onclick="nextMonth()" style="background:#e2e8f0; color:#183153; border-radius:8px; padding:6px 12px;">▶</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="prevMonth()" style="background:#e2e8f0;color:#183153;border-radius:8px;padding:6px 12px;">◀</button>
+        <span id="calMonthLabel" style="font-size:17px;font-weight:800;"></span>
+        <button onclick="nextMonth()" style="background:#e2e8f0;color:#183153;border-radius:8px;padding:6px 12px;">▶</button>
       </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <button onclick="addHolidayPlan()" style="background:#2563eb; color:white; border-radius:10px; padding:8px 14px; font-weight:700; font-size:13px;">+ Add Plan วันหยุด</button>
-        <button onclick="closeCalendar()" style="background:#e2e8f0; color:#183153; border-radius:8px; padding:8px 12px;">ปิด</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="addHolidayPlan()" style="background:#2563eb;color:white;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;">+ Add Plan วันหยุด</button>
+        <button onclick="closeCalendar()" style="background:#e2e8f0;color:#183153;border-radius:8px;padding:8px 12px;">ปิด</button>
       </div>
     </div>
     <div class="modal-body" style="padding:16px;">
-      <div id="calAddModeBanner" style="
-  display:none; background:#f0fdf4; border:1px solid #86efac;
-  border-radius:10px; padding:10px 14px; margin-bottom:12px;
-  font-size:13px; color:#166534; font-weight:600;
-  justify-content:space-between; align-items:center;
-">
-  <span>🟢 กดวันที่ต้องการเพิ่มเป็นวันหยุด</span>
-  <button onclick="exitHolidayAddMode()"
-    style="background:#dcfce7; border:1px solid #86efac; border-radius:8px;
-    padding:4px 10px; cursor:pointer; font-size:12px; font-weight:700; color:#166534;">
-    ยกเลิก
-  </button>
-</div>
-      <div id="calGrid" style="
-        display:grid; grid-template-columns:repeat(7,1fr); gap:6px; text-align:center;
-      "></div>
-      <div style="display:flex; gap:14px; margin-top:14px; font-size:12px; color:#5b708b;">
-        <span>🟦 วันทำงานปกติ</span>
-        <span>🟥 วันหยุด / Holiday</span>
-        <span>⬛ วันที่เลือกอยู่</span>
+      <div id="calAddModeBanner" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#166534;font-weight:600;justify-content:space-between;align-items:center;">
+        <span>🟢 กดวันที่ต้องการเพิ่มเป็นวันหยุด</span>
+        <button onclick="exitHolidayAddMode()" style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;color:#166534;">ยกเลิก</button>
+      </div>
+      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;"></div>
+      <div style="display:flex;gap:14px;margin-top:14px;font-size:12px;color:#5b708b;">
+        <span>🟦 วันทำงานปกติ</span><span>🟥 วันหยุด / Holiday</span><span>⬛ วันที่เลือกอยู่</span>
       </div>
     </div>
   </div>
