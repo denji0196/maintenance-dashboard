@@ -79,6 +79,19 @@
     .cal-day.holiday.selected { background:#dc2626; color:white; }
     .cal-day.empty { cursor:default; }
     .cal-day-header { font-size:12px; color:#5b708b; font-weight:700; padding:4px; }
+    @keyframes holidayGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
     @media (max-width:1100px) { .hero { grid-template-columns:1fr; } .hero-stats { justify-items:start; } }
     @media (max-width:480px) { .field-row { grid-template-columns:1fr; } }
   </style>
@@ -104,7 +117,70 @@
   </div>
 
   <section class="grid">
-    <div class="card span-12">
+    <div class="card span-12" style="position:relative;">
+
+  <button
+    id="holidayPrintBtn"
+    onclick="printHolidayPlan()"
+    title="Print Holiday Plan"
+    style="
+  display:none;
+  position:absolute;
+  top:14px;
+  right:14px;
+
+  width:46px;
+  height:46px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border:none;
+  border-radius:14px;
+
+  background:#111;
+  color:#fff;
+
+  font-size:20px;
+  cursor:pointer;
+
+  z-index:20;
+  overflow:hidden;
+
+  box-shadow:
+    0 0 0 2px rgba(216,17,189,0.35),
+    0 6px 18px rgba(216,17,189,0.35);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+
+  background-image:linear-gradient(
+    135deg,
+    #d811bd,
+    #7c3aed,
+    #2563eb,
+    #d811bd
+  );
+
+  background-size:300% 300%;
+
+  animation:holidayGlow 6s linear infinite;
+"
+
+    onmouseover="
+      this.style.transform='translateY(-2px)';
+      this.style.boxShadow='0 8px 18px rgba(37,99,235,0.35)';
+    "
+
+    onmouseout="
+      this.style.transform='translateY(0)';
+      this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';
+    "
+  >
+    🖨️
+  </button>
       <h2>แผนงานเทียบงานจริงรายช่วงเวลา</h2>
       <div class="sub">PLAN: คลิกเพื่อกรอกรายละเอียดและเลือกช่วงเวลาเป็นระยะ / ACTUAL: คลิกเพื่อเปลี่ยนเป็นสีเขียว</div>
       <div class="timeline-toolbar">
@@ -236,6 +312,209 @@ function normalizeTimeline(timeline){
   });
   return n;
 }
+
+function updateHolidayPrintButton(){
+
+  const btn =
+    byId('holidayPrintBtn');
+
+  if(!btn) return;
+
+  // holiday mode
+  if(
+    holidayState.active &&
+    holidayState.date
+  ){
+
+    btn.style.display =
+      'inline-flex';
+
+  }else{
+
+    btn.style.display =
+      'none';
+  }
+}
+async function printHolidayPlan() {
+
+  try {
+
+    const selectedDate =
+      holidayState.date;
+
+    if (!selectedDate) {
+
+      alert("กรุณาเลือกวันที่");
+      return;
+    }
+
+    // โหลดข้อมูล
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${selectedDate}&order=start_slot`,
+      {
+        headers:{
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if(!res.ok){
+
+      throw new Error(await res.text());
+    }
+
+    const data = await res.json();
+
+    if(!data || data.length === 0){
+
+      alert("ไม่พบข้อมูล");
+      return;
+    }
+
+    // สร้าง rows
+    let rows = "";
+
+    data.forEach((item,index)=>{
+
+      rows += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.date || "-"}</td>
+          <td>${item.line || "-"}</td>
+          <td>${item.machine || "-"}</td>
+          <td>${item.job_type || "-"}</td>
+          <td>${item.detail || "-"}</td>
+          <td>${item.start_slot || "-"}</td>
+          <td>${item.end_slot || "-"}</td>
+          <td>${item.technician || "-"}</td>
+          <td>${item.request_qc ? "YES" : "-"}</td>
+          <td>${item.request_mfg ? "YES" : "-"}</td>
+        </tr>
+      `;
+    });
+
+    // html สำหรับ PDF
+    const pdfContent = document.createElement("div");
+
+    pdfContent.innerHTML = `
+      <div style="
+        font-family:Arial,sans-serif;
+        padding:20px;
+        color:#111;
+      ">
+
+        <h1 style="
+          margin:0;
+          color:#2563eb;
+          font-size:28px;
+        ">
+          Holiday Maintenance Plan
+        </h1>
+
+        <div style="
+          margin-top:8px;
+          margin-bottom:20px;
+          color:#555;
+        ">
+          Date : ${selectedDate}
+        </div>
+
+        <table style="
+          width:100%;
+          border-collapse:collapse;
+        ">
+
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Date</th>
+              <th>Line</th>
+              <th>Machine</th>
+              <th>Job Type</th>
+              <th>Detail</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Technician</th>
+              <th>QC</th>
+              <th>MFG</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${rows}
+          </tbody>
+
+        </table>
+
+        <div style="
+          margin-top:20px;
+          font-size:12px;
+          color:#666;
+        ">
+          Generated : ${new Date().toLocaleString()}
+        </div>
+
+      </div>
+    `;
+
+    // style table
+    pdfContent.querySelectorAll("th").forEach(th=>{
+
+      th.style.background = "#2563eb";
+      th.style.color = "white";
+      th.style.border = "1px solid #ccc";
+      th.style.padding = "8px";
+      th.style.fontSize = "12px";
+    });
+
+    pdfContent.querySelectorAll("td").forEach(td=>{
+
+      td.style.border = "1px solid #ccc";
+      td.style.padding = "8px";
+      td.style.fontSize = "11px";
+    });
+
+    // generate pdf
+    const opt = {
+
+      margin: 0.3,
+
+      filename:
+        `HolidayPlan_${selectedDate}.pdf`,
+
+      image: {
+        type: 'jpeg',
+        quality: 1
+      },
+
+      html2canvas: {
+        scale: 2
+      },
+
+      jsPDF: {
+        unit: 'in',
+        format: 'a4',
+        orientation: 'landscape'
+      }
+    };
+
+    await html2pdf()
+      .set(opt)
+      .from(pdfContent)
+      .save();
+
+  } catch(err) {
+
+    console.error(err);
+
+    alert(
+      "PDF ERROR\n\n" +
+      err.message
+    );
+  }
+}
+
 
 function populateModalTimeSlots(){
   const ss=byId('modalStartSlot'),es=byId('modalEndSlot');
@@ -821,15 +1100,38 @@ function doAddHoliday(ds){
 function selectCalDay(ds){
   const ih=calState.holidays.has(ds);
   safeSetValue('workDate',ds); safeSetText('heroDate',ds); renderCalendar();
-  if(ih){holidayState.active=true;holidayState.date=ds;updateHolidayButton(ds);loadDataFromX4(ds);}
-  else{holidayState.active=false;holidayState.date=null;updateHolidayButton(null);loadData();}
+  if(ih){holidayState.active=true;holidayState.date=ds;updateHolidayButton(ds);updateHolidayPrintButton();loadDataFromX4(ds);}
+  else{holidayState.active=false;holidayState.date=null;updateHolidayButton(null);updateHolidayPrintButton();loadData();}
   closeCalendar();
 }
 
 function updateHolidayButton(ds){
-  const btn=byId('holidayBtn');if(!btn)return;
-  if(ds){btn.innerHTML=`🏖️ Holiday: ${ds}`;btn.style.background='rgba(220,38,38,0.25)';btn.style.border='1px solid rgba(252,165,165,0.6)';}
-  else{btn.innerHTML='📅 plan holiday';btn.style.background='rgba(255,255,255,0.2)';btn.style.border='1px solid rgba(255,255,255,0.35)';}
+
+  const btn = byId('holidayBtn');
+  const printBtn = byId('holidayPrintBtn');
+
+  if(ds){
+
+    btn.innerHTML = `🏖️ Holiday: ${ds}`;
+    btn.style.background = 'rgba(220,38,38,0.25)';
+    btn.style.border = '1px solid rgba(252,165,165,0.6)';
+
+    // SHOW PRINT BUTTON
+    if(printBtn){
+      printBtn.style.display = 'block';
+    }
+
+  }else{
+
+    btn.innerHTML = '📅 plan holiday';
+    btn.style.background = 'rgba(255,255,255,0.2)';
+    btn.style.border = '1px solid rgba(255,255,255,0.35)';
+
+    // HIDE PRINT BUTTON
+    if(printBtn){
+      printBtn.style.display = 'none';
+    }
+  }
 }
 
 function addHolidayPlan(){holidayAddMode=true;renderCalendar();}
@@ -845,7 +1147,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(()=>{if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();},10000);
 });
 </script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <!-- Confirm Modal -->
 <div class="modal-backdrop" id="confirmModalBackdrop">
   <div class="modal">
