@@ -110,7 +110,9 @@
       <div class="timeline-toolbar">
         <div style="color:var(--muted);font-size:13px;">สีฟ้า = วางแผนไว้, สีเขียว = ทำจริงแล้ว</div>
         <div class="actions" style="margin-top:0;">
-          <button class="btn-secondary" onclick="fillSampleTimeline()">ใส่ตัวอย่าง</button>
+         <button class="btn-primary" onclick="forceRefreshData()">
+  🔄 Update
+</button>
           <button class="btn-secondary" onclick="clearTimeline()">ล้างตารางเวลา</button>
         </div>
       </div>
@@ -284,6 +286,56 @@ function buildBadges(d){
   if(d.requestQC) o+='<span class="badge badge-qc">QC</span>';
   if(d.requestMFG)o+='<span class="badge badge-mfg">MFG</span>';
   return o;
+}
+
+async function forceRefreshData(){
+
+  try{
+
+    console.log(
+      "FORCE REFRESH..."
+    );
+
+    // holiday mode
+    if(
+      holidayState.active &&
+      holidayState.date
+    ){
+
+      await loadDataFromX4(
+        holidayState.date
+      );
+
+    }else{
+
+      await loadData();
+    }
+
+    // force render
+    renderTimeline();
+
+    // force browser repaint
+    document.body.style.opacity = "0.99";
+
+    setTimeout(()=>{
+
+      document.body.style.opacity = "1";
+
+    },50);
+
+    console.log(
+      "REFRESH DONE"
+    );
+
+  }catch(err){
+
+    console.error(err);
+
+    alert(
+      "REFRESH ERROR\n\n" +
+      err.message
+    );
+  }
 }
 
 function renderTimeline(){
