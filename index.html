@@ -405,11 +405,28 @@ async function printHolidayPlan() {
       alert("ไม่พบข้อมูล");
       return;
     }
-
+    
     // สร้าง rows
-    let rows = "";
+    // sort เฉพาะตอนปริ้น ตาม line
+const sortedData = [...data].sort((a, b) => {
 
-    data.forEach((item,index)=>{
+  const getNumber = (text) => {
+
+    const match = String(text || "")
+      .match(/\d+/);
+
+    return match
+      ? parseInt(match[0], 10)
+      : 0;
+  };
+
+  return getNumber(a.line) - getNumber(b.line);
+});
+
+// สร้าง rows
+let rows = "";
+
+sortedData.forEach((item,index)=>{
 
       rows += `
         <tr>
