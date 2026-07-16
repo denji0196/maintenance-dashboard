@@ -132,7 +132,6 @@
   width:46px;
   height:46px;
 
-  display:flex;
   align-items:center;
   justify-content:center;
 
@@ -371,13 +370,18 @@ function updateHolidayPrintButton(){
 }
 async function printHolidayPlan() {
 
+  let wrapper = null;
+
   try {
 
-    const selectedDate =
-      holidayState.date;
+    // ตรวจว่าไลบรารีสร้าง PDF โหลดเสร็จหรือยัง
+    if (typeof html2pdf === 'undefined') {
+      alert("ไลบรารีสร้าง PDF ยังโหลดไม่เสร็จ\nถ้าเครื่องนี้ไม่มีอินเทอร์เน็ต ปุ่มปริ้นจะใช้ไม่ได้ กรุณาต่อเน็ตแล้วรีเฟรชหน้าใหม่");
+      return;
+    }
 
+    const selectedDate = holidayState.date;
     if (!selectedDate) {
-
       alert("กรุณาเลือกวันที่");
       return;
     }
@@ -385,187 +389,130 @@ async function printHolidayPlan() {
     // โหลดข้อมูล
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${selectedDate}&order=start_slot`,
-      {
-        headers:{
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`
-        }
-      }
+      { headers:{ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
-
-    if(!res.ok){
-
-      throw new Error(await res.text());
-    }
+    if(!res.ok){ throw new Error(await res.text()); }
 
     const data = await res.json();
-
     if(!data || data.length === 0){
-
       alert("ไม่พบข้อมูล");
       return;
     }
-    
-    // สร้าง rows
-    // sort เฉพาะตอนปริ้น ตาม line
-const sortedData = [...data].sort((a, b) => {
 
-  const getNumber = (text) => {
-
-    const match = String(text || "")
-      .match(/\d+/);
-
-    return match
-      ? parseInt(match[0], 10)
-      : 0;
-  };
-
-  return getNumber(a.line) - getNumber(b.line);
-});
-
-// สร้าง rows
-let rows = "";
-
-sortedData.forEach((item,index)=>{
-
-      rows += `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${item.date || "-"}</td>
-          <td>${item.line || "-"}</td>
-          <td>${item.machine || "-"}</td>
-          <td>${item.job_type || "-"}</td>
-          <td>${item.detail || "-"}</td>
-          <td colspan="2">
-  ${getTimeRange(
-    item.start_slot,
-    item.end_slot
-  )}
-</td>
-          <td>${item.technician || "-"}</td>
-          <td>${item.request_qc ? "YES" : "-"}</td>
-          <td>${item.request_mfg ? "YES" : "-"}</td>
-        </tr>
-      `;
+    // sort ตาม line เฉพาะตอนปริ้น
+    const sortedData = [...data].sort((a, b) => {
+      const getNumber = (text) => {
+        const match = String(text || "").match(/\d+/);
+        return match ? parseInt(match[0], 10) : 0;
+      };
+      return getNumber(a.line) - getNumber(b.line);
     });
 
-    // html สำหรับ PDF
-    const pdfContent = document.createElement("div");
+    // สร้าง rows
+    let rows = "";
+    sortedData.forEach((item, index) => {
+      rows += `<tr>
+        <td class="c">${index + 1}</td>
+        <td class="c">${escapeHtml(item.date || "-")}</td>
+        <td>${escapeHtml(item.line || "-")}</td>
+        <td>${escapeHtml(item.machine || "-")}</td>
+        <td>${escapeHtml(item.job_type || "-")}</td>
+        <td>${escapeHtml(item.detail || "-")}</td>
+        <td class="c">${escapeHtml(getTimeRange(item.start_slot, item.end_slot))}</td>
+        <td>${escapeHtml(item.technician || "-")}</td>
+        <td class="c">${item.request_qc ? "YES" : "-"}</td>
+        <td class="c">${item.request_mfg ? "YES" : "-"}</td>
+      </tr>`;
+    });
 
-    pdfContent.innerHTML = `
-      <div style="
-        font-family:Arial,sans-serif;
-        padding:20px;
+    // ── wrapper ที่แสดงบนจอจริง (จำเป็นต่อการจับภาพให้ครบ + รองรับภาษาไทย) ──
+    wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.inset = '0';
+    wrapper.style.zIndex = '2147483647';
+    wrapper.style.background = 'rgba(15,23,42,0.55)';
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.justifyContent = 'flex-start';
+    wrapper.style.overflow = 'auto';
+    wrapper.style.padding = '24px';
+
+    wrapper.innerHTML = `
+      <div style="color:#fff;font-family:'Segoe UI',Tahoma,sans-serif;font-weight:700;margin-bottom:14px;font-size:16px;">
+        ⏳ กำลังสร้าง PDF...
+      </div>
+      <div id="pdfTarget" style="
+        width:1080px;
+        max-width:100%;
+        background:#ffffff;
+        font-family:Arial,'Segoe UI',Tahoma,sans-serif;
         color:#111;
+        padding:20px;
+        border-radius:6px;
+        box-sizing:border-box;
       ">
-
-        <h1 style="
-          margin:0;
-          color:#2563eb;
-          font-size:28px;
-        ">
-          Holiday Maintenance Plan
-        </h1>
-
-        <div style="
-          margin-top:8px;
-          margin-bottom:20px;
-          color:#555;
-        ">
-          Date : ${selectedDate}
-        </div>
-
-        <table style="
-          width:100%;
-          border-collapse:collapse;
-        ">
-
+        <h1 style="margin:0;color:#2563eb;font-size:26px;">Holiday Maintenance Plan</h1>
+        <div style="margin-top:6px;margin-bottom:16px;color:#555;font-size:13px;">Date : ${escapeHtml(selectedDate)}</div>
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+          <colgroup>
+            <col style="width:4%;"><col style="width:9%;"><col style="width:7%;"><col style="width:11%;"><col style="width:11%;">
+            <col style="width:26%;"><col style="width:12%;"><col style="width:12%;"><col style="width:4%;"><col style="width:4%;">
+          </colgroup>
           <thead>
             <tr>
-              <th>No</th>
-              <th>Date</th>
-              <th>Line</th>
-              <th>Machine</th>
-              <th>Job Type</th>
-              <th>Detail</th>
-              <th colspan="2">Time</th>
-              <th>Technician</th>
-              <th>QC</th>
-              <th>MFG</th>
+              <th>No</th><th>Date</th><th>Line</th><th>Machine</th><th>Job Type</th>
+              <th>Detail</th><th>Time</th><th>Technician</th><th>QC</th><th>MFG</th>
             </tr>
           </thead>
-
-          <tbody>
-            ${rows}
-          </tbody>
-
+          <tbody>${rows}</tbody>
         </table>
-
-        <div style="
-          margin-top:20px;
-          font-size:12px;
-          color:#666;
-        ">
-          Generated : ${new Date().toLocaleString()}
-        </div>
-
+        <div style="margin-top:18px;font-size:11px;color:#666;">Generated : ${escapeHtml(new Date().toLocaleString())}</div>
       </div>
     `;
 
-    // style table
-    pdfContent.querySelectorAll("th").forEach(th=>{
+    document.body.appendChild(wrapper);
 
-      th.style.background = "#2563eb";
-      th.style.color = "white";
-      th.style.border = "1px solid #ccc";
-      th.style.padding = "8px";
-      th.style.fontSize = "12px";
+    const target = wrapper.querySelector('#pdfTarget');
+    // จัด style หัวตาราง/เซลล์
+    target.querySelectorAll('th').forEach(th=>{
+      th.style.background = '#2563eb';
+      th.style.color = '#fff';
+      th.style.border = '1px solid #999';
+      th.style.padding = '7px 8px';
+      th.style.fontSize = '12px';
+      th.style.textAlign = 'center';
+      th.style.wordBreak = 'break-word';
+    });
+    target.querySelectorAll('td').forEach(td=>{
+      td.style.border = '1px solid #999';
+      td.style.padding = '7px 8px';
+      td.style.fontSize = '11px';
+      td.style.wordBreak = 'break-word';
+      td.style.whiteSpace = 'normal';
+      td.style.verticalAlign = 'top';
+      td.style.textAlign = td.classList.contains('c') ? 'center' : 'left';
     });
 
-    pdfContent.querySelectorAll("td").forEach(td=>{
+    // รอให้ browser เรนเดอร์เสร็จก่อนจับภาพ
+    await new Promise(r => setTimeout(r, 120));
 
-      td.style.border = "1px solid #ccc";
-      td.style.padding = "8px";
-      td.style.fontSize = "11px";
-    });
-
-    // generate pdf
     const opt = {
-
       margin: 0.3,
-
-      filename:
-        `HolidayPlan_${selectedDate}.pdf`,
-
-      image: {
-        type: 'jpeg',
-        quality: 1
-      },
-
-      html2canvas: {
-        scale: 2
-      },
-
-      jsPDF: {
-        unit: 'in',
-        format: 'a4',
-        orientation: 'landscape'
-      }
+      filename: `HolidayPlan_${selectedDate}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+      pagebreak: { mode: ['css', 'legacy'] }
     };
 
-    await html2pdf()
-      .set(opt)
-      .from(pdfContent)
-      .save();
+    await html2pdf().set(opt).from(target).save();
 
   } catch(err) {
-
     console.error(err);
-
-    alert(
-      "PDF ERROR\n\n" +
-      err.message
-    );
+    alert("PDF ERROR\n\n" + err.message);
+  } finally {
+    if (wrapper && wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
   }
 }
 
@@ -1120,9 +1067,29 @@ function fillSampleTimeline(){
 }
 
 function clearTimeline(shouldSave=true){
+  // FIX: ยืนยันก่อนลบ + ลบให้ถูก table/date + ลบ actuals ด้วย
+  // (เดิม: ลบเฉพาะ status=OK และลบผิด table ตอน holiday mode → กด "ล้าง" แล้วข้อมูลกลับมาหลัง reload)
+  if(shouldSave){
+    const isHoliday = holidayState.active && holidayState.date;
+    const scopeDate = isHoliday ? holidayState.date : safeValue('workDate');
+    const scopeText = isHoliday
+      ? `วันหยุด ${scopeDate}`
+      : `วันที่ ${scopeDate}`;
+    if(!confirm(`ต้องการล้างตารางเวลาทั้งหมดของ ${scopeText} ?\nการลบนี้ไม่สามารถย้อนกลับได้`)) return;
+
+    const planTable = isHoliday ? 'holiday_plans' : 'plans';
+    const h = {apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, Prefer:'return=minimal'};
+
+    Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${scopeDate}`,{method:'DELETE',headers:h}),
+      fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${scopeDate}`,{method:'DELETE',headers:h})
+    ]).then(()=>{
+      if(isHoliday) loadDataFromX4(scopeDate); else loadData();
+    }).catch(e=>console.error(e));
+  }
+
   state.timeline=normalizeTimeline({}); state.slotDetails={}; state.actualStatus={}; state.actualReason={};
   renderTimeline();
-  if(shouldSave){const date=safeValue('workDate');fetch(`${SUPABASE_URL}/rest/v1/plans?date=eq.${date}&status=eq.OK`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});}
 }
 
 // ── Calendar ──
@@ -1190,9 +1157,9 @@ function updateHolidayButton(ds){
     btn.style.background = 'rgba(220,38,38,0.25)';
     btn.style.border = '1px solid rgba(252,165,165,0.6)';
 
-    // SHOW PRINT BUTTON
+    // SHOW PRINT BUTTON (ใช้ flex เพื่อจัดกลางไอคอน)
     if(printBtn){
-      printBtn.style.display = 'block';
+      printBtn.style.display = 'flex';
     }
 
   }else{
@@ -1218,6 +1185,7 @@ document.addEventListener('click',e=>{if(e.target===byId('taskModalBackdrop'))cl
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTaskModal();});
 document.addEventListener('DOMContentLoaded',()=>{
   ensureMetaDefaults(); populateModalTimeSlots(); initTimeline(); loadData();
+  updateHolidayPrintButton(); // FIX: ให้แน่ใจว่าปุ่มปริ้นซ่อนตอนเริ่ม (โหมดปกติ)
   setInterval(()=>{if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();},10000);
 });
 </script>
