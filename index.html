@@ -14,6 +14,15 @@
     * { box-sizing: border-box; }
     body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; background:linear-gradient(180deg,#eef4ff 0%,var(--bg) 100%); color:var(--text); }
     .container { max-width:1450px; margin:0 auto; padding:24px; }
+
+    /* ── NAV TABS ── */
+    .nav-tabs { display:flex; gap:10px; margin-bottom:18px; background:rgba(255,255,255,0.75); border:1px solid rgba(191,219,254,0.7); border-radius:18px; padding:8px; box-shadow:var(--shadow); position:sticky; top:10px; z-index:500; backdrop-filter:blur(10px); }
+    .nav-tab { flex:1; border:0; border-radius:12px; padding:12px 16px; font:inherit; font-weight:800; font-size:15px; cursor:pointer; background:transparent; color:var(--muted); transition:0.2s ease; }
+    .nav-tab:hover { background:#eff6ff; color:var(--primary); }
+    .nav-tab.active { background:linear-gradient(135deg,#1d4ed8,#2563eb); color:white; box-shadow:0 8px 18px rgba(37,99,235,0.35); }
+    .page { display:none; }
+    .page.active { display:block; }
+
     .hero { background:linear-gradient(135deg,#1d4ed8,#2563eb 55%,#60a5fa); color:white; padding:26px; border-radius:24px; box-shadow:var(--shadow); display:grid; grid-template-columns:1.7fr 1fr; gap:18px; align-items:center; }
     .hero h1 { margin:0 0 8px; font-size:30px; }
     .hero p { margin:0; line-height:1.6; opacity:0.95; }
@@ -54,8 +63,8 @@
     .field { display:flex; flex-direction:column; gap:6px; }
     .field label { font-size:13px; color:var(--muted); font-weight:600; }
     .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    select, textarea, input[type="text"] { width:100%; border:1px solid #cbd5e1; border-radius:12px; padding:10px 12px; background:white; color:var(--text); font:inherit; }
-    select:focus, textarea:focus, input[type="text"]:focus { outline:none; border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,0.18); }
+    select, textarea, input[type="text"], input[type="date"] { width:100%; border:1px solid #cbd5e1; border-radius:12px; padding:10px 12px; background:white; color:var(--text); font:inherit; }
+    select:focus, textarea:focus, input[type="text"]:focus, input[type="date"]:focus { outline:none; border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,0.18); }
     textarea { min-height:90px; resize:vertical; }
     .checkbox-group { display:flex; gap:20px; flex-wrap:wrap; padding:12px 16px; background:linear-gradient(135deg,#f8faff,#eef4ff); border:1px solid #bfdbfe; border-radius:12px; }
     .checkbox-item { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text); user-select:none; }
@@ -79,6 +88,62 @@
     .cal-day.holiday.selected { background:#dc2626; color:white; }
     .cal-day.empty { cursor:default; }
     .cal-day-header { font-size:12px; color:#5b708b; font-weight:700; padding:4px; }
+
+    /* ── PAGE 2 : BIG CALENDAR ── */
+    .bigcal-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .bigcal-month { font-size:22px; font-weight:800; }
+    .bigcal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+    .bigcal-head { text-align:center; font-size:13px; font-weight:800; color:var(--muted); padding:6px 0; }
+    .bigcal-cell { min-height:96px; border:1.5px solid rgba(191,219,254,0.8); border-radius:14px; padding:8px; background:linear-gradient(180deg,#ffffff,#f8fbff); cursor:pointer; transition:0.15s ease; position:relative; display:flex; flex-direction:column; gap:6px; }
+    .bigcal-cell:hover { border-color:#2563eb; box-shadow:0 8px 18px rgba(37,99,235,0.15); transform:translateY(-1px); }
+    .bigcal-cell.empty { background:transparent; border-color:transparent; cursor:default; box-shadow:none; transform:none; }
+    .bigcal-cell.today { border-color:#2563eb; box-shadow:inset 0 0 0 1px #2563eb; }
+    .bigcal-cell.holiday { background:linear-gradient(180deg,#fff1f2,#ffe4e6); border-color:#fecdd3; }
+    .bigcal-daynum { font-size:14px; font-weight:800; }
+    .bigcal-cell.holiday .bigcal-daynum { color:#be123c; }
+    .pill { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:800; border-radius:999px; padding:2px 8px; line-height:1.5; width:fit-content; }
+    .pill-backlog { background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; }
+    .pill-plan    { background:#ffedd5; color:#c2410c; border:1px solid #fed7aa; }
+    .pill-done    { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+    .daydetail-section-title { font-size:14px; font-weight:800; margin:6px 0 8px; display:flex; align-items:center; gap:8px; }
+    .daydetail-item { border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.55; background:#f8fafc; }
+    .daydetail-item + .daydetail-item { margin-top:8px; }
+    .daydetail-item b { color:#0f172a; }
+    .status-chip { display:inline-block; font-size:11px; font-weight:800; border-radius:8px; padding:2px 8px; }
+    .chip-ng { background:#fee2e2; color:#b91c1c; }
+    .chip-wait { background:#ffedd5; color:#c2410c; }
+    .chip-ok { background:#dcfce7; color:#15803d; }
+    .backlog-table-wrap { overflow:auto; max-height:60vh; border:1px solid rgba(96,165,250,0.35); border-radius:16px; }
+    .backlog-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12.5px; min-width:900px; }
+    .backlog-table th { position:sticky; top:0; background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(30,41,59,0.92)); color:#e0f2fe; padding:9px 10px; font-size:12.5px; text-align:left; white-space:nowrap; }
+    .backlog-table td { border-bottom:1px solid rgba(148,163,184,0.22); padding:8px 10px; vertical-align:top; }
+    .backlog-table tr:hover td { background:#eff6ff; }
+
+    /* ── PAGE 3 : SPAREPART ── */
+    .sp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
+    .sp-stat { border-radius:16px; padding:14px 16px; border:1px solid var(--line); background:linear-gradient(180deg,#ffffff,#f8fbff); }
+    .sp-stat .n { font-size:26px; font-weight:800; }
+    .sp-stat .l { font-size:12.5px; color:var(--muted); font-weight:700; margin-top:2px; }
+    .sp-filterbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+    .sp-filterbar select, .sp-filterbar input[type="text"] { width:auto; min-width:170px; }
+    .sp-table-wrap { overflow:auto; border:1px solid rgba(96,165,250,0.35); border-radius:16px; }
+    .sp-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; min-width:1080px; }
+    .sp-table th { position:sticky; top:0; z-index:1; background:linear-gradient(180deg,rgba(15,23,42,0.95),rgba(30,41,59,0.92)); color:#e0f2fe; padding:10px; font-size:13px; white-space:nowrap; }
+    .sp-table td { border-bottom:1px solid rgba(148,163,184,0.22); padding:9px 10px; vertical-align:top; }
+    .sp-table tr:hover td { background:#eff6ff; }
+    .sp-table tr.overdue td { background:#fff1f2; }
+    .sp-cat { font-size:11px; font-weight:800; border-radius:8px; padding:2px 8px; white-space:nowrap; }
+    .cat-repair { background:#ede9fe; color:#6d28d9; }
+    .cat-order  { background:#e0f2fe; color:#0369a1; }
+    .sp-status { font-size:11px; font-weight:800; border-radius:8px; padding:2px 8px; white-space:nowrap; }
+    .st-wait   { background:#fef3c7; color:#92400e; }
+    .st-sent   { background:#ede9fe; color:#6d28d9; }
+    .st-order  { background:#e0f2fe; color:#0369a1; }
+    .st-arrive { background:#dcfce7; color:#15803d; }
+    .st-close  { background:#e2e8f0; color:#334155; }
+    .mini-btn { padding:6px 10px; font-size:12px; border-radius:9px; }
+    .overdue-flag { font-size:10.5px; font-weight:800; color:#b91c1c; }
+
     @keyframes holidayGlow {
   0% {
     background-position: 0% 50%;
@@ -93,11 +158,22 @@
   }
 }
     @media (max-width:1100px) { .hero { grid-template-columns:1fr; } .hero-stats { justify-items:start; } }
+    @media (max-width:768px) { .bigcal-cell { min-height:74px; padding:5px; } .pill { font-size:9px; padding:1px 6px; } .nav-tab { font-size:13px; padding:10px 8px; } }
     @media (max-width:480px) { .field-row { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
 <div class="container">
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" id="tabDaily"     onclick="switchPage('daily')">📋 Daily Dashboard</button>
+    <button class="nav-tab"        id="tabCalendar"  onclick="switchPage('calendar')">📅 ปฏิทินงานค้าง</button>
+    <button class="nav-tab"        id="tabSparepart" onclick="switchPage('sparepart')">🔧 Spare Part ส่งซ่อม/รอของ</button>
+  </nav>
+
+  <!-- ═══════════ PAGE 1 : DAILY ═══════════ -->
+  <div class="page active" id="pageDaily">
   <section class="hero">
     <div>
       <h1>Dashboard งานประจำวัน - พนักงานซ่อม</h1>
@@ -204,6 +280,78 @@
       </div>
     </div>
   </section>
+  </div><!-- /pageDaily -->
+
+  <!-- ═══════════ PAGE 2 : CALENDAR / BACKLOG ═══════════ -->
+  <div class="page" id="pageCalendar">
+    <section class="card span-12" style="margin-bottom:18px;">
+      <div class="bigcal-toolbar">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn-secondary" onclick="bigPrevMonth()">◀</button>
+          <span class="bigcal-month" id="bigcalMonthLabel"></span>
+          <button class="btn-secondary" onclick="bigNextMonth()">▶</button>
+        </div>
+        <div class="actions" style="margin-top:0;">
+          <button class="btn-primary" onclick="refreshCalendarPage()">🔄 Update ข้อมูล</button>
+        </div>
+      </div>
+      <div class="sub" style="margin-bottom:12px;">
+        <span class="pill pill-backlog">🔴 งานค้าง (จากชีท)</span>
+        <span class="pill pill-plan">🟠 แผนยังไม่จบ</span>
+        &nbsp;กดที่วันเพื่อดูรายละเอียดงานค้างของวันนั้น
+      </div>
+      <div class="bigcal-grid" id="bigcalGrid"></div>
+    </section>
+
+    <section class="card span-12">
+      <h2>📋 งานค้างทั้งหมด (จากชีทแจ้งซ่อม สถานะ "งานค้าง")</h2>
+      <div class="sub" id="backlogStatus">กำลังโหลดข้อมูลจาก Google Sheet...</div>
+      <div class="backlog-table-wrap">
+        <table class="backlog-table" id="backlogTable"></table>
+      </div>
+    </section>
+  </div><!-- /pageCalendar -->
+
+  <!-- ═══════════ PAGE 3 : SPAREPART ═══════════ -->
+  <div class="page" id="pageSparepart">
+    <section class="card span-12">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <h2 style="margin:0;">🔧 ติดตาม Spare Part ส่งซ่อม / รอของเข้า</h2>
+        <div class="actions" style="margin-top:0;">
+          <button class="btn-primary" onclick="openSpModal()">➕ เพิ่มรายการ</button>
+          <button class="btn-secondary" onclick="loadSpareparts()">🔄 Update</button>
+        </div>
+      </div>
+
+      <div class="sp-stats" id="spStats"></div>
+
+      <div class="sp-filterbar">
+        <select id="spFilterCat" onchange="renderSpTable()">
+          <option value="">ทุกประเภท</option>
+          <option value="ส่งซ่อม">ส่งซ่อม</option>
+          <option value="รอของเข้า">รอของเข้า (สั่งซื้อ)</option>
+        </select>
+        <select id="spFilterStatus" onchange="renderSpTable()">
+          <option value="">ทุกสถานะ</option>
+          <option>รอดำเนินการ</option>
+          <option>ส่งซ่อมแล้ว</option>
+          <option>รอของเข้า</option>
+          <option>ของเข้าแล้ว</option>
+          <option>ปิดงาน</option>
+        </select>
+        <input type="text" id="spSearch" placeholder="🔍 ค้นหา ชื่อ/รหัส/เครื่อง/PR-PO..." oninput="renderSpTable()" style="flex:1;min-width:220px;" />
+        <label class="checkbox-item" style="font-size:13px;">
+          <input type="checkbox" id="spHideClosed" checked onchange="renderSpTable()" /> ซ่อนงานที่ปิดแล้ว
+        </label>
+      </div>
+
+      <div class="sp-table-wrap">
+        <table class="sp-table" id="spTable"></table>
+      </div>
+      <div class="sub" id="spNote" style="margin-top:12px;"></div>
+    </section>
+  </div><!-- /pageSparepart -->
+
 </div>
 
 <!-- TASK MODAL -->
@@ -272,9 +420,104 @@
   </div>
 </div>
 
+<!-- DAY DETAIL MODAL (page 2) -->
+<div class="modal-backdrop" id="dayDetailBackdrop">
+  <div class="modal" style="width:min(680px,100%);">
+    <div class="modal-header">
+      <h3 class="modal-title" id="dayDetailTitle">งานค้าง</h3>
+      <button class="close-btn" type="button" onclick="byId('dayDetailBackdrop').classList.remove('show')">ปิด</button>
+    </div>
+    <div class="modal-body" id="dayDetailBody"></div>
+  </div>
+</div>
+
+<!-- SPAREPART MODAL (page 3) -->
+<div class="modal-backdrop" id="spModalBackdrop">
+  <div class="modal" style="width:min(620px,100%);">
+    <div class="modal-header">
+      <h3 class="modal-title" id="spModalTitle">เพิ่มรายการ Spare Part</h3>
+      <button class="close-btn" type="button" onclick="closeSpModal()">ปิด</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label>ประเภท</label>
+          <select id="spCat">
+            <option value="ส่งซ่อม">ส่งซ่อม</option>
+            <option value="รอของเข้า">รอของเข้า (สั่งซื้อ)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>สถานะ</label>
+          <select id="spStatus">
+            <option>รอดำเนินการ</option>
+            <option>ส่งซ่อมแล้ว</option>
+            <option>รอของเข้า</option>
+            <option>ของเข้าแล้ว</option>
+            <option>ปิดงาน</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>ชื่ออะไหล่ *</label>
+          <input type="text" id="spName" placeholder="เช่น Servo Motor HG-KR43" />
+        </div>
+        <div class="field">
+          <label>รหัส / SAP Code</label>
+          <input type="text" id="spCode" placeholder="เช่น 8000123456" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Line</label>
+          <input type="text" id="spLine" placeholder="เช่น Line A" />
+        </div>
+        <div class="field">
+          <label>Machine</label>
+          <input type="text" id="spMachine" placeholder="เช่น AS-0251" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>วันที่ส่ง / วันที่สั่ง</label>
+          <input type="date" id="spSendDate" />
+        </div>
+        <div class="field">
+          <label>กำหนดรับของ / ของเข้า</label>
+          <input type="date" id="spExpectDate" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>เลข PR / PO / เอกสารส่งซ่อม</label>
+          <input type="text" id="spRefNo" placeholder="เช่น PR-2026-0123" />
+        </div>
+        <div class="field">
+          <label>ผู้ขาย / ร้านซ่อม</label>
+          <input type="text" id="spVendor" placeholder="เช่น บ.มิตซูฯ" />
+        </div>
+      </div>
+      <div class="field">
+        <label>หมายเหตุ</label>
+        <textarea id="spNoteInput" style="min-height:70px;" placeholder="รายละเอียดเพิ่มเติม เช่น อาการเสีย เบอร์ติดต่อ"></textarea>
+      </div>
+      <div class="actions" style="margin-top:0;justify-content:flex-end;">
+        <button class="btn-primary" type="button" onclick="saveSparepart()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8";
+
+// ── Google Sheet งานค้าง (แก้ชื่อชีท/คำที่ใช้กรองตรงนี้ได้) ──
+const BACKLOG_SHEET_ID     = "1t6uMvJqXE3GFpQTw9VlR0hDxWVIwvHaI2OomvYuH1hU";
+const BACKLOG_SHEET_NAME   = "แจ้งซ่อม";   // tab ที่ดึงข้อมูล
+const BACKLOG_FILTER_TEXT  = "งานค้าง";    // เอาเฉพาะแถวที่มีสถานะ/หัวข้อนี้
+
 const technicians = ["ธนเทพ","สงคราม","สุทิวัส","วีระพงษ์","อาคม","ณัฐวุฒิ","ธีระ","ธนัทดนัย","วิโรจน์","New operator"];
 const timeSlots = ["(7:30-8:30)/(19:30-20:30)","(8:30-9:30)/(20:30-21:30)","(9:30-10:30)/(21:30-22:30)","(10:30-11:30)/(22:30-23:30)","(11:30-12:00)/(23:30-24:00)","(12:00-13:00)/(24:00-01:00)","(13:00-14:00)/(01:00-02:00)","(14:00-14:30)/(02:00-02:30)","(14:30-15:30)/(02:30-03:30)","(15:30-16:30)/(03:30-04:30)","(17:00-17:30)/(05:00-05:30)","(17:30-18:30)/(05:30-06:30)","(18:30-19:30)/(06:30-07:30)"];
 
@@ -286,6 +529,20 @@ function safeValue(id,fb=''){const el=byId(id);return el?el.value:fb;}
 function safeSetValue(id,v){const el=byId(id);if(el)el.value=v;}
 function safeSetText(id,v){const el=byId(id);if(el)el.textContent=v;}
 function escapeHtml(t){return String(t??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ═══════════ PAGE SWITCHER ═══════════
+let currentPage='daily';
+function switchPage(p){
+  currentPage=p;
+  ['daily','calendar','sparepart'].forEach(x=>{
+    const page=byId('page'+x.charAt(0).toUpperCase()+x.slice(1));
+    const tab =byId('tab'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(page)page.classList.toggle('active',x===p);
+    if(tab)tab.classList.toggle('active',x===p);
+  });
+  if(p==='calendar')refreshCalendarPage();
+  if(p==='sparepart')loadSpareparts();
+}
 
 function ensureMetaDefaults(){
   const today=new Date().toISOString().split('T')[0];
@@ -313,59 +570,23 @@ function normalizeTimeline(timeline){
 }
 
 function getTimeRange(startSlot, endSlot){
-
-  const startRaw =
-    timeSlots[startSlot];
-
-  const endRaw =
-    timeSlots[endSlot];
-
-  if(!startRaw || !endRaw){
-    return "-";
-  }
-
-  // เอาฝั่งกลางวัน
-  const startPart =
-    startRaw.split("/")[0];
-
-  const endPart =
-    endRaw.split("/")[0];
-
-  // start time
-  const startTime =
-    startPart
-      .replace("(","")
-      .split("-")[0];
-
-  // end time
-  const endTime =
-    endPart
-      .replace(")","")
-      .split("-")[1];
-
+  const startRaw = timeSlots[startSlot];
+  const endRaw = timeSlots[endSlot];
+  if(!startRaw || !endRaw){ return "-"; }
+  const startPart = startRaw.split("/")[0];
+  const endPart = endRaw.split("/")[0];
+  const startTime = startPart.replace("(","").split("-")[0];
+  const endTime = endPart.replace(")","").split("-")[1];
   return `${startTime} - ${endTime}`;
 }
 
 function updateHolidayPrintButton(){
-
-  const btn =
-    byId('holidayPrintBtn');
-
+  const btn = byId('holidayPrintBtn');
   if(!btn) return;
-
-  // holiday mode
-  if(
-    holidayState.active &&
-    holidayState.date
-  ){
-
-    btn.style.display =
-      'inline-flex';
-
+  if( holidayState.active && holidayState.date ){
+    btn.style.display = 'inline-flex';
   }else{
-
-    btn.style.display =
-      'none';
+    btn.style.display = 'none';
   }
 }
 async function printHolidayPlan() {
@@ -374,7 +595,6 @@ async function printHolidayPlan() {
 
   try {
 
-    // ตรวจว่าไลบรารีสร้าง PDF โหลดเสร็จหรือยัง
     if (typeof html2pdf === 'undefined') {
       alert("ไลบรารีสร้าง PDF ยังโหลดไม่เสร็จ\nถ้าเครื่องนี้ไม่มีอินเทอร์เน็ต ปุ่มปริ้นจะใช้ไม่ได้ กรุณาต่อเน็ตแล้วรีเฟรชหน้าใหม่");
       return;
@@ -386,7 +606,6 @@ async function printHolidayPlan() {
       return;
     }
 
-    // โหลดข้อมูล
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${selectedDate}&order=start_slot`,
       { headers:{ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
@@ -399,7 +618,6 @@ async function printHolidayPlan() {
       return;
     }
 
-    // sort ตาม line เฉพาะตอนปริ้น
     const sortedData = [...data].sort((a, b) => {
       const getNumber = (text) => {
         const match = String(text || "").match(/\d+/);
@@ -408,7 +626,6 @@ async function printHolidayPlan() {
       return getNumber(a.line) - getNumber(b.line);
     });
 
-    // สร้าง rows
     let rows = "";
     sortedData.forEach((item, index) => {
       rows += `<tr>
@@ -425,7 +642,6 @@ async function printHolidayPlan() {
       </tr>`;
     });
 
-    // ── wrapper ที่แสดงบนจอจริง (จำเป็นต่อการจับภาพให้ครบ + รองรับภาษาไทย) ──
     wrapper = document.createElement('div');
     wrapper.style.position = 'fixed';
     wrapper.style.inset = '0';
@@ -474,7 +690,6 @@ async function printHolidayPlan() {
     document.body.appendChild(wrapper);
 
     const target = wrapper.querySelector('#pdfTarget');
-    // จัด style หัวตาราง/เซลล์
     target.querySelectorAll('th').forEach(th=>{
       th.style.background = '#2563eb';
       th.style.color = '#fff';
@@ -494,7 +709,6 @@ async function printHolidayPlan() {
       td.style.textAlign = td.classList.contains('c') ? 'center' : 'left';
     });
 
-    // รอให้ browser เรนเดอร์เสร็จก่อนจับภาพ
     await new Promise(r => setTimeout(r, 120));
 
     const opt = {
@@ -569,52 +783,20 @@ function buildBadges(d){
 }
 
 async function forceRefreshData(){
-
   try{
-
-    console.log(
-      "FORCE REFRESH..."
-    );
-
-    // holiday mode
-    if(
-      holidayState.active &&
-      holidayState.date
-    ){
-
-      await loadDataFromX4(
-        holidayState.date
-      );
-
+    console.log("FORCE REFRESH...");
+    if( holidayState.active && holidayState.date ){
+      await loadDataFromX4( holidayState.date );
     }else{
-
       await loadData();
     }
-
-    // force render
     renderTimeline();
-
-    // force browser repaint
     document.body.style.opacity = "0.99";
-
-    setTimeout(()=>{
-
-      document.body.style.opacity = "1";
-
-    },50);
-
-    console.log(
-      "REFRESH DONE"
-    );
-
+    setTimeout(()=>{ document.body.style.opacity = "1"; },50);
+    console.log("REFRESH DONE");
   }catch(err){
-
     console.error(err);
-
-    alert(
-      "REFRESH ERROR\n\n" +
-      err.message
-    );
+    alert("REFRESH ERROR\n\n" + err.message);
   }
 }
 
@@ -729,14 +911,12 @@ async function saveTaskModal(){
     state.timeline[technician] = getDefaultTimelineRow();
   }
 
-  // ลบช่วงเดิม
   clearPlanRange(
     technician,
     originalIndex,
     originalEndIndex
   );
 
-  // ลบ detail เดิม
 delete state.slotDetails[
   getSlotKey(
     technician,
@@ -745,7 +925,6 @@ delete state.slotDetails[
   )
 ];
 
-  // เพิ่มช่วงใหม่
   applyPlanRange(
     technician,
     r.start,
@@ -766,7 +945,6 @@ delete state.slotDetails[
 
   renderTimeline();
 
-  // SAVE SUPABASE
   await saveData(
   technician,
   r.start,
@@ -827,7 +1005,6 @@ function toggleActualBlock(name,start,end){
 }
 
 function saveActualToSupabase(name,start,end,result,reason,detail){
-  // ✅ ดึง date จาก slotDetails ก่อน ถ้าไม่มีค่อย fallback
   const slotDetail = state.slotDetails[getSlotKey(name,'PLAN',start)];
   const date = slotDetail?.date 
     || (holidayState.active&&holidayState.date ? holidayState.date : safeValue('workDate'));
@@ -907,7 +1084,6 @@ async function saveData(
 
     console.log("SAVE PAYLOAD:", payload);
 
-    // CHECK EXIST
     const checkRes = await fetch(
   `${SUPABASE_URL}/rest/v1/${table}?date=eq.${targetDate}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${oldStartSlot}&end_slot=eq.${oldEndSlot}`,
       {
@@ -924,7 +1100,6 @@ async function saveData(
 
     let saveRes;
 
-    // UPDATE
     if(existing.length > 0){
 
       const id = existing[0].id;
@@ -945,7 +1120,6 @@ async function saveData(
 
     }else{
 
-      // INSERT
       saveRes = await fetch(
         `${SUPABASE_URL}/rest/v1/${table}`,
         {
@@ -964,65 +1138,40 @@ async function saveData(
 
     const responseText = await saveRes.text();
 
-    console.log(
-      "SUPABASE STATUS:",
-      saveRes.status
-    );
-
-    console.log(
-      "SUPABASE RESPONSE:",
-      responseText
-    );
+    console.log("SUPABASE STATUS:", saveRes.status);
+    console.log("SUPABASE RESPONSE:", responseText);
 
     if(!saveRes.ok){
-
-      alert(
-        "SAVE FAILED\n\n" +
-        responseText
-      );
-
+      alert("SAVE FAILED\n\n" + responseText);
       return;
     }
 
     console.log("SAVE SUCCESS");
 
-    // reload
-    if(
-      holidayState.active &&
-      holidayState.date
-    ){
-      await loadDataFromX4(
-        holidayState.date
-      );
+    if( holidayState.active && holidayState.date ){
+      await loadDataFromX4( holidayState.date );
     }else{
       await loadData();
     }
 
   }catch(err){
-
     console.error(err);
-
-    alert(
-      "SAVE ERROR\n\n" +
-      err.message
-    );
+    alert("SAVE ERROR\n\n" + err.message);
   }
 }
 
 function loadData(){
-  fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  return fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
   .then(r=>r.json()).then(plans=>{
     const nt=normalizeTimeline({}),nd={};
     state.actualStatus={}; state.actualReason={};
     const seen=new Set();
     plans.forEach(row=>{
-      // ✅ เพิ่ม date ในการ destructure
       const{technician,start_slot:start,end_slot:end,job_type:jobType,detail,status,reason,line,machine,request_qc,request_mfg,date}=row;
       const key=getSlotKey(technician,'PLAN',start);
       if(seen.has(key))return; seen.add(key);
       if(!nt[technician])nt[technician]=getDefaultTimelineRow();
       for(let i=start;i<=end;i++)nt[technician].PLAN[i]=true;
-      // ✅ เก็บ date ไว้ใน slotDetails
       nd[key]={startIndex:start,endIndex:end,jobType,detail,line:line||'',machine:machine||'',requestQC:request_qc||false,requestMFG:request_mfg||false,date:date||''};
       if(status){for(let i=start;i<=end;i++){nt[technician].ACTUAL[i]=true;state.actualStatus[`${technician}_${i}`]=status;state.actualReason[`${technician}_${i}`]=reason||'';}}
     });
@@ -1031,7 +1180,7 @@ function loadData(){
 }
 
 function loadDataFromX4(date){
-  Promise.all([
+  return Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${date}&type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()),
     fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json())
   ]).then(([plans])=>{
@@ -1044,7 +1193,6 @@ function loadDataFromX4(date){
         nt[technician].PLAN[i]=true;
         if(status){nt[technician].ACTUAL[i]=true;state.actualStatus[`${technician}_${i}`]=status;state.actualReason[`${technician}_${i}`]=reason;}
       }
-      // ✅ เก็บ date ไว้ใน slotDetails
       nd[getSlotKey(technician,'PLAN',start)]={startIndex:start,endIndex:end,jobType,detail,line:line||'',machine:machine||'',requestQC:request_qc||false,requestMFG:request_mfg||false,date:rowDate||date};
     });
     state.timeline=nt; state.slotDetails=nd; renderTimeline();
@@ -1067,8 +1215,6 @@ function fillSampleTimeline(){
 }
 
 function clearTimeline(shouldSave=true){
-  // FIX: ยืนยันก่อนลบ + ลบให้ถูก table/date + ลบ actuals ด้วย
-  // (เดิม: ลบเฉพาะ status=OK และลบผิด table ตอน holiday mode → กด "ล้าง" แล้วข้อมูลกลับมาหลัง reload)
   if(shouldSave){
     const isHoliday = holidayState.active && holidayState.date;
     const scopeDate = isHoliday ? holidayState.date : safeValue('workDate');
@@ -1092,7 +1238,7 @@ function clearTimeline(shouldSave=true){
   renderTimeline();
 }
 
-// ── Calendar ──
+// ── Calendar (holiday picker เดิม) ──
 const calState={year:new Date().getFullYear(),month:new Date().getMonth(),holidays:new Set()};
 const holidayState={active:false,date:null};
 let holidayAddMode=false, confirmCallback=null;
@@ -1157,7 +1303,6 @@ function updateHolidayButton(ds){
     btn.style.background = 'rgba(220,38,38,0.25)';
     btn.style.border = '1px solid rgba(252,165,165,0.6)';
 
-    // SHOW PRINT BUTTON (ใช้ flex เพื่อจัดกลางไอคอน)
     if(printBtn){
       printBtn.style.display = 'flex';
     }
@@ -1168,7 +1313,6 @@ function updateHolidayButton(ds){
     btn.style.background = 'rgba(255,255,255,0.2)';
     btn.style.border = '1px solid rgba(255,255,255,0.35)';
 
-    // HIDE PRINT BUTTON
     if(printBtn){
       printBtn.style.display = 'none';
     }
@@ -1181,12 +1325,418 @@ function openConfirmModal(msg,cb){byId('confirmMessage').innerText=msg;confirmCa
 function closeConfirmModal(){byId('confirmModalBackdrop').classList.remove('show');confirmCallback=null;}
 function confirmOk(){if(confirmCallback)confirmCallback();closeConfirmModal();}
 
-document.addEventListener('click',e=>{if(e.target===byId('taskModalBackdrop'))closeTaskModal();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTaskModal();});
+// ═══════════════════════════════════════════════════════
+// PAGE 2 : ปฏิทินงานค้าง
+// ═══════════════════════════════════════════════════════
+const bigcal = { year:new Date().getFullYear(), month:new Date().getMonth() };
+const backlogData = { headers:[], rows:[], dateColIndex:-1, statusColIndex:-1, totalRows:0, filtered:false, byDate:{}, loaded:false, error:null };
+const pendingPlans = { byDate:{}, loaded:false }; // แผน supabase ที่ status ว่าง หรือ NG
+
+function pad2(n){return String(n).padStart(2,'0');}
+function toISODate(d){return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
+
+// แปลงค่าจาก gviz ให้เป็น YYYY-MM-DD (รองรับ Date object, "Date(y,m,d)", "dd/mm/yyyy", ปี พ.ศ.)
+function gvizToISO(v,f){
+  if(v instanceof Date && !isNaN(v)) return toISODate(v);
+  const tryStr = (s)=>{
+    if(!s) return null;
+    s=String(s).trim();
+    let m=s.match(/^Date\((\d+),(\d+),(\d+)/);
+    if(m){ let y=+m[1]; if(y>2400)y-=543; return `${y}-${pad2(+m[2]+1)}-${pad2(+m[3])}`; }
+    m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m){ let y=+m[1]; if(y>2400)y-=543; return `${y}-${pad2(+m[2])}-${pad2(+m[3])}`; }
+    m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if(m){ let y=+m[3]; if(y>2400)y-=543; return `${y}-${pad2(+m[2])}-${pad2(+m[1])}`; }
+    return null;
+  };
+  return tryStr(v) || tryStr(f) || null;
+}
+
+function loadBacklogSheet(){
+  return new Promise((resolve)=>{
+    const cb='__gvizCb_'+Date.now();
+    let done=false;
+    const cleanup=(s)=>{ delete window[cb]; if(s&&s.parentNode)s.parentNode.removeChild(s); };
+    window[cb]=(resp)=>{
+      done=true;
+      try{
+        const cols=(resp.table.cols||[]).map(c=>c.label||c.id||'');
+        const rows=(resp.table.rows||[]).map(r=>(r.c||[]).map(c=>c?{v:c.v,f:c.f}:{v:null,f:null}));
+        // ตัด row ที่ว่างทั้งแถวออก
+        let cleanRows=rows.filter(r=>r.some(c=>c.v!==null&&c.v!==''&&c.v!==undefined));
+
+        // ── หา column สถานะ แล้วกรองเฉพาะแถวที่เป็น "งานค้าง" ──
+        const cellText=(c)=>String((c&&(c.f??c.v))??'').trim();
+        let statusIdx=-1;
+        // 1) หา column ที่ header สื่อถึงสถานะ/งานค้าง
+        cols.forEach((label,i)=>{
+          if(statusIdx>=0)return;
+          const l=String(label);
+          if(/สถานะ|status|งานค้าง|ค้าง/i.test(l))statusIdx=i;
+        });
+        // 2) ถ้าไม่เจอจาก header → หา column ที่มีค่าตรงกับคำว่า "งานค้าง"
+        if(statusIdx<0){
+          for(let i=0;i<cols.length;i++){
+            if(cleanRows.some(r=>cellText(r[i]).includes(BACKLOG_FILTER_TEXT))){ statusIdx=i; break; }
+          }
+        }
+        backlogData.statusColIndex=statusIdx;
+        backlogData.totalRows=cleanRows.length;
+        if(statusIdx>=0){
+          cleanRows=cleanRows.filter(r=>cellText(r[statusIdx]).includes(BACKLOG_FILTER_TEXT));
+          backlogData.filtered=true;
+        }else{
+          backlogData.filtered=false; // ไม่เจอ column สถานะ → แสดงทั้งหมดไปก่อน
+        }
+
+        backlogData.headers=cols;
+        backlogData.rows=cleanRows;
+        // หา column ที่เป็นวันที่ (label มีคำว่า วันที่/date/day หรือค่าเป็น date)
+        let dateIdx=-1;
+        cols.forEach((label,i)=>{
+          if(dateIdx>=0)return;
+          const l=String(label).toLowerCase();
+          if(l.includes('วันที่')||l.includes('date')||l.includes('day')){
+            if(cleanRows.some(r=>gvizToISO(r[i]?.v,r[i]?.f)))dateIdx=i;
+          }
+        });
+        if(dateIdx<0){
+          // ไม่เจอจาก header → หา column แรกที่ค่าส่วนใหญ่เป็นวันที่
+          for(let i=0;i<cols.length;i++){
+            const cnt=cleanRows.filter(r=>gvizToISO(r[i]?.v,r[i]?.f)).length;
+            if(cnt>0 && cnt>=cleanRows.length*0.3){ dateIdx=i; break; }
+          }
+        }
+        backlogData.dateColIndex=dateIdx;
+        backlogData.byDate={};
+        if(dateIdx>=0){
+          cleanRows.forEach(r=>{
+            const iso=gvizToISO(r[dateIdx]?.v,r[dateIdx]?.f);
+            if(iso){ (backlogData.byDate[iso]=backlogData.byDate[iso]||[]).push(r); }
+          });
+        }
+        backlogData.loaded=true; backlogData.error=null;
+      }catch(err){ backlogData.error=err.message; }
+      resolve();
+    };
+    const s=document.createElement('script');
+    s.src=`https://docs.google.com/spreadsheets/d/${BACKLOG_SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(BACKLOG_SHEET_NAME)}&headers=1&tqx=out:json;responseHandler:${cb}`;
+    s.onerror=()=>{ if(!done){ backlogData.error='โหลด Google Sheet ไม่สำเร็จ (ตรวจสอบว่าแชร์เป็น Anyone with the link แล้ว)'; cleanup(s); resolve(); } };
+    window[cb+'_script']=s;
+    // ห่อ callback ให้ลบ script ทิ้งด้วย
+    const orig=window[cb];
+    window[cb]=(resp)=>{ orig(resp); cleanup(s); };
+    document.body.appendChild(s);
+    setTimeout(()=>{ if(!done){ backlogData.error='โหลด Google Sheet ช้าเกินไป (timeout)'; cleanup(s); resolve(); } },15000);
+  });
+}
+
+function loadPendingPlans(){
+  const sel='select=date,technician,start_slot,end_slot,line,machine,job_type,detail,status,reason';
+  return Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/plans?${sel}&type=eq.PLAN`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()).catch(()=>[]),
+    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?${sel}&type=eq.PLAN`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()).catch(()=>[])
+  ]).then(([p,h])=>{
+    pendingPlans.byDate={};
+    [...(Array.isArray(p)?p:[]),...(Array.isArray(h)?h:[])].forEach(row=>{
+      if(!row.date)return;
+      if(row.status==='OK')return; // เสร็จแล้ว ไม่นับเป็นงานค้าง
+      (pendingPlans.byDate[row.date]=pendingPlans.byDate[row.date]||[]).push(row);
+    });
+    pendingPlans.loaded=true;
+  });
+}
+
+async function refreshCalendarPage(){
+  safeSetText('backlogStatus','กำลังโหลดข้อมูลจาก Google Sheet...');
+  await Promise.all([loadBacklogSheet(),loadPendingPlans()]);
+  renderBigCal();
+  renderBacklogTable();
+}
+
+function bigPrevMonth(){bigcal.month--;if(bigcal.month<0){bigcal.month=11;bigcal.year--;}renderBigCal();}
+function bigNextMonth(){bigcal.month++;if(bigcal.month>11){bigcal.month=0;bigcal.year++;}renderBigCal();}
+
+function renderBigCal(){
+  const mn=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  safeSetText('bigcalMonthLabel',`${mn[bigcal.month]} ${bigcal.year+543}`);
+  const grid=byId('bigcalGrid'); if(!grid)return;
+  const today=toISODate(new Date());
+  const fd=new Date(bigcal.year,bigcal.month,1).getDay();
+  const dim=new Date(bigcal.year,bigcal.month+1,0).getDate();
+  let html=['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div class="bigcal-head">${d}</div>`).join('');
+  for(let i=0;i<fd;i++)html+=`<div class="bigcal-cell empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${bigcal.year}-${pad2(bigcal.month+1)}-${pad2(d)}`;
+    const nBacklog=(backlogData.byDate[ds]||[]).length;
+    const nPlan=(pendingPlans.byDate[ds]||[]).length;
+    let cls='bigcal-cell';
+    if(ds===today)cls+=' today';
+    let pills='';
+    if(nBacklog)pills+=`<span class="pill pill-backlog">🔴 ค้าง ${nBacklog}</span>`;
+    if(nPlan)pills+=`<span class="pill pill-plan">🟠 แผน ${nPlan}</span>`;
+    if(!nBacklog&&!nPlan&&ds<=today)pills=`<span class="pill pill-done">✓</span>`;
+    html+=`<div class="${cls}" onclick="openDayDetail('${ds}')"><div class="bigcal-daynum">${d}</div>${pills}</div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function openDayDetail(ds){
+  const backlog=backlogData.byDate[ds]||[];
+  const plans=pendingPlans.byDate[ds]||[];
+  safeSetText('dayDetailTitle',`งานค้างวันที่ ${ds}`);
+  let html='';
+
+  // ── งานค้างจากชีท ──
+  html+=`<div class="daydetail-section-title">📋 งานค้างจาก Google Sheet <span class="pill pill-backlog">${backlog.length} รายการ</span></div>`;
+  if(backlog.length===0){
+    html+=`<div class="sub" style="margin:0;">ไม่มีงานค้างจากชีทในวันนี้</div>`;
+  }else{
+    backlog.forEach(r=>{
+      const parts=[];
+      backlogData.headers.forEach((h,i)=>{
+        if(i===backlogData.dateColIndex)return;
+        const c=r[i]; if(!c)return;
+        const val=(c.f??c.v);
+        if(val===null||val===''||val===undefined)return;
+        parts.push(`<b>${escapeHtml(h||('คอลัมน์ '+(i+1)))}:</b> ${escapeHtml(val)}`);
+      });
+      html+=`<div class="daydetail-item">${parts.join('<br>')||'-'}</div>`;
+    });
+  }
+
+  // ── แผนที่ยังไม่จบ (Supabase) ──
+  html+=`<div class="daydetail-section-title" style="margin-top:14px;">🗓️ แผนงานที่ยังไม่จบ (Dashboard) <span class="pill pill-plan">${plans.length} รายการ</span></div>`;
+  if(plans.length===0){
+    html+=`<div class="sub" style="margin:0;">ไม่มีแผนค้างในวันนี้</div>`;
+  }else{
+    plans.forEach(p=>{
+      const chip=p.status==='NG'
+        ? '<span class="status-chip chip-ng">NG</span>'
+        : '<span class="status-chip chip-wait">ยังไม่บันทึก ACTUAL</span>';
+      html+=`<div class="daydetail-item">
+        <b>${escapeHtml(p.technician||'-')}</b> | ${escapeHtml(getTimeRange(p.start_slot,p.end_slot))} ${chip}<br>
+        ${[p.line,p.machine,p.job_type].filter(Boolean).map(escapeHtml).join(' | ')}<br>
+        ${escapeHtml(p.detail||'-')}${p.reason?`<br><b>Reason:</b> ${escapeHtml(p.reason)}`:''}
+      </div>`;
+    });
+  }
+
+  byId('dayDetailBody').innerHTML=html;
+  byId('dayDetailBackdrop').classList.add('show');
+}
+
+function renderBacklogTable(){
+  const t=byId('backlogTable'); if(!t)return;
+  if(backlogData.error){
+    safeSetText('backlogStatus','⚠️ '+backlogData.error);
+    t.innerHTML=''; return;
+  }
+  if(!backlogData.loaded){ return; }
+  // แสดงเฉพาะ column ที่มีข้อมูลจริงอย่างน้อย 1 แถว
+  const usedCols=[];
+  backlogData.headers.forEach((h,i)=>{
+    if(backlogData.rows.some(r=>{const c=r[i];return c&&c.v!==null&&c.v!==''&&c.v!==undefined;}))usedCols.push(i);
+  });
+  let statusMsg = backlogData.filtered
+    ? `งานค้าง ${backlogData.rows.length} รายการ (กรองจากชีทแจ้งซ่อมทั้งหมด ${backlogData.totalRows} แถว)`
+    : `ทั้งหมด ${backlogData.rows.length} รายการ ⚠️ ไม่พบคอลัมน์สถานะ "${BACKLOG_FILTER_TEXT}" ในชีท จึงแสดงทุกแถว`;
+  if(backlogData.dateColIndex<0) statusMsg+=' (ไม่พบคอลัมน์วันที่ จึงแสดงเป็นรายการรวม ไม่ผูกกับปฏิทิน)';
+  safeSetText('backlogStatus',statusMsg);
+  let html='<thead><tr><th>#</th>';
+  usedCols.forEach(i=>{ html+=`<th>${escapeHtml(backlogData.headers[i]||('คอลัมน์ '+(i+1)))}</th>`; });
+  html+='</tr></thead><tbody>';
+  backlogData.rows.forEach((r,ri)=>{
+    html+=`<tr><td>${ri+1}</td>`;
+    usedCols.forEach(i=>{
+      const c=r[i]; let val=c?(c.f??c.v):'';
+      if(i===backlogData.dateColIndex){ val=gvizToISO(c?.v,c?.f)||val; }
+      html+=`<td>${escapeHtml(val??'')}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  t.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════
+// PAGE 3 : SPARE PART ส่งซ่อม / รอของเข้า  (ตาราง Supabase: sparepart_tracking)
+// ═══════════════════════════════════════════════════════
+let spItems=[];
+let spEditId=null;
+
+function spHeaders(json=false){
+  const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
+  if(json){h['Content-Type']='application/json';h['Prefer']='return=minimal';}
+  return h;
+}
+
+function loadSpareparts(){
+  return fetch(`${SUPABASE_URL}/rest/v1/sparepart_tracking?order=send_date.desc.nullslast,id.desc`,{headers:spHeaders()})
+  .then(async r=>{
+    if(!r.ok){
+      const txt=await r.text();
+      if(r.status===404||/relation .* does not exist|Could not find the table/i.test(txt)){
+        byId('spNote').innerHTML='⚠️ ยังไม่พบตาราง <b>sparepart_tracking</b> ใน Supabase — ต้องสร้างตารางก่อน (ดู SQL ในคำแนะนำที่ได้รับพร้อมไฟล์นี้)';
+        spItems=[]; renderSpTable(); return null;
+      }
+      throw new Error(txt);
+    }
+    return r.json();
+  })
+  .then(data=>{ if(Array.isArray(data)){spItems=data; byId('spNote').textContent=''; renderSpTable();} })
+  .catch(e=>{ console.error(e); byId('spNote').textContent='โหลดข้อมูลไม่สำเร็จ: '+e.message; });
+}
+
+function spStatusClass(s){
+  switch(s){
+    case 'ส่งซ่อมแล้ว':return 'st-sent';
+    case 'รอของเข้า':return 'st-order';
+    case 'ของเข้าแล้ว':return 'st-arrive';
+    case 'ปิดงาน':return 'st-close';
+    default:return 'st-wait';
+  }
+}
+
+function renderSpTable(){
+  const t=byId('spTable'); if(!t)return;
+  const fCat=safeValue('spFilterCat'), fSt=safeValue('spFilterStatus');
+  const q=safeValue('spSearch').toLowerCase().trim();
+  const hideClosed=byId('spHideClosed')?.checked;
+  const today=toISODate(new Date());
+
+  const rows=spItems.filter(it=>{
+    if(fCat&&it.category!==fCat)return false;
+    if(fSt&&it.status!==fSt)return false;
+    if(hideClosed&&it.status==='ปิดงาน'&&!fSt)return false;
+    if(q){
+      const blob=[it.part_name,it.part_code,it.line,it.machine,it.ref_no,it.vendor,it.note].join(' ').toLowerCase();
+      if(!blob.includes(q))return false;
+    }
+    return true;
+  });
+
+  // stats
+  const open=spItems.filter(i=>i.status!=='ปิดงาน');
+  const nRepair=open.filter(i=>i.category==='ส่งซ่อม').length;
+  const nOrder=open.filter(i=>i.category==='รอของเข้า').length;
+  const nOverdue=open.filter(i=>i.expect_date&&i.expect_date<today).length;
+  byId('spStats').innerHTML=`
+    <div class="sp-stat"><div class="n">${open.length}</div><div class="l">รายการที่ยังไม่ปิด</div></div>
+    <div class="sp-stat"><div class="n" style="color:#6d28d9;">${nRepair}</div><div class="l">ส่งซ่อมอยู่</div></div>
+    <div class="sp-stat"><div class="n" style="color:#0369a1;">${nOrder}</div><div class="l">รอของเข้า</div></div>
+    <div class="sp-stat"><div class="n" style="color:${nOverdue?'#b91c1c':'#15803d'};">${nOverdue}</div><div class="l">เกินกำหนดแล้ว</div></div>`;
+
+  let html=`<thead><tr>
+    <th>ประเภท</th><th>อะไหล่ / รหัส</th><th>Line / Machine</th>
+    <th>วันที่ส่ง</th><th>กำหนดรับ</th><th>PR/PO</th><th>ผู้ขาย/ร้านซ่อม</th>
+    <th>สถานะ</th><th>หมายเหตุ</th><th></th>
+  </tr></thead><tbody>`;
+
+  if(rows.length===0){
+    html+=`<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:26px;">ยังไม่มีรายการ — กด "➕ เพิ่มรายการ" เพื่อเริ่มบันทึก</td></tr>`;
+  }
+
+  rows.forEach(it=>{
+    const overdue=it.expect_date&&it.expect_date<today&&it.status!=='ปิดงาน'&&it.status!=='ของเข้าแล้ว';
+    html+=`<tr class="${overdue?'overdue':''}">
+      <td><span class="sp-cat ${it.category==='ส่งซ่อม'?'cat-repair':'cat-order'}">${escapeHtml(it.category||'-')}</span></td>
+      <td><b>${escapeHtml(it.part_name||'-')}</b>${it.part_code?`<br><span style="color:var(--muted);font-size:12px;">${escapeHtml(it.part_code)}</span>`:''}</td>
+      <td>${escapeHtml([it.line,it.machine].filter(Boolean).join(' / ')||'-')}</td>
+      <td>${escapeHtml(it.send_date||'-')}</td>
+      <td>${escapeHtml(it.expect_date||'-')}${overdue?'<br><span class="overdue-flag">⚠ เกินกำหนด</span>':''}</td>
+      <td>${escapeHtml(it.ref_no||'-')}</td>
+      <td>${escapeHtml(it.vendor||'-')}</td>
+      <td><span class="sp-status ${spStatusClass(it.status)}">${escapeHtml(it.status||'-')}</span></td>
+      <td style="max-width:220px;">${escapeHtml(it.note||'')}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn-secondary mini-btn" onclick="editSparepart(${it.id})">✏️</button>
+        <button class="btn-danger mini-btn" onclick="deleteSparepart(${it.id})">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  html+='</tbody>';
+  t.innerHTML=html;
+}
+
+function openSpModal(){
+  spEditId=null;
+  safeSetText('spModalTitle','เพิ่มรายการ Spare Part');
+  safeSetValue('spCat','ส่งซ่อม'); safeSetValue('spStatus','รอดำเนินการ');
+  safeSetValue('spName',''); safeSetValue('spCode','');
+  safeSetValue('spLine',''); safeSetValue('spMachine','');
+  safeSetValue('spSendDate',toISODate(new Date())); safeSetValue('spExpectDate','');
+  safeSetValue('spRefNo',''); safeSetValue('spVendor',''); safeSetValue('spNoteInput','');
+  byId('spModalBackdrop').classList.add('show');
+}
+function closeSpModal(){byId('spModalBackdrop').classList.remove('show');}
+
+function editSparepart(id){
+  const it=spItems.find(x=>x.id===id); if(!it)return;
+  spEditId=id;
+  safeSetText('spModalTitle','แก้ไขรายการ Spare Part');
+  safeSetValue('spCat',it.category||'ส่งซ่อม'); safeSetValue('spStatus',it.status||'รอดำเนินการ');
+  safeSetValue('spName',it.part_name||''); safeSetValue('spCode',it.part_code||'');
+  safeSetValue('spLine',it.line||''); safeSetValue('spMachine',it.machine||'');
+  safeSetValue('spSendDate',it.send_date||''); safeSetValue('spExpectDate',it.expect_date||'');
+  safeSetValue('spRefNo',it.ref_no||''); safeSetValue('spVendor',it.vendor||''); safeSetValue('spNoteInput',it.note||'');
+  byId('spModalBackdrop').classList.add('show');
+}
+
+async function saveSparepart(){
+  const name=safeValue('spName').trim();
+  if(!name){ alert('กรุณากรอกชื่ออะไหล่'); return; }
+  const payload={
+    category:safeValue('spCat'),
+    status:safeValue('spStatus'),
+    part_name:name,
+    part_code:safeValue('spCode').trim(),
+    line:safeValue('spLine').trim(),
+    machine:safeValue('spMachine').trim(),
+    send_date:safeValue('spSendDate')||null,
+    expect_date:safeValue('spExpectDate')||null,
+    ref_no:safeValue('spRefNo').trim(),
+    vendor:safeValue('spVendor').trim(),
+    note:safeValue('spNoteInput').trim()
+  };
+  try{
+    let res;
+    if(spEditId){
+      res=await fetch(`${SUPABASE_URL}/rest/v1/sparepart_tracking?id=eq.${spEditId}`,{method:'PATCH',headers:spHeaders(true),body:JSON.stringify(payload)});
+    }else{
+      res=await fetch(`${SUPABASE_URL}/rest/v1/sparepart_tracking`,{method:'POST',headers:spHeaders(true),body:JSON.stringify(payload)});
+    }
+    if(!res.ok){ throw new Error(await res.text()); }
+    closeSpModal();
+    await loadSpareparts();
+  }catch(err){
+    console.error(err);
+    alert('SAVE ERROR\n\n'+err.message+'\n\nถ้าขึ้นว่าไม่พบตาราง ให้สร้างตาราง sparepart_tracking ใน Supabase ก่อน');
+  }
+}
+
+function deleteSparepart(id){
+  const it=spItems.find(x=>x.id===id);
+  if(!confirm(`ลบรายการ "${it?.part_name||id}" ?\nการลบนี้ไม่สามารถย้อนกลับได้`))return;
+  fetch(`${SUPABASE_URL}/rest/v1/sparepart_tracking?id=eq.${id}`,{method:'DELETE',headers:spHeaders(true)})
+  .then(()=>loadSpareparts())
+  .catch(e=>alert('DELETE ERROR\n\n'+e.message));
+}
+
+// ═══════════ EVENTS / INIT ═══════════
+document.addEventListener('click',e=>{if(e.target===byId('taskModalBackdrop'))closeTaskModal();if(e.target===byId('dayDetailBackdrop'))byId('dayDetailBackdrop').classList.remove('show');if(e.target===byId('spModalBackdrop'))closeSpModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTaskModal();byId('dayDetailBackdrop').classList.remove('show');closeSpModal();}});
 document.addEventListener('DOMContentLoaded',()=>{
   ensureMetaDefaults(); populateModalTimeSlots(); initTimeline(); loadData();
-  updateHolidayPrintButton(); // FIX: ให้แน่ใจว่าปุ่มปริ้นซ่อนตอนเริ่ม (โหมดปกติ)
-  setInterval(()=>{if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();},10000);
+  updateHolidayPrintButton();
+  setInterval(()=>{
+    if(currentPage==='daily'){
+      if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();
+    }else if(currentPage==='sparepart'){
+      loadSpareparts();
+    }
+    // หน้า calendar ไม่ auto-refresh ทุก 10 วิ เพราะดึงจาก Google Sheet (ใช้ปุ่ม Update แทน)
+  },10000);
 });
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
