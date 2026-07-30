@@ -101,6 +101,24 @@
     .bigcal-cell.holiday { background:linear-gradient(180deg,#fff1f2,#ffe4e6); border-color:#fecdd3; }
     .bigcal-daynum { font-size:14px; font-weight:800; }
     .bigcal-cell.holiday .bigcal-daynum { color:#be123c; }
+    /* ── HEATMAP: สีช่องวันตามปริมาณงานค้าง ── */
+    .bigcal-daynum { display:flex; justify-content:space-between; align-items:center; }
+    .bigcal-daynum .cnt { font-size:10.5px; font-weight:800; color:#94a3b8; }
+    .heat-b1 { background:linear-gradient(180deg,#fff1f2,#ffe9ea); border-color:#fecdd3; }
+    .heat-b2 { background:linear-gradient(180deg,#ffe0e2,#ffd4d8); border-color:#fda4af; }
+    .heat-b3 { background:linear-gradient(180deg,#fecdd3,#fdb6c0); border-color:#fb7185; }
+    .heat-b1 .bigcal-daynum, .heat-b2 .bigcal-daynum, .heat-b3 .bigcal-daynum { color:#9f1239; }
+    .heat-b1:hover, .heat-b2:hover, .heat-b3:hover { border-color:#e11d48; }
+    .heat-p1 { background:linear-gradient(180deg,#fff8eb,#fff3dd); border-color:#fbe4b6; }
+    .heat-p2 { background:linear-gradient(180deg,#fdefd0,#fce8bd); border-color:#f5d488; }
+    .heat-p3 { background:linear-gradient(180deg,#fbe3ac,#f9da93); border-color:#eab308; }
+    .heat-p1 .bigcal-daynum, .heat-p2 .bigcal-daynum, .heat-p3 .bigcal-daynum { color:#92400e; }
+    .heat-p1:hover, .heat-p2:hover, .heat-p3:hover { border-color:#d97706; }
+    .heat-clear { background:linear-gradient(180deg,#f2fbf5,#e9f8ee); border-color:#d7f0df; }
+    .heat-clear .bigcal-daynum { color:#15803d; }
+    .heat-legend { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:4px 0 12px; }
+    .heat-scale { display:inline-flex; gap:3px; align-items:center; }
+    .heat-swatch { width:20px; height:13px; border-radius:4px; border:1px solid rgba(0,0,0,0.08); }
     .pill { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:800; border-radius:999px; padding:2px 8px; line-height:1.5; width:fit-content; }
     .pill-backlog { background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; }
     .pill-plan    { background:#ffedd5; color:#c2410c; border:1px solid #fed7aa; }
@@ -295,10 +313,25 @@
           <button class="btn-primary" onclick="refreshCalendarPage()">🔄 Update ข้อมูล</button>
         </div>
       </div>
-      <div class="sub" style="margin-bottom:12px;">
-        <span class="pill pill-backlog">🔴 งานค้าง (จากชีท)</span>
-        <span class="pill pill-plan">🟠 แผนยังไม่จบ</span>
-        &nbsp;กดที่วันเพื่อดูรายละเอียดงานค้างของวันนั้น
+      <div class="heat-legend">
+        <span style="font-weight:700;color:var(--text);">งานค้าง (แจ้งซ่อม):</span>
+        <span class="heat-scale">
+          <span class="heat-swatch" style="background:#fff1f2;"></span>
+          <span class="heat-swatch" style="background:#ffe0e2;"></span>
+          <span class="heat-swatch" style="background:#fecdd3;"></span>
+          <span>น้อย → มาก</span>
+        </span>
+        <span style="font-weight:700;color:var(--text);margin-left:8px;">แผนยังไม่จบ:</span>
+        <span class="heat-scale">
+          <span class="heat-swatch" style="background:#fff8eb;"></span>
+          <span class="heat-swatch" style="background:#fdefd0;"></span>
+          <span class="heat-swatch" style="background:#fbe3ac;"></span>
+        </span>
+        <span class="heat-scale" style="margin-left:8px;">
+          <span class="heat-swatch" style="background:#f2fbf5;"></span>
+          <span>เคลียร์หมดแล้ว</span>
+        </span>
+        <span style="margin-left:auto;">💡 กดที่วันเพื่อดูรายละเอียด</span>
       </div>
       <div class="bigcal-grid" id="bigcalGrid"></div>
     </section>
@@ -589,14 +622,38 @@ function updateHolidayPrintButton(){
     btn.style.display = 'none';
   }
 }
-async function printHolidayPlan() {
+// โหลดฟอนต์ไทย (Sarabun) ครั้งเดียวแล้ว cache — ฝังลง PDF ให้ตัวอักษรเป็น text จริง ไม่มีทางซ้อน
+async function ensureThaiFont(doc){
+  if(!window.__sarabunB64){
+    const urls=[
+      'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sarabun/Sarabun-Regular.ttf',
+      'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf'
+    ];
+    let buf=null,lastErr=null;
+    for(const u of urls){
+      try{
+        const r=await fetch(u);
+        if(r.ok){ buf=await r.arrayBuffer(); break; }
+        lastErr=new Error('HTTP '+r.status);
+      }catch(e){ lastErr=e; }
+    }
+    if(!buf) throw new Error('โหลดฟอนต์ภาษาไทยสำหรับ PDF ไม่สำเร็จ ('+(lastErr&&lastErr.message||'network')+')\nกรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+    const bytes=new Uint8Array(buf); let bin=''; const CH=0x8000;
+    for(let i=0;i<bytes.length;i+=CH){ bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH)); }
+    window.__sarabunB64=btoa(bin);
+  }
+  doc.addFileToVFS('Sarabun-Regular.ttf',window.__sarabunB64);
+  doc.addFont('Sarabun-Regular.ttf','Sarabun','normal');
+  doc.addFont('Sarabun-Regular.ttf','Sarabun','bold');
+}
 
-  let wrapper = null;
+async function printHolidayPlan() {
 
   try {
 
-    if (typeof html2pdf === 'undefined') {
-      alert("ไลบรารีสร้าง PDF ยังโหลดไม่เสร็จ\nถ้าเครื่องนี้ไม่มีอินเทอร์เน็ต ปุ่มปริ้นจะใช้ไม่ได้ กรุณาต่อเน็ตแล้วรีเฟรชหน้าใหม่");
+    const NS = window.jspdf;
+    if (!NS || typeof NS.jsPDF !== 'function') {
+      alert("ไลบรารีสร้าง PDF ยังโหลดไม่เสร็จ\nกรุณาต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่");
       return;
     }
 
@@ -618,6 +675,7 @@ async function printHolidayPlan() {
       return;
     }
 
+    // sort ตาม line เฉพาะตอนปริ้น
     const sortedData = [...data].sort((a, b) => {
       const getNumber = (text) => {
         const match = String(text || "").match(/\d+/);
@@ -626,107 +684,71 @@ async function printHolidayPlan() {
       return getNumber(a.line) - getNumber(b.line);
     });
 
-    let rows = "";
-    sortedData.forEach((item, index) => {
-      rows += `<tr>
-        <td class="c">${index + 1}</td>
-        <td class="c">${escapeHtml(item.date || "-")}</td>
-        <td>${escapeHtml(item.line || "-")}</td>
-        <td>${escapeHtml(item.machine || "-")}</td>
-        <td>${escapeHtml(item.job_type || "-")}</td>
-        <td>${escapeHtml(item.detail || "-")}</td>
-        <td class="c">${escapeHtml(getTimeRange(item.start_slot, item.end_slot))}</td>
-        <td>${escapeHtml(item.technician || "-")}</td>
-        <td class="c">${item.request_qc ? "YES" : "-"}</td>
-        <td class="c">${item.request_mfg ? "YES" : "-"}</td>
-      </tr>`;
+    const doc = new NS.jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    await ensureThaiFont(doc);
+
+    doc.setFont('Sarabun','bold');
+    doc.setFontSize(18);
+    doc.setTextColor(37,99,235);
+    doc.text('Holiday Maintenance Plan', 10, 14);
+
+    doc.setFont('Sarabun','normal');
+    doc.setFontSize(10);
+    doc.setTextColor(85,85,85);
+    doc.text('Date : ' + selectedDate, 10, 20);
+
+    const body = sortedData.map((it,i)=>[
+      String(i+1),
+      it.date || '-',
+      it.line || '-',
+      it.machine || '-',
+      it.job_type || '-',
+      it.detail || '-',
+      getTimeRange(it.start_slot, it.end_slot),
+      it.technician || '-',
+      it.request_qc ? 'YES' : '-',
+      it.request_mfg ? 'YES' : '-'
+    ]);
+
+    doc.autoTable({
+      head: [['No','Date','Line','Machine','Job Type','Detail','Time','Technician','QC','MFG']],
+      body: body,
+      startY: 24,
+      margin: { left:10, right:10 },
+      styles: {
+        font:'Sarabun', fontStyle:'normal', fontSize:9,
+        cellPadding:1.8, lineColor:[140,140,140], lineWidth:0.15,
+        textColor:[17,17,17], valign:'top', overflow:'linebreak'
+      },
+      headStyles: {
+        font:'Sarabun', fontStyle:'bold', fontSize:9.5,
+        fillColor:[37,99,235], textColor:[255,255,255], halign:'center'
+      },
+      columnStyles: {
+        0:{cellWidth:9,  halign:'center'},
+        1:{cellWidth:21, halign:'center'},
+        2:{cellWidth:18},
+        3:{cellWidth:27},
+        4:{cellWidth:23},
+        /* คอลัมน์ 5 Detail = ความกว้างที่เหลือทั้งหมด */
+        6:{cellWidth:25, halign:'center'},
+        7:{cellWidth:24},
+        8:{cellWidth:10, halign:'center'},
+        9:{cellWidth:11, halign:'center'}
+      },
+      didDrawPage: () => {
+        doc.setFont('Sarabun','normal');
+        doc.setFontSize(8);
+        doc.setTextColor(120,120,120);
+        doc.text('Generated : ' + new Date().toLocaleString(), 10, doc.internal.pageSize.getHeight() - 6);
+      }
     });
 
-    wrapper = document.createElement('div');
-    wrapper.style.position = 'fixed';
-    wrapper.style.inset = '0';
-    wrapper.style.zIndex = '2147483647';
-    wrapper.style.background = 'rgba(15,23,42,0.55)';
-    wrapper.style.display = 'flex';
-    wrapper.style.flexDirection = 'column';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.justifyContent = 'flex-start';
-    wrapper.style.overflow = 'auto';
-    wrapper.style.padding = '24px';
-
-    wrapper.innerHTML = `
-      <div style="color:#fff;font-family:'Segoe UI',Tahoma,sans-serif;font-weight:700;margin-bottom:14px;font-size:16px;">
-        ⏳ กำลังสร้าง PDF...
-      </div>
-      <div id="pdfTarget" style="
-        width:1080px;
-        max-width:100%;
-        background:#ffffff;
-        font-family:Arial,'Segoe UI',Tahoma,sans-serif;
-        color:#111;
-        padding:20px;
-        border-radius:6px;
-        box-sizing:border-box;
-      ">
-        <h1 style="margin:0;color:#2563eb;font-size:26px;">Holiday Maintenance Plan</h1>
-        <div style="margin-top:6px;margin-bottom:16px;color:#555;font-size:13px;">Date : ${escapeHtml(selectedDate)}</div>
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-          <colgroup>
-            <col style="width:4%;"><col style="width:9%;"><col style="width:7%;"><col style="width:11%;"><col style="width:11%;">
-            <col style="width:26%;"><col style="width:12%;"><col style="width:12%;"><col style="width:4%;"><col style="width:4%;">
-          </colgroup>
-          <thead>
-            <tr>
-              <th>No</th><th>Date</th><th>Line</th><th>Machine</th><th>Job Type</th>
-              <th>Detail</th><th>Time</th><th>Technician</th><th>QC</th><th>MFG</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <div style="margin-top:18px;font-size:11px;color:#666;">Generated : ${escapeHtml(new Date().toLocaleString())}</div>
-      </div>
-    `;
-
-    document.body.appendChild(wrapper);
-
-    const target = wrapper.querySelector('#pdfTarget');
-    target.querySelectorAll('th').forEach(th=>{
-      th.style.background = '#2563eb';
-      th.style.color = '#fff';
-      th.style.border = '1px solid #999';
-      th.style.padding = '7px 8px';
-      th.style.fontSize = '12px';
-      th.style.textAlign = 'center';
-      th.style.wordBreak = 'break-word';
-    });
-    target.querySelectorAll('td').forEach(td=>{
-      td.style.border = '1px solid #999';
-      td.style.padding = '7px 8px';
-      td.style.fontSize = '11px';
-      td.style.wordBreak = 'break-word';
-      td.style.whiteSpace = 'normal';
-      td.style.verticalAlign = 'top';
-      td.style.textAlign = td.classList.contains('c') ? 'center' : 'left';
-    });
-
-    await new Promise(r => setTimeout(r, 120));
-
-    const opt = {
-      margin: 0.3,
-      filename: `HolidayPlan_${selectedDate}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
-      pagebreak: { mode: ['css', 'legacy'] }
-    };
-
-    await html2pdf().set(opt).from(target).save();
+    doc.save(`HolidayPlan_${selectedDate}.pdf`);
 
   } catch(err) {
     console.error(err);
     alert("PDF ERROR\n\n" + err.message);
-  } finally {
-    if (wrapper && wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
   }
 }
 
@@ -785,6 +807,7 @@ function buildBadges(d){
 async function forceRefreshData(){
   try{
     console.log("FORCE REFRESH...");
+    lastTimelineSnapshot='';
     if( holidayState.active && holidayState.date ){
       await loadDataFromX4( holidayState.date );
     }else{
@@ -963,7 +986,7 @@ function clearTaskModalData(){
   const table=holidayState.active?'holiday_plans':'plans';
   const df=holidayState.active?`date=eq.${holidayState.date}&`:'';
   fetch(`${SUPABASE_URL}/rest/v1/${table}?${df}technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'}})
-  .then(()=>{if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();});
+  .then(()=>{lastTimelineSnapshot='';if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();});
 }
 
 // ── Popup helpers ──
@@ -1148,6 +1171,7 @@ async function saveData(
 
     console.log("SAVE SUCCESS");
 
+    lastTimelineSnapshot='';
     if( holidayState.active && holidayState.date ){
       await loadDataFromX4( holidayState.date );
     }else{
@@ -1160,9 +1184,14 @@ async function saveData(
   }
 }
 
+let lastTimelineSnapshot='';
+
 function loadData(){
   return fetch(`${SUPABASE_URL}/rest/v1/plans?type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
-  .then(r=>r.json()).then(plans=>{
+  .then(r=>r.text()).then(txt=>{
+    if(txt===lastTimelineSnapshot)return;  // ข้อมูลเดิม ไม่ต้อง render ซ้ำ (กันจอวูบ)
+    lastTimelineSnapshot=txt;
+    const plans=JSON.parse(txt);
     const nt=normalizeTimeline({}),nd={};
     state.actualStatus={}; state.actualReason={};
     const seen=new Set();
@@ -1184,6 +1213,9 @@ function loadDataFromX4(date){
     fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${date}&type=eq.PLAN&order=start_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()),
     fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json())
   ]).then(([plans])=>{
+    const snap='X4:'+date+':'+JSON.stringify(plans);
+    if(snap===lastTimelineSnapshot)return;
+    lastTimelineSnapshot=snap;
     const nt=normalizeTimeline({}),nd={};
     state.actualStatus={}; state.actualReason={};
     plans.forEach(row=>{
@@ -1230,6 +1262,7 @@ function clearTimeline(shouldSave=true){
       fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${scopeDate}`,{method:'DELETE',headers:h}),
       fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${scopeDate}`,{method:'DELETE',headers:h})
     ]).then(()=>{
+      lastTimelineSnapshot='';
       if(isHoliday) loadDataFromX4(scopeDate); else loadData();
     }).catch(e=>console.error(e));
   }
@@ -1287,6 +1320,7 @@ function doAddHoliday(ds){
 function selectCalDay(ds){
   const ih=calState.holidays.has(ds);
   safeSetValue('workDate',ds); safeSetText('heroDate',ds); renderCalendar();
+  lastTimelineSnapshot='';
   if(ih){holidayState.active=true;holidayState.date=ds;updateHolidayButton(ds);updateHolidayPrintButton();loadDataFromX4(ds);}
   else{holidayState.active=false;holidayState.date=null;updateHolidayButton(null);updateHolidayPrintButton();loadData();}
   closeCalendar();
@@ -1457,6 +1491,17 @@ async function refreshCalendarPage(){
 function bigPrevMonth(){bigcal.month--;if(bigcal.month<0){bigcal.month=11;bigcal.year--;}renderBigCal();}
 function bigNextMonth(){bigcal.month++;if(bigcal.month>11){bigcal.month=0;bigcal.year++;}renderBigCal();}
 
+function heatClass(nBacklog,nPlan,ds,today){
+  if(nBacklog>=6)return 'heat-b3';
+  if(nBacklog>=3)return 'heat-b2';
+  if(nBacklog>=1)return 'heat-b1';
+  if(nPlan>=6)return 'heat-p3';
+  if(nPlan>=3)return 'heat-p2';
+  if(nPlan>=1)return 'heat-p1';
+  if(ds<=today)return 'heat-clear';
+  return '';
+}
+
 function renderBigCal(){
   const mn=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   safeSetText('bigcalMonthLabel',`${mn[bigcal.month]} ${bigcal.year+543}`);
@@ -1470,13 +1515,14 @@ function renderBigCal(){
     const ds=`${bigcal.year}-${pad2(bigcal.month+1)}-${pad2(d)}`;
     const nBacklog=(backlogData.byDate[ds]||[]).length;
     const nPlan=(pendingPlans.byDate[ds]||[]).length;
-    let cls='bigcal-cell';
+    const total=nBacklog+nPlan;
+    let cls='bigcal-cell '+heatClass(nBacklog,nPlan,ds,today);
     if(ds===today)cls+=' today';
     let pills='';
     if(nBacklog)pills+=`<span class="pill pill-backlog">🔴 ค้าง ${nBacklog}</span>`;
     if(nPlan)pills+=`<span class="pill pill-plan">🟠 แผน ${nPlan}</span>`;
-    if(!nBacklog&&!nPlan&&ds<=today)pills=`<span class="pill pill-done">✓</span>`;
-    html+=`<div class="${cls}" onclick="openDayDetail('${ds}')"><div class="bigcal-daynum">${d}</div>${pills}</div>`;
+    if(!total&&ds<=today)pills=`<span class="pill pill-done">✓ เคลียร์</span>`;
+    html+=`<div class="${cls.trim()}" onclick="openDayDetail('${ds}')"><div class="bigcal-daynum"><span>${d}</span>${total?`<span class="cnt">${total} งาน</span>`:''}</div>${pills}</div>`;
   }
   grid.innerHTML=html;
 }
@@ -1730,6 +1776,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   ensureMetaDefaults(); populateModalTimeSlots(); initTimeline(); loadData();
   updateHolidayPrintButton();
   setInterval(()=>{
+    if(document.hidden)return; // เปิดแท็บอื่นอยู่ ไม่ต้องยิง request
     if(currentPage==='daily'){
       if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();
     }else if(currentPage==='sparepart'){
@@ -1739,7 +1786,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   },10000);
 });
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <!-- Confirm Modal -->
 <div class="modal-backdrop" id="confirmModalBackdrop">
   <div class="modal">
