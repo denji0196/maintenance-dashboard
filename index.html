@@ -137,6 +137,24 @@
     .backlog-table td { border-bottom:1px solid rgba(148,163,184,0.22); padding:8px 10px; vertical-align:top; }
     .backlog-table tr:hover td { background:#eff6ff; }
 
+    /* ── SHIFT (จัดกะพนักงาน) ── */
+    .shift-panel { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .shift-chip { border:1.5px solid #cbd5e1; background:#fff; color:#5b708b; border-radius:999px; padding:7px 14px; font-size:13px; font-weight:700; cursor:pointer; user-select:none; transition:0.15s; }
+    .shift-chip:hover { border-color:#2563eb; transform:translateY(-1px); }
+    .shift-chip.shift-day { background:linear-gradient(135deg,#fef3c7,#fde68a); border-color:#f59e0b; color:#92400e; }
+    .shift-chip.shift-night { background:linear-gradient(135deg,#e0e7ff,#c7d2fe); border-color:#6366f1; color:#3730a3; }
+    .pill-day   { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+    .pill-night { background:#e0e7ff; color:#3730a3; border:1px solid #a5b4fc; }
+    tr.shift-sec td { font-weight:800; font-size:13px; padding:9px 10px; border-bottom:1px solid rgba(148,163,184,0.3); }
+    tr.sec-day td   { background:linear-gradient(135deg,#fef3c7,#fffbeb); color:#92400e; }
+    tr.sec-night td { background:linear-gradient(135deg,#e0e7ff,#eef2ff); color:#3730a3; }
+    tr.sec-none td  { background:#f1f5f9; color:#5b708b; }
+    tr.row-day td   { background:#fffdf3; }
+    tr.row-night td { background:#f6f7ff; }
+    tr.row-day td:first-child   { box-shadow:inset 3px 0 0 #f59e0b; }
+    tr.row-night td:first-child { box-shadow:inset 3px 0 0 #6366f1; }
+    .shift-badge { font-size:13px; white-space:nowrap; }
+
     /* ── PAGE 3 : SPAREPART ── */
     .sp-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
     .sp-stat { border-radius:16px; padding:14px 16px; border:1px solid var(--line); background:linear-gradient(180deg,#ffffff,#f8fbff); }
@@ -302,6 +320,12 @@
 
   <!-- ═══════════ PAGE 2 : CALENDAR / BACKLOG ═══════════ -->
   <div class="page" id="pageCalendar">
+    <section class="card span-12" style="margin-bottom:18px;">
+      <h2>👥 จัดกะพนักงาน</h2>
+      <div class="sub">รายชื่อดึงจากชีทแจ้งซ่อม — กดชื่อเพื่อสลับ: <b>ไม่ระบุ</b> → <b style="color:#92400e;">☀️ กะเช้า</b> → <b style="color:#3730a3;">🌙 กะดึก</b> แล้วปฏิทิน/ตารางด้านล่างจะแยกสีตามกะให้อัตโนมัติ</div>
+      <div class="shift-panel" id="shiftPanel"><span class="sub" style="margin:0;">กด 🔄 Update ข้อมูล เพื่อโหลดรายชื่อ</span></div>
+      <div class="sub" id="shiftNote" style="margin:10px 0 0;"></div>
+    </section>
     <section class="card span-12" style="margin-bottom:18px;">
       <div class="bigcal-toolbar">
         <div style="display:flex;align-items:center;gap:10px;">
@@ -1363,7 +1387,7 @@ function confirmOk(){if(confirmCallback)confirmCallback();closeConfirmModal();}
 // PAGE 2 : ปฏิทินงานค้าง
 // ═══════════════════════════════════════════════════════
 const bigcal = { year:new Date().getFullYear(), month:new Date().getMonth() };
-const backlogData = { headers:[], rows:[], dateColIndex:-1, statusColIndex:-1, totalRows:0, filtered:false, byDate:{}, loaded:false, error:null };
+const backlogData = { headers:[], rows:[], dateColIndex:-1, statusColIndex:-1, nameColIndex:-1, totalRows:0, filtered:false, byDate:{}, loaded:false, error:null };
 const pendingPlans = { byDate:{}, loaded:false }; // แผน supabase ที่ status ว่าง หรือ NG
 
 function pad2(n){return String(n).padStart(2,'0');}
@@ -1441,6 +1465,24 @@ function loadBacklogSheet(){
             if(cnt>0 && cnt>=cleanRows.length*0.3){ dateIdx=i; break; }
           }
         }
+        // หา column ชื่อพนักงาน (ผู้แจ้ง/ผู้รับผิดชอบ/ช่าง)
+        let nameIdx=-1;
+        cols.forEach((label,i)=>{
+          if(nameIdx>=0)return;
+          if(/ผู้แจ้ง|ผู้รับ|ชื่อ|ช่าง|พนักงาน|คนแจ้ง|name|technician|operator/i.test(String(label)))nameIdx=i;
+        });
+        if(nameIdx<0){
+          // fallback: หา column ที่มีชื่อช่างของทีมเราอยู่ในข้อมูล
+          outer:
+          for(let i=0;i<cols.length;i++){
+            for(const r of cleanRows){
+              const t=cellText(r[i]);
+              if(t&&technicians.some(n=>t.includes(n))){ nameIdx=i; break outer; }
+            }
+          }
+        }
+        backlogData.nameColIndex=nameIdx;
+
         backlogData.dateColIndex=dateIdx;
         backlogData.byDate={};
         if(dateIdx>=0){
@@ -1469,11 +1511,28 @@ function loadPendingPlans(){
   const sel='select=date,technician,start_slot,end_slot,line,machine,job_type,detail,status,reason';
   return Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/plans?${sel}&type=eq.PLAN`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()).catch(()=>[]),
-    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?${sel}&type=eq.PLAN`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()).catch(()=>[])
-  ]).then(([p,h])=>{
-    pendingPlans.byDate={};
+    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?${sel}&type=eq.PLAN`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()).catch(()=>[]),
+    fetch(`${SUPABASE_URL}/rest/v1/actuals?select=date,technician,start_slot,end_slot,status,reason`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}}).then(r=>r.json()).catch(()=>[])
+  ]).then(([p,h,a])=>{
+    // FIX: บางงานกด OK แล้วแต่สถานะไปอยู่ในตาราง actuals อย่างเดียว (ตาราง plans ไม่ถูกอัปเดต)
+    // → เช็คสถานะจาก actuals ประกอบด้วย + ตัดแถวซ้ำ (แผนเดียวกันมีหลาย record) ก่อนสรุปว่า "ยังไม่จบ"
+    const actualMap={};
+    (Array.isArray(a)?a:[]).forEach(r=>{
+      actualMap[`${r.date}|${r.technician}|${r.start_slot}|${r.end_slot}`]=r;
+    });
+    const best={};
     [...(Array.isArray(p)?p:[]),...(Array.isArray(h)?h:[])].forEach(row=>{
       if(!row.date)return;
+      const key=`${row.date}|${row.technician}|${row.start_slot}|${row.end_slot}`;
+      const act=actualMap[key];
+      const status=row.status || (act&&act.status) || null;
+      const merged={...row,status,reason:row.reason||(act&&act.reason)||''};
+      const prev=best[key];
+      // แถวซ้ำ: เก็บแถวที่มีสถานะไว้ (OK ชนะทุกอย่าง จะได้ตัดออกจากงานค้าง)
+      if(!prev || status==='OK' || (status&&!prev.status)) best[key]=merged;
+    });
+    pendingPlans.byDate={};
+    Object.values(best).forEach(row=>{
       if(row.status==='OK')return; // เสร็จแล้ว ไม่นับเป็นงานค้าง
       (pendingPlans.byDate[row.date]=pendingPlans.byDate[row.date]||[]).push(row);
     });
@@ -1481,9 +1540,113 @@ function loadPendingPlans(){
   });
 }
 
+// ═══ ระบบจัดกะพนักงาน ═══
+// พยายามเก็บลง Supabase (ตาราง shift_assignments) ให้ทุกเครื่องเห็นเหมือนกัน
+// ถ้ายังไม่มีตาราง จะเก็บลงเครื่องนี้ (localStorage) ไปก่อนโดยอัตโนมัติ
+const shiftState={ map:{}, source:'local' };
+
+function rowName(r){
+  const i=backlogData.nameColIndex;
+  if(i<0||!r||!r[i])return'';
+  return String((r[i].f??r[i].v)??'').trim();
+}
+// ช่องชื่อในชีทมักใส่หลายคนคั่นด้วย , หรือ / → แตกเป็นรายคน
+function splitNames(t){
+  return String(t||'')
+    .split(/[,\/+]|และ/)
+    .map(s=>s.trim().replace(/\s+/g,' '))
+    .filter(s=>s.length>0);
+}
+function rowNames(r){ return splitNames(rowName(r)); }
+// หากะของคนในชื่อ (เทียบตรงก่อน ถ้าไม่ตรงลองเทียบแบบชื่อย่อย/สะกดต่างเล็กน้อย)
+function nameShift(n){
+  let s=shiftState.map[n];
+  if(!s){
+    const hit=Object.keys(shiftState.map).find(k=>k&&n&&(n.includes(k)||k.includes(n)));
+    if(hit)s=shiftState.map[hit];
+  }
+  return s||null;
+}
+// งาน 1 เคสอาจมีคนจากทั้ง 2 กะ → คืนว่าเกี่ยวกับกะไหนบ้าง
+function rowShiftSet(r){
+  const set={day:false,night:false,any:false};
+  rowNames(r).forEach(n=>{
+    const s=nameShift(n);
+    if(s==='day'){set.day=true;set.any=true;}
+    if(s==='night'){set.night=true;set.any=true;}
+  });
+  return set;
+}
+function hasShiftData(){ return Object.keys(shiftState.map).length>0; }
+
+function loadShiftAssignments(){
+  return fetch(`${SUPABASE_URL}/rest/v1/shift_assignments?select=name,shift`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(async r=>{ if(!r.ok)throw new Error(await r.text()); return r.json(); })
+  .then(rows=>{
+    shiftState.map={};
+    (rows||[]).forEach(x=>{ if(x&&x.name&&x.shift)shiftState.map[x.name]=x.shift; });
+    shiftState.source='supabase';
+  })
+  .catch(()=>{
+    try{ shiftState.map=JSON.parse(localStorage.getItem('shiftMap')||'{}'); }catch(e){ shiftState.map={}; }
+    shiftState.source='local';
+  });
+}
+
+function persistShift(name,shift){
+  if(shiftState.source==='supabase'){
+    const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'};
+    if(shift){
+      fetch(`${SUPABASE_URL}/rest/v1/shift_assignments?on_conflict=name`,{method:'POST',headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({name,shift})}).catch(e=>console.error(e));
+    }else{
+      fetch(`${SUPABASE_URL}/rest/v1/shift_assignments?name=eq.${encodeURIComponent(name)}`,{method:'DELETE',headers:{...h,Prefer:'return=minimal'}}).catch(e=>console.error(e));
+    }
+  }else{
+    localStorage.setItem('shiftMap',JSON.stringify(shiftState.map));
+  }
+}
+
+function cycleShift(name){
+  const cur=shiftState.map[name];
+  const next = cur==='day' ? 'night' : cur==='night' ? null : 'day';
+  if(next)shiftState.map[name]=next; else delete shiftState.map[name];
+  persistShift(name,next);
+  renderShiftPanel(); renderBigCal(); renderBacklogTable();
+}
+
+function renderShiftPanel(){
+  const box=byId('shiftPanel'); if(!box)return;
+  const note=byId('shiftNote');
+  // รวมชื่อจาก 2 แหล่ง: ช่างในหน้างานประจำวัน + ชื่อจากชีทแจ้งซ่อม (ถ้าหาคอลัมน์เจอ)
+  const sheetNames = backlogData.nameColIndex>=0
+    ? backlogData.rows.flatMap(r=>rowNames(r))
+    : [];
+  const names=[...new Set([...technicians,...sheetNames])].sort((a,b)=>a.localeCompare(b,'th'));
+  if(names.length===0){
+    box.innerHTML='<span class="sub" style="margin:0;">ยังไม่มีรายชื่อ</span>';
+    if(note)note.textContent='';
+    return;
+  }
+  box.innerHTML=names.map(n=>{
+    const s=shiftState.map[n];
+    const cls=s==='day'?'shift-day':s==='night'?'shift-night':'';
+    const ic=s==='day'?'☀️ ':s==='night'?'🌙 ':'';
+    return `<span class="shift-chip ${cls}" onclick="cycleShift(decodeURIComponent('${encodeURIComponent(n)}'))">${ic}${escapeHtml(n)}</span>`;
+  }).join('');
+  const nD=names.filter(n=>shiftState.map[n]==='day').length;
+  const nN=names.filter(n=>shiftState.map[n]==='night').length;
+  if(note){
+    let t=`☀️ กะเช้า ${nD} คน · 🌙 กะดึก ${nN} คน · ไม่ระบุ ${names.length-nD-nN} คน`;
+    if(backlogData.nameColIndex<0)t+='  |  ใช้รายชื่อช่างจากหน้างานประจำวัน (ในชีทแจ้งซ่อมไม่พบคอลัมน์ชื่อ)';
+    if(shiftState.source==='local')t+='  (บันทึกเฉพาะเครื่องนี้ — สร้างตาราง shift_assignments ใน Supabase เพื่อให้ทุกเครื่องเห็นเหมือนกัน)';
+    note.textContent=t;
+  }
+}
+
 async function refreshCalendarPage(){
   safeSetText('backlogStatus','กำลังโหลดข้อมูลจาก Google Sheet...');
-  await Promise.all([loadBacklogSheet(),loadPendingPlans()]);
+  await Promise.all([loadBacklogSheet(),loadPendingPlans(),loadShiftAssignments()]);
+  renderShiftPanel();
   renderBigCal();
   renderBacklogTable();
 }
@@ -1519,8 +1682,30 @@ function renderBigCal(){
     let cls='bigcal-cell '+heatClass(nBacklog,nPlan,ds,today);
     if(ds===today)cls+=' today';
     let pills='';
-    if(nBacklog)pills+=`<span class="pill pill-backlog">🔴 ค้าง ${nBacklog}</span>`;
-    if(nPlan)pills+=`<span class="pill pill-plan">🟠 แผน ${nPlan}</span>`;
+    if(nBacklog){
+      if(hasShiftData()){
+        const rows=backlogData.byDate[ds]||[];
+        let cD=0,cN=0,cU=0;
+        rows.forEach(r=>{const st=rowShiftSet(r); if(st.day)cD++; if(st.night)cN++; if(!st.any)cU++;});
+        if(cD)pills+=`<span class="pill pill-day">☀️ค้าง ${cD}</span>`;
+        if(cN)pills+=`<span class="pill pill-night">🌙ค้าง ${cN}</span>`;
+        if(cU)pills+=`<span class="pill pill-backlog">🔴ค้าง ${cU}</span>`;
+      }else{
+        pills+=`<span class="pill pill-backlog">🔴 ค้าง ${nBacklog}</span>`;
+      }
+    }
+    if(nPlan){
+      if(hasShiftData()){
+        const prow=pendingPlans.byDate[ds]||[];
+        let pD=0,pN=0,pU=0;
+        prow.forEach(p=>{const s=shiftState.map[p.technician]; if(s==='day')pD++; else if(s==='night')pN++; else pU++;});
+        if(pD)pills+=`<span class="pill pill-day">☀️แผน ${pD}</span>`;
+        if(pN)pills+=`<span class="pill pill-night">🌙แผน ${pN}</span>`;
+        if(pU)pills+=`<span class="pill pill-plan">🟠แผน ${pU}</span>`;
+      }else{
+        pills+=`<span class="pill pill-plan">🟠 แผน ${nPlan}</span>`;
+      }
+    }
     if(!total&&ds<=today)pills=`<span class="pill pill-done">✓ เคลียร์</span>`;
     html+=`<div class="${cls.trim()}" onclick="openDayDetail('${ds}')"><div class="bigcal-daynum"><span>${d}</span>${total?`<span class="cnt">${total} งาน</span>`:''}</div>${pills}</div>`;
   }
@@ -1533,39 +1718,75 @@ function openDayDetail(ds){
   safeSetText('dayDetailTitle',`งานค้างวันที่ ${ds}`);
   let html='';
 
-  // ── งานค้างจากชีท ──
+  // ── งานค้างจากชีท (แยกตามกะถ้าจัดกะไว้แล้ว) ──
+  const itemHtml=(r,shift)=>{
+    const parts=[];
+    backlogData.headers.forEach((h,i)=>{
+      if(i===backlogData.dateColIndex)return;
+      const c=r[i]; if(!c)return;
+      const val=(c.f??c.v);
+      if(val===null||val===''||val===undefined)return;
+      parts.push(`<b>${escapeHtml(h||('คอลัมน์ '+(i+1)))}:</b> ${escapeHtml(val)}`);
+    });
+    const border=shift==='day'?'border-left:4px solid #f59e0b;background:#fffdf3;':shift==='night'?'border-left:4px solid #6366f1;background:#f6f7ff;':'';
+    return `<div class="daydetail-item" style="${border}">${parts.join('<br>')||'-'}</div>`;
+  };
   html+=`<div class="daydetail-section-title">📋 งานค้างจาก Google Sheet <span class="pill pill-backlog">${backlog.length} รายการ</span></div>`;
   if(backlog.length===0){
     html+=`<div class="sub" style="margin:0;">ไม่มีงานค้างจากชีทในวันนี้</div>`;
+  }else if(hasShiftData()){
+    const gD=backlog.filter(r=>rowShiftSet(r).day);
+    const gN=backlog.filter(r=>rowShiftSet(r).night);
+    const gU=backlog.filter(r=>!rowShiftSet(r).any);
+    if(gD.length){
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-day">☀️ กะเช้า ${gD.length}</span></div>`;
+      gD.forEach(r=>{ html+=itemHtml(r,'day'); });
+    }
+    if(gN.length){
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-night">🌙 กะดึก ${gN.length}</span></div>`;
+      gN.forEach(r=>{ html+=itemHtml(r,'night'); });
+    }
+    if(gU.length){
+      html+=`<div class="daydetail-section-title" style="font-size:13px;color:#5b708b;">ยังไม่ระบุกะ ${gU.length}</div>`;
+      gU.forEach(r=>{ html+=itemHtml(r,null); });
+    }
   }else{
-    backlog.forEach(r=>{
-      const parts=[];
-      backlogData.headers.forEach((h,i)=>{
-        if(i===backlogData.dateColIndex)return;
-        const c=r[i]; if(!c)return;
-        const val=(c.f??c.v);
-        if(val===null||val===''||val===undefined)return;
-        parts.push(`<b>${escapeHtml(h||('คอลัมน์ '+(i+1)))}:</b> ${escapeHtml(val)}`);
-      });
-      html+=`<div class="daydetail-item">${parts.join('<br>')||'-'}</div>`;
-    });
+    backlog.forEach(r=>{ html+=itemHtml(r,null); });
   }
 
-  // ── แผนที่ยังไม่จบ (Supabase) ──
+  // ── แผนที่ยังไม่จบ (Supabase) — แยกตามกะถ้าจัดกะไว้แล้ว ──
+  const planItem=(p,shift)=>{
+    const chip=p.status==='NG'
+      ? '<span class="status-chip chip-ng">NG</span>'
+      : '<span class="status-chip chip-wait">ยังไม่บันทึก ACTUAL</span>';
+    const border=shift==='day'?'border-left:4px solid #f59e0b;background:#fffdf3;':shift==='night'?'border-left:4px solid #6366f1;background:#f6f7ff;':'';
+    return `<div class="daydetail-item" style="${border}">
+      <b>${escapeHtml(p.technician||'-')}</b> | ${escapeHtml(getTimeRange(p.start_slot,p.end_slot))} ${chip}<br>
+      ${[p.line,p.machine,p.job_type].filter(Boolean).map(escapeHtml).join(' | ')}<br>
+      ${escapeHtml(p.detail||'-')}${p.reason?`<br><b>Reason:</b> ${escapeHtml(p.reason)}`:''}
+    </div>`;
+  };
   html+=`<div class="daydetail-section-title" style="margin-top:14px;">🗓️ แผนงานที่ยังไม่จบ (Dashboard) <span class="pill pill-plan">${plans.length} รายการ</span></div>`;
   if(plans.length===0){
     html+=`<div class="sub" style="margin:0;">ไม่มีแผนค้างในวันนี้</div>`;
+  }else if(hasShiftData()){
+    const pD=plans.filter(p=>shiftState.map[p.technician]==='day');
+    const pN=plans.filter(p=>shiftState.map[p.technician]==='night');
+    const pU=plans.filter(p=>!shiftState.map[p.technician]);
+    if(pD.length){
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-day">☀️ กะเช้า ${pD.length}</span></div>`;
+      pD.forEach(p=>{ html+=planItem(p,'day'); });
+    }
+    if(pN.length){
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-night">🌙 กะดึก ${pN.length}</span></div>`;
+      pN.forEach(p=>{ html+=planItem(p,'night'); });
+    }
+    if(pU.length){
+      html+=`<div class="daydetail-section-title" style="font-size:13px;color:#5b708b;">ยังไม่ระบุกะ ${pU.length}</div>`;
+      pU.forEach(p=>{ html+=planItem(p,null); });
+    }
   }else{
-    plans.forEach(p=>{
-      const chip=p.status==='NG'
-        ? '<span class="status-chip chip-ng">NG</span>'
-        : '<span class="status-chip chip-wait">ยังไม่บันทึก ACTUAL</span>';
-      html+=`<div class="daydetail-item">
-        <b>${escapeHtml(p.technician||'-')}</b> | ${escapeHtml(getTimeRange(p.start_slot,p.end_slot))} ${chip}<br>
-        ${[p.line,p.machine,p.job_type].filter(Boolean).map(escapeHtml).join(' | ')}<br>
-        ${escapeHtml(p.detail||'-')}${p.reason?`<br><b>Reason:</b> ${escapeHtml(p.reason)}`:''}
-      </div>`;
-    });
+    plans.forEach(p=>{ html+=planItem(p,null); });
   }
 
   byId('dayDetailBody').innerHTML=html;
@@ -1579,7 +1800,6 @@ function renderBacklogTable(){
     t.innerHTML=''; return;
   }
   if(!backlogData.loaded){ return; }
-  // แสดงเฉพาะ column ที่มีข้อมูลจริงอย่างน้อย 1 แถว
   const usedCols=[];
   backlogData.headers.forEach((h,i)=>{
     if(backlogData.rows.some(r=>{const c=r[i];return c&&c.v!==null&&c.v!==''&&c.v!==undefined;}))usedCols.push(i);
@@ -1589,18 +1809,52 @@ function renderBacklogTable(){
     : `ทั้งหมด ${backlogData.rows.length} รายการ ⚠️ ไม่พบคอลัมน์สถานะ "${BACKLOG_FILTER_TEXT}" ในชีท จึงแสดงทุกแถว`;
   if(backlogData.dateColIndex<0) statusMsg+=' (ไม่พบคอลัมน์วันที่ จึงแสดงเป็นรายการรวม ไม่ผูกกับปฏิทิน)';
   safeSetText('backlogStatus',statusMsg);
-  let html='<thead><tr><th>#</th>';
-  usedCols.forEach(i=>{ html+=`<th>${escapeHtml(backlogData.headers[i]||('คอลัมน์ '+(i+1)))}</th>`; });
-  html+='</tr></thead><tbody>';
-  backlogData.rows.forEach((r,ri)=>{
-    html+=`<tr><td>${ri+1}</td>`;
+
+  const grouped=hasShiftData();
+  const colCount=usedCols.length+2; // # + กะ
+
+  const renderRow=(r,ri,shift)=>{
+    const rowCls=shift==='day'?'row-day':shift==='night'?'row-night':'';
+    const st=rowShiftSet(r);
+    const badge=(st.day&&st.night)?'☀️+🌙':shift==='day'?'☀️ เช้า':shift==='night'?'🌙 ดึก':'—';
+    let out=`<tr class="${rowCls}"><td>${ri}</td><td class="shift-badge">${badge}</td>`;
     usedCols.forEach(i=>{
       const c=r[i]; let val=c?(c.f??c.v):'';
       if(i===backlogData.dateColIndex){ val=gvizToISO(c?.v,c?.f)||val; }
-      html+=`<td>${escapeHtml(val??'')}</td>`;
+      out+=`<td>${escapeHtml(val??'')}</td>`;
     });
-    html+='</tr>';
-  });
+    return out+'</tr>';
+  };
+
+  let html='<thead><tr><th>#</th><th>กะ</th>';
+  usedCols.forEach(i=>{ html+=`<th>${escapeHtml(backlogData.headers[i]||('คอลัมน์ '+(i+1)))}</th>`; });
+  html+='</tr></thead><tbody>';
+
+  if(grouped){
+    // แยกเป็น 3 กลุ่ม: กะเช้า / กะดึก / ไม่ระบุ พร้อมหัวสีคั่นชัดเจน
+    const gD=[],gN=[],gU=[];
+    backlogData.rows.forEach(r=>{
+      const st=rowShiftSet(r);
+      if(st.day)gD.push(r);
+      if(st.night)gN.push(r);   // งานที่มีคนทั้ง 2 กะ จะเห็นในทั้ง 2 หมวด
+      if(!st.any)gU.push(r);
+    });
+    let ri=1;
+    if(gD.length){
+      html+=`<tr class="shift-sec sec-day"><td colspan="${colCount}">☀️ กะเช้า — งานค้าง ${gD.length} รายการ</td></tr>`;
+      gD.forEach(r=>{ html+=renderRow(r,ri++,'day'); });
+    }
+    if(gN.length){
+      html+=`<tr class="shift-sec sec-night"><td colspan="${colCount}">🌙 กะดึก — งานค้าง ${gN.length} รายการ</td></tr>`;
+      gN.forEach(r=>{ html+=renderRow(r,ri++,'night'); });
+    }
+    if(gU.length){
+      html+=`<tr class="shift-sec sec-none"><td colspan="${colCount}">ยังไม่ระบุกะ — ${gU.length} รายการ (กดชื่อในกล่อง "จัดกะพนักงาน" ด้านบน)</td></tr>`;
+      gU.forEach(r=>{ html+=renderRow(r,ri++,null); });
+    }
+  }else{
+    backlogData.rows.forEach((r,ri)=>{ html+=renderRow(r,ri+1,null); });
+  }
   html+='</tbody>';
   t.innerHTML=html;
 }
