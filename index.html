@@ -382,7 +382,7 @@
     </section>
 
     <section class="card span-12">
-      <h2>📋 งานค้างทั้งหมด (จากชีทแจ้งซ่อม สถานะ "งานค้าง")</h2>
+      <h2>📋 งานค้างทั้งหมด (ชีทแจ้งซ่อม: งานค้าง = YES และ สถานะงานค้าง ≠ OK)</h2>
       <div class="sub" id="backlogStatus">กำลังโหลดข้อมูลจาก Google Sheet...</div>
       <div class="backlog-table-wrap">
         <table class="backlog-table" id="backlogTable"></table>
@@ -594,7 +594,11 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // ── Google Sheet งานค้าง (แก้ชื่อชีท/คำที่ใช้กรองตรงนี้ได้) ──
 const BACKLOG_SHEET_ID     = "1t6uMvJqXE3GFpQTw9VlR0hDxWVIwvHaI2OomvYuH1hU";
 const BACKLOG_SHEET_NAME   = "แจ้งซ่อม";   // tab ที่ดึงข้อมูล
-const BACKLOG_FILTER_TEXT  = "งานค้าง";    // เอาเฉพาะแถวที่มีสถานะ/หัวข้อนี้
+// ตามชีทแจ้งซ่อม: คอลัมน์ "งานค้าง" = YES คือเป็นงานค้าง / คอลัมน์ "สถานะงานค้าง" = OK คือปิดแล้ว
+const BACKLOG_FLAG_HEADER   = "งานค้าง";        // ช่องนี้ = YES → เป็นงานค้าง
+const BACKLOG_STATUS_HEADER = "สถานะงานค้าง";   // ช่องนี้ = OK  → ปิดแล้ว ตัดออก
+const BACKLOG_YES_WORDS     = ["yes","y","ใช่","true","✓","✔"];
+const BACKLOG_DONE_WORDS    = ["ok","เสร็จ","ปิด","จบ","เรียบร้อย","closed","complete","done","finish"];
 
 const technicians = ["ธนเทพ","สงคราม","สุทิวัส","วีระพงษ์","อาคม","ณัฐวุฒิ","ธีระ","ธนัทดนัย","วิโรจน์","New operator"];
 const timeSlots = ["(7:30-8:30)/(19:30-20:30)","(8:30-9:30)/(20:30-21:30)","(9:30-10:30)/(21:30-22:30)","(10:30-11:30)/(22:30-23:30)","(11:30-12:00)/(23:30-24:00)","(12:00-13:00)/(24:00-01:00)","(13:00-14:00)/(01:00-02:00)","(14:00-14:30)/(02:00-02:30)","(14:30-15:30)/(02:30-03:30)","(15:30-16:30)/(03:30-04:30)","(17:00-17:30)/(05:00-05:30)","(17:30-18:30)/(05:30-06:30)","(18:30-19:30)/(06:30-07:30)"];
@@ -1408,7 +1412,7 @@ function confirmOk(){if(confirmCallback)confirmCallback();closeConfirmModal();}
 // PAGE 2 : ปฏิทินงานค้าง
 // ═══════════════════════════════════════════════════════
 const bigcal = { year:new Date().getFullYear(), month:new Date().getMonth() };
-const backlogData = { headers:[], rows:[], dateColIndex:-1, statusColIndex:-1, nameColIndex:-1, totalRows:0, filtered:false, byDate:{}, loaded:false, error:null };
+const backlogData = { headers:[], rows:[], dateColIndex:-1, statusColIndex:-1, statusColName:'', doneColIndex:-1, doneColName:'', matchCount:0, doneCount:0, nameColIndex:-1, totalRows:0, filtered:false, byDate:{}, loaded:false, error:null };
 const pendingPlans = { byDate:{}, loaded:false }; // แผน supabase ที่ status ว่าง หรือ NG
 
 function pad2(n){return String(n).padStart(2,'0');}
@@ -1444,29 +1448,61 @@ function loadBacklogSheet(){
         // ตัด row ที่ว่างทั้งแถวออก
         let cleanRows=rows.filter(r=>r.some(c=>c.v!==null&&c.v!==''&&c.v!==undefined));
 
-        // ── หา column สถานะ แล้วกรองเฉพาะแถวที่เป็น "งานค้าง" ──
+        // ── กรอง: คอลัมน์ "งานค้าง" = YES และคอลัมน์ "สถานะงานค้าง" ยังไม่ใช่ OK ──
         const cellText=(c)=>String((c&&(c.f??c.v))??'').trim();
-        let statusIdx=-1;
-        // 1) หา column ที่ header สื่อถึงสถานะ/งานค้าง
-        cols.forEach((label,i)=>{
-          if(statusIdx>=0)return;
-          const l=String(label);
-          if(/สถานะ|status|งานค้าง|ค้าง/i.test(l))statusIdx=i;
+        const norm=(t)=>String(t||'').replace(/\s+/g,'').toLowerCase();
+        const allRows=cleanRows.slice();   // เก็บทุกแถวไว้ใช้หาคอลัมน์วันที่/ชื่อ
+
+        const isYes=(t)=>{ const s=norm(t); return !!s && BACKLOG_YES_WORDS.some(w=>s===norm(w)); };
+        const isDone=(t)=>{
+          const s=norm(t);
+          if(!s)return false;
+          if(s==='ok'||s==='okay')return true;
+          return BACKLOG_DONE_WORDS.some(w=>{ const k=norm(w); return k.length>2 && s.includes(k); });
+        };
+        // คอลัมน์รูปภาพ/ผู้แก้ไข ฯลฯ มีคำว่า "งานค้าง" ปนอยู่ในหัวคอลัมน์ ต้องไม่เอามาใช้
+        const isNoise=(label)=>/รูป|ภาพ|ผู้|ประเภท|image|photo|file/i.test(String(label));
+
+        // คอลัมน์ธง "งานค้าง" (YES)
+        let flagIdx=-1;
+        cols.forEach((label,i)=>{ if(flagIdx<0 && norm(label)===norm(BACKLOG_FLAG_HEADER))flagIdx=i; });
+        if(flagIdx<0)cols.forEach((label,i)=>{
+          if(flagIdx<0 && /งานค้าง|ค้าง/.test(String(label)) && !/สถานะ/.test(String(label)) && !isNoise(label))flagIdx=i;
         });
-        // 2) ถ้าไม่เจอจาก header → หา column ที่มีค่าตรงกับคำว่า "งานค้าง"
-        if(statusIdx<0){
+        if(flagIdx<0){   // สุดท้าย: หาคอลัมน์ที่มีค่า YES อยู่จริง
           for(let i=0;i<cols.length;i++){
-            if(cleanRows.some(r=>cellText(r[i]).includes(BACKLOG_FILTER_TEXT))){ statusIdx=i; break; }
+            if(isNoise(cols[i]))continue;
+            if(allRows.some(r=>isYes(cellText(r[i])))){ flagIdx=i; break; }
           }
         }
-        backlogData.statusColIndex=statusIdx;
+
+        // คอลัมน์ "สถานะงานค้าง" (OK = ปิดแล้ว)
+        let doneIdx=-1;
+        cols.forEach((label,i)=>{ if(doneIdx<0 && norm(label)===norm(BACKLOG_STATUS_HEADER))doneIdx=i; });
+        if(doneIdx<0)cols.forEach((label,i)=>{
+          if(doneIdx<0 && i!==flagIdx && /สถานะ/.test(String(label)) && !isNoise(label))doneIdx=i;
+        });
+
+        backlogData.statusColIndex=flagIdx;
+        backlogData.statusColName=flagIdx>=0?String(cols[flagIdx]||('คอลัมน์ '+(flagIdx+1))):'';
+        backlogData.doneColIndex=doneIdx;
+        backlogData.doneColName=doneIdx>=0?String(cols[doneIdx]||('คอลัมน์ '+(doneIdx+1))):'';
         backlogData.totalRows=cleanRows.length;
-        if(statusIdx>=0){
-          cleanRows=cleanRows.filter(r=>cellText(r[statusIdx]).includes(BACKLOG_FILTER_TEXT));
+
+        let nMatch=0,nDone=0;
+        if(flagIdx>=0){
+          cleanRows=cleanRows.filter(r=>{
+            if(!isYes(cellText(r[flagIdx])))return false;                            // งานค้าง ≠ YES
+            nMatch++;
+            if(doneIdx>=0 && isDone(cellText(r[doneIdx]))){ nDone++; return false; }  // สถานะงานค้าง = OK → ปิดแล้ว
+            return true;
+          });
           backlogData.filtered=true;
         }else{
-          backlogData.filtered=false; // ไม่เจอ column สถานะ → แสดงทั้งหมดไปก่อน
+          backlogData.filtered=false;
         }
+        backlogData.matchCount=nMatch;
+        backlogData.doneCount=nDone;
 
         backlogData.headers=cols;
         backlogData.rows=cleanRows;
@@ -1476,14 +1512,14 @@ function loadBacklogSheet(){
           if(dateIdx>=0)return;
           const l=String(label).toLowerCase();
           if(l.includes('วันที่')||l.includes('date')||l.includes('day')){
-            if(cleanRows.some(r=>gvizToISO(r[i]?.v,r[i]?.f)))dateIdx=i;
+            if(allRows.some(r=>gvizToISO(r[i]?.v,r[i]?.f)))dateIdx=i;
           }
         });
         if(dateIdx<0){
           // ไม่เจอจาก header → หา column แรกที่ค่าส่วนใหญ่เป็นวันที่
           for(let i=0;i<cols.length;i++){
-            const cnt=cleanRows.filter(r=>gvizToISO(r[i]?.v,r[i]?.f)).length;
-            if(cnt>0 && cnt>=cleanRows.length*0.3){ dateIdx=i; break; }
+            const cnt=allRows.filter(r=>gvizToISO(r[i]?.v,r[i]?.f)).length;
+            if(cnt>0 && cnt>=allRows.length*0.3){ dateIdx=i; break; }
           }
         }
         // หา column ชื่อพนักงาน (ผู้แจ้ง/ผู้รับผิดชอบ/ช่าง)
@@ -1496,7 +1532,7 @@ function loadBacklogSheet(){
           // fallback: หา column ที่มีชื่อช่างของทีมเราอยู่ในข้อมูล
           outer:
           for(let i=0;i<cols.length;i++){
-            for(const r of cleanRows){
+            for(const r of allRows){
               const t=cellText(r[i]);
               if(t&&technicians.some(n=>t.includes(n))){ nameIdx=i; break outer; }
             }
@@ -1517,7 +1553,7 @@ function loadBacklogSheet(){
       resolve();
     };
     const s=document.createElement('script');
-    s.src=`https://docs.google.com/spreadsheets/d/${BACKLOG_SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(BACKLOG_SHEET_NAME)}&headers=1&tqx=out:json;responseHandler:${cb}`;
+    s.src=`https://docs.google.com/spreadsheets/d/${BACKLOG_SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(BACKLOG_SHEET_NAME)}&headers=1&_t=${Date.now()}&tqx=out:json;responseHandler:${cb}`;
     s.onerror=()=>{ if(!done){ backlogData.error='โหลด Google Sheet ไม่สำเร็จ (ตรวจสอบว่าแชร์เป็น Anyone with the link แล้ว)'; cleanup(s); resolve(); } };
     window[cb+'_script']=s;
     // ห่อ callback ให้ลบ script ทิ้งด้วย
@@ -1852,8 +1888,8 @@ function renderBacklogTable(){
     if(backlogData.rows.some(r=>{const c=r[i];return c&&c.v!==null&&c.v!==''&&c.v!==undefined;}))usedCols.push(i);
   });
   let statusMsg = backlogData.filtered
-    ? `งานค้าง ${backlogData.rows.length} รายการ (กรองจากชีทแจ้งซ่อมทั้งหมด ${backlogData.totalRows} แถว)`
-    : `ทั้งหมด ${backlogData.rows.length} รายการ ⚠️ ไม่พบคอลัมน์สถานะ "${BACKLOG_FILTER_TEXT}" ในชีท จึงแสดงทุกแถว`;
+    ? `ชีท «${BACKLOG_SHEET_NAME}» — งานค้าง ${backlogData.rows.length} รายการ | «${backlogData.statusColName}» = YES ${backlogData.matchCount} รายการ, «${backlogData.doneColName||'-'}» = OK ${backlogData.doneCount} รายการ (ตัดออก) [ทั้งชีท ${backlogData.totalRows} แถว]`
+    : `ชีท «${BACKLOG_SHEET_NAME}» — ทั้งหมด ${backlogData.rows.length} รายการ ⚠️ ไม่พบคอลัมน์ "${BACKLOG_FLAG_HEADER}" จึงแสดงทุกแถว`;
   if(backlogData.dateColIndex<0) statusMsg+=' (ไม่พบคอลัมน์วันที่ จึงแสดงเป็นรายการรวม ไม่ผูกกับปฏิทิน)';
   safeSetText('backlogStatus',statusMsg);
 
