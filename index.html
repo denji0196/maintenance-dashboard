@@ -577,7 +577,7 @@
       </div>
       <div class="actions" style="margin-top:0;justify-content:flex-end;">
         <button class="btn-danger" type="button" onclick="clearTaskModalData()">ล้างข้อมูลช่องนี้</button>
-        <button class="btn-move" type="button" id="moveJobBtn" onclick="openMoveModal()">🏖️ ย้ายไปวันหยุด</button>
+        <button class="btn-move" type="button" id="moveJobBtn" onclick="openMoveModal()">🔄 ย้ายวัน</button>
         <button class="btn-primary" type="button" onclick="saveTaskModal()">บันทึก</button>
       </div>
     </div>
@@ -589,7 +589,7 @@
   <div class="modal" style="width:min(660px,100%);">
     <div class="modal-header">
       <div>
-        <h3 class="modal-title">🏖️ ย้ายงานไปวันหยุด</h3>
+        <h3 class="modal-title">🔄 ย้ายงานไปวันอื่น</h3>
         <div class="sub" id="moveSubtitle" style="margin:6px 0 0 0;">-</div>
       </div>
       <button class="close-btn" type="button" onclick="closeMoveModal()">ปิด</button>
@@ -598,7 +598,15 @@
       <div class="move-info" id="moveInfo"></div>
 
       <div class="field">
-        <label>1) เลือกวันหยุดปลายทาง</label>
+        <label>1) ย้ายไปที่ไหน</label>
+        <div class="mode-pick">
+          <button type="button" class="mode-btn" id="moveModeNormal" onclick="setMoveMode('normal')">🗓️ วันธรรมดา</button>
+          <button type="button" class="mode-btn on" id="moveModeHoliday" onclick="setMoveMode('holiday')">🏖️ วันหยุด</button>
+        </div>
+      </div>
+
+      <div class="field" id="moveDateField">
+        <label>เลือกวันหยุดปลายทาง</label>
         <select id="moveDate" onchange="refreshMoveSlots()"></select>
       </div>
 
@@ -608,14 +616,14 @@
       </div>
 
       <div class="field">
-        <label>3) เลือกช่วงเวลาในวันหยุด (ช่องเทา = มีงานอยู่แล้ว)</label>
+        <label>3) เลือกช่วงเวลาปลายทาง (ช่องเทา = มีงานอยู่แล้ว)</label>
         <div class="slot-pick" id="moveSlotPick"></div>
         <div class="sub" id="moveSlotInfo" style="margin:8px 0 0;">ยังไม่ได้เลือกช่วงเวลา</div>
       </div>
 
       <div class="actions" style="margin-top:0;justify-content:flex-end;">
         <button class="btn-secondary" type="button" onclick="closeMoveModal()">ยกเลิก</button>
-        <button class="btn-primary" type="button" onclick="saveMoveJob()">🏖️ ย้ายงาน</button>
+        <button class="btn-primary" type="button" onclick="saveMoveJob()">🔄 ย้ายงาน</button>
       </div>
     </div>
   </div>
@@ -1148,9 +1156,9 @@ function openTaskModal(name,type,index){
   if(mfg)mfg.checked=d.requestMFG||false;
 
   safeSetText('taskModalSubtitle',`${name} | ${type} | ${timeSlots[si]||'-'} - ${timeSlots[ei]||'-'}`);
-  // ปุ่มย้ายไปวันหยุด: ใช้ได้เฉพาะงานวันปกติที่มีข้อมูลอยู่แล้ว
+  // ปุ่มย้ายวัน: ใช้ได้กับงานที่มีข้อมูลอยู่แล้ว (ทั้งวันปกติและวันหยุด)
   const mv=byId('moveJobBtn');
-  if(mv)mv.style.display=(!holidayState.active && d && typeof d.startIndex==='number') ? 'inline-block' : 'none';
+  if(mv)mv.style.display=(d && typeof d.startIndex==='number') ? 'inline-block' : 'none';
   byId('taskModalBackdrop').classList.add('show');
 }
 
@@ -1250,23 +1258,25 @@ function clearTaskModalData(){
 // ═══════════════════════════════════════════════════════
 // ย้ายงานวันปกติ → วันหยุด
 // ═══════════════════════════════════════════════════════
-const moveState={ src:null, start:-1, end:-1, occupied:[] };
+const moveState={ src:null, srcTable:'plans', mode:'holiday', start:-1, end:-1, occupied:[] };
 
 function openMoveModal(){
   const{technician,originalIndex,originalEndIndex}=modalState;
   const d=state.slotDetails[getSlotKey(technician,'PLAN',originalIndex)];
   if(!d){ alert('ไม่พบข้อมูลงานนี้'); return; }
 
+  const fromHoliday=holidayState.active&&holidayState.date;
+  moveState.srcTable=fromHoliday?'holiday_plans':'plans';
   moveState.src={
     technician, start:originalIndex, end:originalEndIndex,
-    date: d.date || safeValue('workDate'),
+    date: d.date || (fromHoliday?holidayState.date:safeValue('workDate')),
     detail:d.detail||'', line:d.line||'', machine:d.machine||'',
     jobType:d.jobType||'PM', requestQC:!!d.requestQC, requestMFG:!!d.requestMFG,
     backlogKey:d.backlogKey||''
   };
   moveState.start=-1; moveState.end=-1;
 
-  safeSetText('moveSubtitle',`${technician} | ${getTimeRange(originalIndex,originalEndIndex)} | วันที่ ${moveState.src.date}`);
+  safeSetText('moveSubtitle',`${technician} | ${getTimeRange(originalIndex,originalEndIndex)} | จาก${fromHoliday?'วันหยุด':'วันปกติ'} ${moveState.src.date}`);
   byId('moveInfo').innerHTML=`
     <b>${escapeHtml([d.line,d.machine].filter(Boolean).join(' · ')||'-')}</b> — ${escapeHtml(d.jobType||'-')}<br>
     ${escapeHtml(d.detail||'-')}`;
@@ -1279,9 +1289,20 @@ function openMoveModal(){
   }).join('');
 
   byId('moveJobBackdrop').classList.add('show');
-  loadMoveHolidays().then(()=>refreshMoveSlots());
+  // มาจากวันหยุด → ตั้งต้นเป็นย้ายกลับวันธรรมดา / มาจากวันปกติ → ตั้งต้นเป็นวันหยุด
+  setMoveMode(fromHoliday?'normal':'holiday');
 }
 function closeMoveModal(){ byId('moveJobBackdrop').classList.remove('show'); }
+
+function setMoveMode(m){
+  moveState.mode=m;
+  moveState.start=-1; moveState.end=-1;
+  byId('moveModeNormal').classList.toggle('on',m==='normal');
+  byId('moveModeHoliday').classList.toggle('on',m==='holiday');
+  byId('moveDateField').style.display = m==='holiday' ? 'flex' : 'none';
+  if(m==='holiday'){ loadMoveHolidays().then(()=>refreshMoveSlots()); }
+  else{ refreshMoveSlots(); }
+}
 
 function loadMoveHolidays(){
   const today=toISODate(new Date());
@@ -1297,15 +1318,29 @@ function loadMoveHolidays(){
 }
 
 function refreshMoveSlots(){
-  const d=safeValue('moveDate'), tech=safeValue('moveTech');
+  const tech=safeValue('moveTech');
   moveState.start=-1; moveState.end=-1;
   moveState.occupied=Array(timeSlots.length).fill(false);
-  if(!d){ renderMoveSlots(); return; }
-  fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${d}&technician=eq.${encodeURIComponent(tech)}&select=start_slot,end_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+
+  const s=moveState.src;
+  const isHoliday=moveState.mode==='holiday';
+  const dstDate=isHoliday?safeValue('moveDate'):(safeValue('workDate')||toISODate(new Date()));
+  if(isHoliday && !dstDate){ renderMoveSlots(); return; }
+
+  const url = isHoliday
+    ? `${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${dstDate}&technician=eq.${encodeURIComponent(tech)}&select=start_slot,end_slot,date`
+    : `${SUPABASE_URL}/rest/v1/plans?technician=eq.${encodeURIComponent(tech)}&select=start_slot,end_slot,date`;
+
+  fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
   .then(r=>r.ok?r.json():[]).then(rows=>{
-    (rows||[]).forEach(p=>{ for(let i=p.start_slot;i<=p.end_slot;i++)moveState.occupied[i]=true; });
-    // ตั้งค่าเริ่มต้นเป็นช่วงเวลาเดิม ถ้าว่าง
-    const s=moveState.src;
+    (rows||[]).forEach(p=>{
+      // ไม่นับตัวงานเดิมของตัวเองเป็นช่องที่ไม่ว่าง
+      const same = (moveState.srcTable===(isHoliday?'holiday_plans':'plans'))
+        && p.date===s.date && tech===s.technician
+        && p.start_slot===s.start && p.end_slot===s.end;
+      if(same)return;
+      for(let i=p.start_slot;i<=p.end_slot;i++)moveState.occupied[i]=true;
+    });
     let free=true;
     for(let i=s.start;i<=s.end;i++)if(moveState.occupied[i])free=false;
     if(free){ moveState.start=s.start; moveState.end=s.end; }
@@ -1343,13 +1378,18 @@ function pickMoveSlot(i){
 
 async function saveMoveJob(){
   const s=moveState.src; if(!s)return;
-  const date=safeValue('moveDate');
+  const isHoliday=moveState.mode==='holiday';
+  const dstTable=isHoliday?'holiday_plans':'plans';
+  const date=isHoliday?safeValue('moveDate'):(safeValue('workDate')||toISODate(new Date()));
   const tech=safeValue('moveTech');
-  if(!date){ alert('กรุณาเลือกวันหยุดปลายทาง'); return; }
+  if(isHoliday && !date){ alert('กรุณาเลือกวันหยุดปลายทาง'); return; }
   if(moveState.start<0){ alert('กรุณาเลือกช่วงเวลา'); return; }
   const start=moveState.start, end=moveState.end>=0?moveState.end:moveState.start;
 
-  if(!confirm(`ย้ายงานนี้ไปวันหยุด ${date}\n${tech} | ${getTimeRange(start,end)}\n\nงานจะถูกลบออกจากตารางวันปกติ`))return;
+  const sameSpot = dstTable===moveState.srcTable && date===s.date && tech===s.technician && start===s.start && end===s.end;
+  if(sameSpot){ alert('ปลายทางเหมือนเดิม ไม่มีอะไรต้องย้าย'); return; }
+
+  if(!confirm(`ย้ายงานนี้ไป${isHoliday?'วันหยุด '+date:'วันธรรมดา'}\n${tech} | ${getTimeRange(start,end)}\n\nงานจะถูกลบออกจากตำแหน่งเดิม`))return;
 
   const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'};
   const payload={
@@ -1362,29 +1402,29 @@ async function saveMoveJob(){
   if(s.backlogKey)payload.backlog_key=s.backlogKey;
 
   try{
-    // 1) เพิ่มลงวันหยุด
-    let res=await fetch(`${SUPABASE_URL}/rest/v1/holiday_plans`,{method:'POST',headers:{...h,Prefer:'return=minimal'},body:JSON.stringify(payload)});
+    let res=await fetch(`${SUPABASE_URL}/rest/v1/${dstTable}`,{method:'POST',headers:{...h,Prefer:'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok){
       const txt=await res.text();
       if(/backlog_key/.test(txt)){
         delete payload.backlog_key;
-        res=await fetch(`${SUPABASE_URL}/rest/v1/holiday_plans`,{method:'POST',headers:{...h,Prefer:'return=minimal'},body:JSON.stringify(payload)});
+        res=await fetch(`${SUPABASE_URL}/rest/v1/${dstTable}`,{method:'POST',headers:{...h,Prefer:'return=minimal'},body:JSON.stringify(payload)});
         if(!res.ok)throw new Error(await res.text());
       }else throw new Error(txt);
     }
 
-    // 2) ลบออกจากตารางวันปกติ (รวม actuals ของช่วงนั้น ถ้ามี)
+    // ลบตำแหน่งเดิม (รวม actuals ของช่วงนั้น ถ้ามี)
     const del={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'};
+    const q=`technician=eq.${encodeURIComponent(s.technician)}&start_slot=eq.${s.start}&end_slot=eq.${s.end}&date=eq.${s.date}`;
     await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/plans?technician=eq.${encodeURIComponent(s.technician)}&start_slot=eq.${s.start}&end_slot=eq.${s.end}&date=eq.${s.date}`,{method:'DELETE',headers:del}),
-      fetch(`${SUPABASE_URL}/rest/v1/actuals?technician=eq.${encodeURIComponent(s.technician)}&start_slot=eq.${s.start}&end_slot=eq.${s.end}&date=eq.${s.date}`,{method:'DELETE',headers:del})
+      fetch(`${SUPABASE_URL}/rest/v1/${moveState.srcTable}?${q}`,{method:'DELETE',headers:del}),
+      fetch(`${SUPABASE_URL}/rest/v1/actuals?${q}`,{method:'DELETE',headers:del})
     ]);
 
     closeMoveModal(); closeTaskModal();
     lastTimelineSnapshot='';
-    await loadData();
+    if(holidayState.active&&holidayState.date)await loadDataFromX4(holidayState.date); else await loadData();
     if(typeof loadNgList==='function')loadNgList();
-    alert(`ย้ายงานไปวันหยุด ${date} เรียบร้อย\n${tech} | ${getTimeRange(start,end)}`);
+    alert(`ย้ายงานเรียบร้อย\n${isHoliday?'วันหยุด '+date:'วันธรรมดา'} | ${tech} | ${getTimeRange(start,end)}`);
   }catch(err){
     console.error(err);
     alert('ย้ายงานไม่สำเร็จ\n\n'+err.message);
