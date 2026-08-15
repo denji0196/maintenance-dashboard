@@ -168,6 +168,42 @@
     .bc-v.prob { color:#b91c1c; font-weight:600; }
     .bc-v.rem  { color:#92400e; }
 
+    /* ── ย้ายงานไปวันหยุด ── */
+    .btn-move { background:linear-gradient(135deg,#0891b2,#0e7490); color:#fff; }
+    .btn-move:hover { background:linear-gradient(135deg,#0e7490,#155e75); }
+    #moveJobBackdrop { z-index:10060; }
+    .move-info { background:#ecfeff; border:1px solid #a5f3fc; border-radius:10px; padding:10px 12px; font-size:12.5px; line-height:1.65; }
+
+    /* ── รายการ NG ค้าง ── */
+    .ng-item { transition:opacity .25s ease, transform .25s ease, max-height .35s ease, margin .35s ease, padding .35s ease; overflow:hidden; max-height:600px; position:relative; }
+    .ng-item.clearing { pointer-events:none; }
+    .ng-item.clearing::after {
+      content:''; position:absolute; inset:0; border-radius:12px;
+      background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.65) 50%,rgba(255,255,255,0) 100%);
+      background-size:200% 100%; animation:ngSweep 1s linear infinite;
+    }
+    @keyframes ngSweep { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+    .ng-item.done { border-left-color:#16a34a !important; background:#f0fdf4 !important; }
+    .ng-item.gone { opacity:0; transform:translateX(28px); max-height:0; margin-bottom:0; padding-top:0; padding-bottom:0; border-width:0; }
+    .ng-spin { display:inline-block; width:13px; height:13px; border:2px solid #fecaca; border-top-color:#dc2626; border-radius:50%; animation:ngSpin .7s linear infinite; vertical-align:-2px; margin-right:6px; }
+    @keyframes ngSpin { to { transform:rotate(360deg); } }
+    .ng-status-msg { font-size:12.5px; font-weight:800; color:#b91c1c; }
+    .ng-status-msg.ok { color:#15803d; }
+    #ngListBtn { border:1.5px solid #fecaca; background:#fff5f5; color:#b91c1c; font-weight:800; }
+    #ngListBtn:hover { background:#fee2e2; }
+    #ngListBtn.zero { border-color:#d7f0df; background:#f2fbf5; color:#15803d; }
+    .ng-item { border:1px solid var(--line); border-left:4px solid #dc2626; border-radius:12px; padding:11px 13px; background:#fff8f8; margin-bottom:9px; }
+    .ng-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+    .ng-tech { font-weight:800; font-size:13px; }
+    .ng-line { font-weight:800; font-size:15px; color:#1d4ed8; }
+    .ng-mc { font-weight:700; font-size:13px; color:#0f172a; background:#eef2f7; border-radius:7px; padding:1px 9px; }
+    .ng-nomc { font-size:12px; color:#94a3b8; font-weight:700; font-style:italic; }
+    .ng-time { font-size:12px; color:var(--muted); font-weight:700; }
+    .ng-date { margin-left:auto; font-size:12px; color:var(--muted); font-weight:700; }
+    .ng-row { font-size:13px; line-height:1.6; }
+    .ng-row b { color:#0f172a; }
+    .ng-reason { color:#b91c1c; }
+
     /* ── ปุ่มจ่ายงานจากงานค้าง ── */
     #assignBacklogBackdrop { z-index:10050; }   /* ต้องอยู่เหนือ popup รายวัน */
     .btn-assign { background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff; padding:6px 12px; font-size:12px; border-radius:9px; white-space:nowrap; font-weight:800; }
@@ -363,6 +399,7 @@
          <button class="btn-primary" onclick="forceRefreshData()">
   🔄 Update
 </button>
+          <button class="btn-secondary" onclick="openNgList()" id="ngListBtn">🔴 NG ค้าง <span id="ngCount">0</span></button>
           <button class="btn-secondary" onclick="clearTimeline()">ล้างตารางเวลา</button>
         </div>
       </div>
@@ -540,8 +577,63 @@
       </div>
       <div class="actions" style="margin-top:0;justify-content:flex-end;">
         <button class="btn-danger" type="button" onclick="clearTaskModalData()">ล้างข้อมูลช่องนี้</button>
+        <button class="btn-move" type="button" id="moveJobBtn" onclick="openMoveModal()">🏖️ ย้ายไปวันหยุด</button>
         <button class="btn-primary" type="button" onclick="saveTaskModal()">บันทึก</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE JOB TO HOLIDAY MODAL -->
+<div class="modal-backdrop" id="moveJobBackdrop">
+  <div class="modal" style="width:min(660px,100%);">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">🏖️ ย้ายงานไปวันหยุด</h3>
+        <div class="sub" id="moveSubtitle" style="margin:6px 0 0 0;">-</div>
+      </div>
+      <button class="close-btn" type="button" onclick="closeMoveModal()">ปิด</button>
+    </div>
+    <div class="modal-body">
+      <div class="move-info" id="moveInfo"></div>
+
+      <div class="field">
+        <label>1) เลือกวันหยุดปลายทาง</label>
+        <select id="moveDate" onchange="refreshMoveSlots()"></select>
+      </div>
+
+      <div class="field">
+        <label>2) ผู้รับผิดชอบ (เปลี่ยนคนได้)</label>
+        <select id="moveTech" onchange="refreshMoveSlots()"></select>
+      </div>
+
+      <div class="field">
+        <label>3) เลือกช่วงเวลาในวันหยุด (ช่องเทา = มีงานอยู่แล้ว)</label>
+        <div class="slot-pick" id="moveSlotPick"></div>
+        <div class="sub" id="moveSlotInfo" style="margin:8px 0 0;">ยังไม่ได้เลือกช่วงเวลา</div>
+      </div>
+
+      <div class="actions" style="margin-top:0;justify-content:flex-end;">
+        <button class="btn-secondary" type="button" onclick="closeMoveModal()">ยกเลิก</button>
+        <button class="btn-primary" type="button" onclick="saveMoveJob()">🏖️ ย้ายงาน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NG LIST MODAL -->
+<div class="modal-backdrop" id="ngListBackdrop">
+  <div class="modal" style="width:min(700px,100%);">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">🔴 รายการงาน NG ที่ถูกลบออกจากตารางแล้ว</h3>
+        <div class="sub" style="margin:6px 0 0 0;">งานที่บันทึกผลเป็น NG แล้วล้างออกจากตารางเวลา จะมาเก็บไว้ที่นี่เพื่อไม่ให้ตกหล่น</div>
+      </div>
+      <button class="close-btn" type="button" onclick="byId('ngListBackdrop').classList.remove('show')">ปิด</button>
+    </div>
+    <div class="modal-body">
+      <div class="sub" id="ngHint" style="margin:0;"></div>
+      <div id="ngListBody"></div>
     </div>
   </div>
 </div>
@@ -1056,6 +1148,9 @@ function openTaskModal(name,type,index){
   if(mfg)mfg.checked=d.requestMFG||false;
 
   safeSetText('taskModalSubtitle',`${name} | ${type} | ${timeSlots[si]||'-'} - ${timeSlots[ei]||'-'}`);
+  // ปุ่มย้ายไปวันหยุด: ใช้ได้เฉพาะงานวันปกติที่มีข้อมูลอยู่แล้ว
+  const mv=byId('moveJobBtn');
+  if(mv)mv.style.display=(!holidayState.active && d && typeof d.startIndex==='number') ? 'inline-block' : 'none';
   byId('taskModalBackdrop').classList.add('show');
 }
 
@@ -1123,12 +1218,177 @@ delete state.slotDetails[
 
 function clearTaskModalData(){
   const{technician,originalIndex,originalEndIndex}=modalState;
+  const st=state.actualStatus[`${technician}_${originalIndex}`];
+
+  // ต้องบันทึกผล ACTUAL (OK/NG) ก่อนถึงจะล้างงานออกจากตารางได้
+  if(st!=='OK' && st!=='NG'){
+    alert('ยังล้างงานนี้ไม่ได้\n\nต้องบันทึกผลในช่อง ACTUAL เป็น OK หรือ NG ก่อน\nแล้วค่อยล้างออกจากตารางเวลา');
+    return;
+  }
+  if(!confirm(`ล้างงานนี้ออกจากตารางเวลา?\n\nสถานะปัจจุบัน: ${st}${st==='NG'?'\n(งาน NG จะถูกเก็บไว้ในรายการ "🔴 NG ค้าง" ให้ตามต่อ)':''}`))return;
+
   clearPlanRange(technician,originalIndex,originalEndIndex);
   renderTimeline(); closeTaskModal();
+
   const table=holidayState.active?'holiday_plans':'plans';
   const df=holidayState.active?`date=eq.${holidayState.date}&`:'';
-  fetch(`${SUPABASE_URL}/rest/v1/${table}?${df}technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'}})
-  .then(()=>{lastTimelineSnapshot='';if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();});
+  const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'};
+
+  const jobs=[fetch(`${SUPABASE_URL}/rest/v1/${table}?${df}technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`,{method:'DELETE',headers:h})];
+  // OK = จบแล้ว ลบ actuals ทิ้งด้วย / NG = เก็บไว้ในรายการ NG ค้าง
+  if(st==='OK'){
+    const d=state.slotDetails[getSlotKey(technician,'PLAN',originalIndex)]?.date || (holidayState.active?holidayState.date:safeValue('workDate'));
+    jobs.push(fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${d}&technician=eq.${encodeURIComponent(technician)}&start_slot=eq.${originalIndex}&end_slot=eq.${originalEndIndex}`,{method:'DELETE',headers:h}));
+  }
+  Promise.all(jobs).then(()=>{
+    lastTimelineSnapshot='';
+    if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date);else loadData();
+    loadNgList();
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ย้ายงานวันปกติ → วันหยุด
+// ═══════════════════════════════════════════════════════
+const moveState={ src:null, start:-1, end:-1, occupied:[] };
+
+function openMoveModal(){
+  const{technician,originalIndex,originalEndIndex}=modalState;
+  const d=state.slotDetails[getSlotKey(technician,'PLAN',originalIndex)];
+  if(!d){ alert('ไม่พบข้อมูลงานนี้'); return; }
+
+  moveState.src={
+    technician, start:originalIndex, end:originalEndIndex,
+    date: d.date || safeValue('workDate'),
+    detail:d.detail||'', line:d.line||'', machine:d.machine||'',
+    jobType:d.jobType||'PM', requestQC:!!d.requestQC, requestMFG:!!d.requestMFG,
+    backlogKey:d.backlogKey||''
+  };
+  moveState.start=-1; moveState.end=-1;
+
+  safeSetText('moveSubtitle',`${technician} | ${getTimeRange(originalIndex,originalEndIndex)} | วันที่ ${moveState.src.date}`);
+  byId('moveInfo').innerHTML=`
+    <b>${escapeHtml([d.line,d.machine].filter(Boolean).join(' · ')||'-')}</b> — ${escapeHtml(d.jobType||'-')}<br>
+    ${escapeHtml(d.detail||'-')}`;
+
+  const ts=byId('moveTech');
+  ts.innerHTML=technicians.map(n=>{
+    const s=nameShift(n);
+    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    return `<option value="${escapeHtml(n)}"${n===technician?' selected':''}>${escapeHtml(n)}${tag}</option>`;
+  }).join('');
+
+  byId('moveJobBackdrop').classList.add('show');
+  loadMoveHolidays().then(()=>refreshMoveSlots());
+}
+function closeMoveModal(){ byId('moveJobBackdrop').classList.remove('show'); }
+
+function loadMoveHolidays(){
+  const today=toISODate(new Date());
+  return fetch(`${SUPABASE_URL}/rest/v1/holidays?select=date,note&date=gte.${today}&order=date`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.ok?r.json():[]).then(rows=>{
+    const sel=byId('moveDate');
+    if(!rows||!rows.length){
+      sel.innerHTML='<option value="">— ยังไม่มีวันหยุดในระบบ (เพิ่มที่ปุ่ม plan holiday) —</option>';
+    }else{
+      sel.innerHTML=rows.map(h=>`<option value="${h.date}">${h.date}${h.note?' — '+escapeHtml(h.note):''}</option>`).join('');
+    }
+  }).catch(()=>{});
+}
+
+function refreshMoveSlots(){
+  const d=safeValue('moveDate'), tech=safeValue('moveTech');
+  moveState.start=-1; moveState.end=-1;
+  moveState.occupied=Array(timeSlots.length).fill(false);
+  if(!d){ renderMoveSlots(); return; }
+  fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?date=eq.${d}&technician=eq.${encodeURIComponent(tech)}&select=start_slot,end_slot`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.ok?r.json():[]).then(rows=>{
+    (rows||[]).forEach(p=>{ for(let i=p.start_slot;i<=p.end_slot;i++)moveState.occupied[i]=true; });
+    // ตั้งค่าเริ่มต้นเป็นช่วงเวลาเดิม ถ้าว่าง
+    const s=moveState.src;
+    let free=true;
+    for(let i=s.start;i<=s.end;i++)if(moveState.occupied[i])free=false;
+    if(free){ moveState.start=s.start; moveState.end=s.end; }
+    renderMoveSlots();
+  }).catch(()=>renderMoveSlots());
+}
+
+function renderMoveSlots(){
+  const box=byId('moveSlotPick'); if(!box)return;
+  box.innerHTML=timeSlots.map((t,i)=>{
+    const p=t.split('/');
+    const busy=moveState.occupied[i];
+    const sel=(moveState.start>=0&&moveState.end>=0&&i>=moveState.start&&i<=moveState.end)||(moveState.start===i&&moveState.end<0);
+    const cls='slot-opt'+(busy?' busy':'')+(sel?' sel':'');
+    return `<div class="${cls}" ${busy?'':`onclick="pickMoveSlot(${i})"`}>${(p[0]||'').replace(/[()]/g,'')}<small>${(p[1]||'').replace(/[()]/g,'')}</small></div>`;
+  }).join('');
+  const info=byId('moveSlotInfo');
+  if(moveState.start<0)info.textContent='ยังไม่ได้เลือกช่วงเวลา';
+  else if(moveState.end<0)info.textContent=`เริ่ม ${timeSlots[moveState.start]} — กดช่องสิ้นสุด`;
+  else info.textContent=`จะย้ายไปลงเวลา: ${getTimeRange(moveState.start,moveState.end)} (${moveState.end-moveState.start+1} ช่วง)`;
+}
+
+function pickMoveSlot(i){
+  if(moveState.occupied[i])return;
+  if(moveState.start<0||moveState.end>=0){ moveState.start=i; moveState.end=-1; }
+  else{
+    if(i<moveState.start){ moveState.start=i; moveState.end=-1; renderMoveSlots(); return; }
+    for(let k=moveState.start;k<=i;k++){
+      if(moveState.occupied[k]){ alert('ช่วงที่เลือกทับกับงานที่มีอยู่แล้ว กรุณาเลือกใหม่'); moveState.start=-1; moveState.end=-1; renderMoveSlots(); return; }
+    }
+    moveState.end=i;
+  }
+  renderMoveSlots();
+}
+
+async function saveMoveJob(){
+  const s=moveState.src; if(!s)return;
+  const date=safeValue('moveDate');
+  const tech=safeValue('moveTech');
+  if(!date){ alert('กรุณาเลือกวันหยุดปลายทาง'); return; }
+  if(moveState.start<0){ alert('กรุณาเลือกช่วงเวลา'); return; }
+  const start=moveState.start, end=moveState.end>=0?moveState.end:moveState.start;
+
+  if(!confirm(`ย้ายงานนี้ไปวันหยุด ${date}\n${tech} | ${getTimeRange(start,end)}\n\nงานจะถูกลบออกจากตารางวันปกติ`))return;
+
+  const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'};
+  const payload={
+    date, technician:tech, type:'PLAN',
+    start_slot:start, end_slot:end,
+    job_type:s.jobType, detail:s.detail,
+    line:s.line, machine:s.machine,
+    request_qc:s.requestQC, request_mfg:s.requestMFG
+  };
+  if(s.backlogKey)payload.backlog_key=s.backlogKey;
+
+  try{
+    // 1) เพิ่มลงวันหยุด
+    let res=await fetch(`${SUPABASE_URL}/rest/v1/holiday_plans`,{method:'POST',headers:{...h,Prefer:'return=minimal'},body:JSON.stringify(payload)});
+    if(!res.ok){
+      const txt=await res.text();
+      if(/backlog_key/.test(txt)){
+        delete payload.backlog_key;
+        res=await fetch(`${SUPABASE_URL}/rest/v1/holiday_plans`,{method:'POST',headers:{...h,Prefer:'return=minimal'},body:JSON.stringify(payload)});
+        if(!res.ok)throw new Error(await res.text());
+      }else throw new Error(txt);
+    }
+
+    // 2) ลบออกจากตารางวันปกติ (รวม actuals ของช่วงนั้น ถ้ามี)
+    const del={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'};
+    await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/plans?technician=eq.${encodeURIComponent(s.technician)}&start_slot=eq.${s.start}&end_slot=eq.${s.end}&date=eq.${s.date}`,{method:'DELETE',headers:del}),
+      fetch(`${SUPABASE_URL}/rest/v1/actuals?technician=eq.${encodeURIComponent(s.technician)}&start_slot=eq.${s.start}&end_slot=eq.${s.end}&date=eq.${s.date}`,{method:'DELETE',headers:del})
+    ]);
+
+    closeMoveModal(); closeTaskModal();
+    lastTimelineSnapshot='';
+    await loadData();
+    if(typeof loadNgList==='function')loadNgList();
+    alert(`ย้ายงานไปวันหยุด ${date} เรียบร้อย\n${tech} | ${getTimeRange(start,end)}`);
+  }catch(err){
+    console.error(err);
+    alert('ย้ายงานไม่สำเร็จ\n\n'+err.message);
+  }
 }
 
 // ── Popup helpers ──
@@ -1180,13 +1440,30 @@ function saveActualToSupabase(name,start,end,result,reason,detail){
     || (holidayState.active&&holidayState.date ? holidayState.date : safeValue('workDate'));
 
   const planTable=holidayState.active?'holiday_plans':'plans';
-  const payload={date,technician:name,start_slot:start,end_slot:end,status:result,reason:reason||'',detail:detail||''};
-  fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
-  .then(r=>r.json()).then(existing=>{
-    if(existing.length>0)return fetch(`${SUPABASE_URL}/rest/v1/actuals?id=eq.${existing[0].id}`,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
-    return fetch(`${SUPABASE_URL}/rest/v1/actuals`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
+  const base={date,technician:name,start_slot:start,end_slot:end,status:result,reason:reason||'',detail:detail||''};
+  // เก็บ Line/Machine ไว้ด้วย เพื่อให้รายการ NG ค้างแสดงได้ว่าเครื่องไหน
+  const payload={...base,line:slotDetail?.line||'',machine:slotDetail?.machine||''};
+  const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
+  const hj={...h,'Content-Type':'application/json',Prefer:'return=minimal'};
+
+  // ถ้าตาราง actuals ยังไม่มีคอลัมน์ line/machine → ส่งใหม่แบบไม่มีสองช่องนี้
+  const send=(url,method,body)=>fetch(url,{method,headers:hj,body:JSON.stringify(body)}).then(async r=>{
+    if(!r.ok){
+      const txt=await r.text();
+      if(/line|machine/i.test(txt)&&/column|schema|find/i.test(txt)){
+        return fetch(url,{method,headers:hj,body:JSON.stringify(base)});
+      }
+    }
+    return r;
   });
-  fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({status:result,reason:reason||''})});
+
+  fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`,{headers:h})
+  .then(r=>r.json()).then(existing=>{
+    if(existing.length>0)return send(`${SUPABASE_URL}/rest/v1/actuals?id=eq.${existing[0].id}`,'PATCH',payload);
+    return send(`${SUPABASE_URL}/rest/v1/actuals`,'POST',payload);
+  }).then(()=>{ if(typeof loadNgList==='function')loadNgList(); });
+
+  fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${date}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}`,{method:'PATCH',headers:hj,body:JSON.stringify({status:result,reason:reason||''})});
 }
 
 function showActualViewPopup(name,start,end,status,reason){
@@ -1412,21 +1689,33 @@ function clearTimeline(shouldSave=true){
   if(shouldSave){
     const isHoliday = holidayState.active && holidayState.date;
     const scopeDate = isHoliday ? holidayState.date : safeValue('workDate');
-    const scopeText = isHoliday
-      ? `วันหยุด ${scopeDate}`
-      : `วันที่ ${scopeDate}`;
-    if(!confirm(`ต้องการล้างตารางเวลาทั้งหมดของ ${scopeText} ?\nการลบนี้ไม่สามารถย้อนกลับได้`)) return;
+    const scopeText = isHoliday ? `วันหยุด ${scopeDate}` : `วันที่ ${scopeDate}`;
+
+    // นับงานที่ยังไม่บันทึกผล (จะไม่ถูกลบ)
+    let nPending=0;
+    Object.keys(state.slotDetails).forEach(k=>{
+      const d=state.slotDetails[k]; if(!d)return;
+      const tech=k.split('__')[0];
+      const st=state.actualStatus[`${tech}_${d.startIndex}`];
+      if(st!=='OK'&&st!=='NG')nPending++;
+    });
+
+    if(!confirm(`ล้างตารางเวลาของ ${scopeText}\n\nจะลบเฉพาะงานที่บันทึกผลแล้ว (OK/NG)\nงานที่ยังไม่บันทึกผล ${nPending} รายการ จะถูกเก็บไว้ในตาราง\nงาน NG จะไปอยู่ในรายการ "🔴 NG ค้าง"\n\nยืนยัน?`)) return;
 
     const planTable = isHoliday ? 'holiday_plans' : 'plans';
     const h = {apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, Prefer:'return=minimal'};
 
     Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${scopeDate}`,{method:'DELETE',headers:h}),
-      fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${scopeDate}`,{method:'DELETE',headers:h})
+      // ลบเฉพาะแผนที่มีสถานะแล้ว (ยังไม่บันทึกผล = ไม่ลบ)
+      fetch(`${SUPABASE_URL}/rest/v1/${planTable}?date=eq.${scopeDate}&status=not.is.null`,{method:'DELETE',headers:h}),
+      // actuals: ลบเฉพาะ OK / เก็บ NG ไว้ในรายการ NG ค้าง
+      fetch(`${SUPABASE_URL}/rest/v1/actuals?date=eq.${scopeDate}&status=eq.OK`,{method:'DELETE',headers:h})
     ]).then(()=>{
       lastTimelineSnapshot='';
       if(isHoliday) loadDataFromX4(scopeDate); else loadData();
+      loadNgList();
     }).catch(e=>console.error(e));
+    return;   // ไม่ล้าง state ในเครื่อง ให้โหลดใหม่จาก server แทน
   }
 
   state.timeline=normalizeTimeline({}); state.slotDetails={}; state.actualStatus={}; state.actualReason={};
@@ -1520,6 +1809,174 @@ function exitHolidayAddMode(){holidayAddMode=false;renderCalendar();}
 function openConfirmModal(msg,cb){byId('confirmMessage').innerText=msg;confirmCallback=cb;byId('confirmModalBackdrop').classList.add('show');}
 function closeConfirmModal(){byId('confirmModalBackdrop').classList.remove('show');confirmCallback=null;}
 function confirmOk(){if(confirmCallback)confirmCallback();closeConfirmModal();}
+
+// ═══════════════════════════════════════════════════════
+// รายการงาน NG ที่ถูกลบออกจากตารางแล้ว (กันงานตกหล่น)
+// ═══════════════════════════════════════════════════════
+let ngItems=[];
+
+// รายการที่กดเคลียร์แล้ว (แค่ไม่โชว์ในลิสต์ ข้อมูลใน Supabase ยังอยู่ครบ)
+function readClearedNg(){
+  try{ return new Set(JSON.parse(localStorage.getItem('ngCleared')||'[]')); }catch(e){ return new Set(); }
+}
+function writeClearedNg(set){
+  try{ localStorage.setItem('ngCleared',JSON.stringify([...set])); }catch(e){}
+}
+
+function loadNgList(){
+  const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
+  return Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/actuals?status=eq.NG&order=date.desc`,{headers:h}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch(`${SUPABASE_URL}/rest/v1/plans?select=date,technician,start_slot,end_slot`,{headers:h}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch(`${SUPABASE_URL}/rest/v1/holiday_plans?select=date,technician,start_slot,end_slot`,{headers:h}).then(r=>r.ok?r.json():[]).catch(()=>[])
+  ]).then(([acts,p,hh])=>{
+    const keyOf=r=>`${r.date}|${r.technician}|${r.start_slot}|${r.end_slot}`;
+    const onBoard=new Set([...(p||[]),...(hh||[])].map(keyOf));
+    const localCleared=readClearedNg();
+    // เอาเฉพาะ NG ที่ไม่มีอยู่ในตารางแล้ว และยังไม่ถูกกดเคลียร์
+    ngItems=(acts||[]).filter(a=>
+      !onBoard.has(keyOf(a)) && a.ng_cleared!==true &&
+      !localCleared.has(String(a.id)) && !localCleared.has(keyOf(a))
+    );
+    updateNgCount();
+    if(byId('ngListBackdrop').classList.contains('show'))renderNgList();
+  });
+}
+
+function updateNgCount(){
+  const el=byId('ngCount'), btn=byId('ngListBtn');
+  if(el)el.textContent=ngItems.length;
+  if(btn)btn.classList.toggle('zero',ngItems.length===0);
+}
+
+function openNgList(){
+  byId('ngListBackdrop').classList.add('show');
+  renderNgList();
+  loadNgList();
+}
+
+function renderNgList(){
+  const box=byId('ngListBody'); if(!box)return;
+  if(ngItems.length===0){
+    box.innerHTML='<div class="sub" style="margin:0;">ไม่มีงาน NG ค้างอยู่ 🎉</div>';
+    return;
+  }
+  box.innerHTML=ngItems.map((it,idx)=>{
+    const line=(it.line||'').trim(), mc=(it.machine||'').trim();
+    const head = (line||mc)
+      ? `<span class="ng-line">${escapeHtml(line||'-')}</span><span class="ng-mc">${escapeHtml(mc||'-')}</span>`
+      : `<span class="ng-nomc">ไม่มีข้อมูล Line/MC</span>`;
+    return `
+    <div class="ng-item" data-idx="${idx}">
+      <div class="ng-top">
+        ${head}
+        <span class="status-chip chip-ng">NG</span>
+        <span class="ng-date">📅 ${escapeHtml(it.date||'-')}</span>
+      </div>
+      <div class="ng-top" style="margin-bottom:6px;">
+        <span class="ng-tech">👤 ${escapeHtml(it.technician||'-')}</span>
+        <span class="ng-time">🕐 ${escapeHtml(getTimeRange(it.start_slot,it.end_slot))}</span>
+      </div>
+      <div class="ng-row"><b>งาน:</b> ${escapeHtml(it.detail||'-')}</div>
+      <div class="ng-row ng-reason"><b>เหตุผล:</b> ${escapeHtml(it.reason||'-')}</div>
+      <div class="actions" style="margin-top:9px;justify-content:flex-end;align-items:center;gap:10px;">
+        <span class="ng-status-msg" style="display:none;"></span>
+        <button class="btn-assign mini-btn ng-plan-btn" data-idx="${idx}" type="button">➕ ลงงาน</button>
+        <button class="btn-danger mini-btn ng-clear-btn" data-idx="${idx}" type="button">✓ เคลียร์ออกจากรายการ</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ผูก event โดยตรง (ไม่พึ่ง onclick inline เผื่อบางแถวไม่มี id)
+  box.querySelectorAll('.ng-clear-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>clearNgItem(Number(btn.getAttribute('data-idx'))));
+  });
+  box.querySelectorAll('.ng-plan-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>openAssignFromNg(Number(btn.getAttribute('data-idx'))));
+  });
+}
+
+// ทำเครื่องหมายว่าเคลียร์แล้ว (ไม่ลบข้อมูลใน Supabase)
+function markNgCleared(it){
+  const localFallback=()=>{
+    const s=readClearedNg();
+    s.add(String(it.id!==undefined&&it.id!==null?it.id:`${it.date}|${it.technician}|${it.start_slot}|${it.end_slot}`));
+    writeClearedNg(s);
+  };
+  const url=(it.id!==undefined&&it.id!==null)
+    ? `${SUPABASE_URL}/rest/v1/actuals?id=eq.${it.id}`
+    : `${SUPABASE_URL}/rest/v1/actuals?date=eq.${it.date}&technician=eq.${encodeURIComponent(it.technician)}&start_slot=eq.${it.start_slot}&end_slot=eq.${it.end_slot}`;
+  return fetch(url,{
+    method:'PATCH',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=representation'},
+    body:JSON.stringify({ng_cleared:true})
+  }).then(async r=>{
+    const txt=await r.text();
+    let rows=[]; try{ rows=JSON.parse(txt||'[]'); }catch(e){}
+    if(!r.ok||!Array.isArray(rows)||rows.length===0){ localFallback(); return false; }
+    return true;
+  }).catch(()=>{ localFallback(); return false; });
+}
+
+// idx = ลำดับในรายการที่แสดงอยู่
+function clearNgItem(idx){
+  const it=ngItems[idx];
+  if(!it){ alert('ไม่พบรายการนี้ กรุณากด Update แล้วลองใหม่'); return; }
+
+  const info=[it.line,it.machine,it.technician].filter(Boolean).join(' | ')+'\n'+(it.detail||'');
+  if(!confirm(`เอางาน NG นี้ออกจากรายการ?\n\n${info}\n\n(ข้อมูลใน Supabase ยังอยู่ครบ แค่ไม่แสดงในรายการนี้แล้ว)`))return;
+
+  const box=byId('ngListBody');
+  const card=box?box.querySelector(`.ng-item[data-idx="${idx}"]`):null;
+  const msg=card?card.querySelector('.ng-status-msg'):null;
+  const btn=card?card.querySelector('.ng-clear-btn'):null;
+
+  if(btn)btn.style.display='none';
+  if(card)card.classList.add('clearing');
+  if(msg){ msg.style.display='inline'; msg.classList.remove('ok'); msg.innerHTML='<span class="ng-spin"></span>กำลังเคลียร์...'; }
+
+  const finish=(hint)=>{
+    if(msg){ msg.classList.add('ok'); msg.innerHTML='✓ เคลียร์เรียบร้อย'; }
+    if(card){ card.classList.remove('clearing'); card.classList.add('done'); }
+    setTimeout(()=>{
+      if(card)card.classList.add('gone');
+      setTimeout(()=>{
+        ngItems=ngItems.filter(x=>x!==it);
+        updateNgCount();
+        renderNgList();
+        if(hint){ const el=byId('ngHint'); if(el)el.innerHTML=hint; }
+      },380);
+    },500);
+  };
+
+  const localFallback=()=>{
+    const s=readClearedNg();
+    s.add(String(it.id!==undefined?it.id:`${it.date}|${it.technician}|${it.start_slot}|${it.end_slot}`));
+    writeClearedNg(s);
+  };
+
+  // ทำเครื่องหมายที่ Supabase (ไม่ลบข้อมูล) — ถ้าไม่มี id ให้ระบุด้วย วันที่+ช่าง+ช่วงเวลา
+  const url = (it.id!==undefined && it.id!==null)
+    ? `${SUPABASE_URL}/rest/v1/actuals?id=eq.${it.id}`
+    : `${SUPABASE_URL}/rest/v1/actuals?date=eq.${it.date}&technician=eq.${encodeURIComponent(it.technician)}&start_slot=eq.${it.start_slot}&end_slot=eq.${it.end_slot}`;
+
+  fetch(url,{
+    method:'PATCH',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=representation'},
+    body:JSON.stringify({ng_cleared:true})
+  })
+  .then(async r=>{
+    const txt=await r.text();
+    let rows=[]; try{ rows=JSON.parse(txt||'[]'); }catch(e){}
+    if(!r.ok || !Array.isArray(rows) || rows.length===0){
+      localFallback();
+      finish('ℹ️ บันทึกการเคลียร์ไว้เฉพาะเครื่องนี้ — ถ้าอยากให้ทุกเครื่องเห็นตรงกัน ให้รัน SQL:<br><code>alter table actuals add column if not exists ng_cleared boolean default false;</code>');
+    }else{
+      finish('');
+    }
+  })
+  .catch(()=>{ localFallback(); finish(''); });
+}
 
 // ═══════════════════════════════════════════════════════
 // PAGE 2 : ปฏิทินงานค้าง
@@ -2123,7 +2580,7 @@ function renderBacklogTable(){
 // ═══════════════════════════════════════════════════════
 // จ่ายงานค้างจากชีท → ลงตารางเวลา (ปิดงานได้จากชีทเท่านั้น)
 // ═══════════════════════════════════════════════════════
-const assignState={ row:null, key:'', mode:'normal', start:-1, end:-1, occupied:[], holidays:[] };
+const assignState={ src:'backlog', row:null, ngItem:null, key:'', mode:'normal', start:-1, end:-1, occupied:[], holidays:[] };
 const assignedKeys=new Set();   // key ที่ถูกจ่ายงานไปแล้ว (ไว้โชว์ป้ายในตาราง)
 
 function assignedBadge(r){
@@ -2145,6 +2602,8 @@ function loadAssignedKeys(){
 function openAssignModal(idx){
   const r=backlogData.rows[idx];
   if(!r){ alert('ไม่พบข้อมูลงานค้างแถวนี้'); return; }
+  assignState.src='backlog';
+  assignState.ngItem=null;
   assignState.row=r;
   assignState.key=backlogRowKey(r);
   assignState.mode='normal';
@@ -2166,6 +2625,34 @@ function openAssignModal(idx){
   setAssignMode('normal');
   byId('assignBacklogBackdrop').classList.add('show');
 }
+// เปิดหน้าต่างลงงานจากรายการ NG
+function openAssignFromNg(idx){
+  const it=ngItems[idx];
+  if(!it){ alert('ไม่พบรายการนี้ กรุณากด Update แล้วลองใหม่'); return; }
+  assignState.src='ng';
+  assignState.ngItem=it;
+  assignState.row=null;
+  assignState.key='';
+  assignState.mode='normal';
+  assignState.start=-1; assignState.end=-1;
+
+  safeSetText('assignSubtitle',`งาน NG เดิม: ${it.technician||'-'} | ${getTimeRange(it.start_slot,it.end_slot)} | ${it.date||'-'}`);
+  byId('assignPreview').innerHTML=`
+    <b>${escapeHtml([it.line,it.machine].filter(Boolean).join(' · ')||'ไม่มีข้อมูล Line/MC')}</b><br>
+    <b>งาน:</b> ${escapeHtml(it.detail||'-')}<br>
+    <b style="color:#b91c1c;">เหตุผลที่ NG:</b> ${escapeHtml(it.reason||'-')}`;
+
+  const sel=byId('assignTech');
+  sel.innerHTML=technicians.map(n=>{
+    const s=nameShift(n);
+    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    return `<option value="${escapeHtml(n)}"${n===it.technician?' selected':''}>${escapeHtml(n)}${tag}</option>`;
+  }).join('');
+
+  setAssignMode('normal');
+  byId('assignBacklogBackdrop').classList.add('show');
+}
+
 function closeAssignModal(){ byId('assignBacklogBackdrop').classList.remove('show'); }
 
 function setAssignMode(m){
@@ -2249,8 +2736,11 @@ function pickAssignSlot(i){
 }
 
 async function saveAssignBacklog(){
-  const r=assignState.row;
-  if(!r){ closeAssignModal(); return; }
+  const isNg = assignState.src==='ng';
+  const r=assignState.row, ng=assignState.ngItem;
+  if(!isNg && !r){ closeAssignModal(); return; }
+  if(isNg && !ng){ closeAssignModal(); return; }
+
   const tech=safeValue('assignTech');
   if(!tech){ alert('กรุณาเลือกผู้รับผิดชอบ'); return; }
   if(assignState.start<0){ alert('กรุณาเลือกช่วงเวลา'); return; }
@@ -2262,7 +2752,14 @@ async function saveAssignBacklog(){
   if(isHoliday && !date){ alert('กรุณาเลือกวันหยุด'); return; }
 
   const table=isHoliday?'holiday_plans':'plans';
-  const payload={
+  const payload = isNg ? {
+    date, technician:tech, type:'PLAN',
+    start_slot:start, end_slot:end,
+    job_type:'Breakdown',
+    detail:`[งาน NG] ${ng.detail||''}${ng.reason?' | เหตุผลเดิม: '+ng.reason:''}`.trim(),
+    line:ng.line||'', machine:ng.machine||'',
+    request_qc:false, request_mfg:false
+  } : {
     date, technician:tech, type:'PLAN',
     start_slot:start, end_slot:end,
     job_type:'Breakdown',
@@ -2286,12 +2783,22 @@ async function saveAssignBacklog(){
       }
       throw new Error(txt);
     }
-    assignedKeys.add(assignState.key);
+
     closeAssignModal();
     lastTimelineSnapshot='';
-    if(isHoliday){ alert(`ลงงานให้ ${tech} วันหยุด ${date} เวลา ${getTimeRange(start,end)} เรียบร้อย`); }
-    else{ await loadData(); alert(`ลงงานให้ ${tech} เวลา ${getTimeRange(start,end)} เรียบร้อย`); }
-    renderBacklogTable();
+
+    if(isNg){
+      // ลงงานแล้ว → เอาออกจากรายการ NG (ไม่ลบข้อมูลใน Supabase)
+      await markNgCleared(ng);
+      ngItems=ngItems.filter(x=>x!==ng);
+      updateNgCount(); renderNgList();
+    }else{
+      assignedKeys.add(assignState.key);
+      renderBacklogTable();
+    }
+
+    if(!isHoliday) await loadData();
+    alert(`ลงงานให้ ${tech}${isHoliday?' วันหยุด '+date:''} เวลา ${getTimeRange(start,end)} เรียบร้อย`);
   }catch(err){
     console.error(err);
     alert('บันทึกไม่สำเร็จ\n\n'+err.message);
@@ -2466,18 +2973,22 @@ function deleteSparepart(id){
 document.addEventListener('click',e=>{
   if(e.target===byId('taskModalBackdrop'))closeTaskModal();
   if(e.target===byId('assignBacklogBackdrop'))closeAssignModal();
+  if(e.target===byId('moveJobBackdrop'))closeMoveModal();
   if(e.target===byId('dayDetailBackdrop')&&!byId('assignBacklogBackdrop').classList.contains('show'))byId('dayDetailBackdrop').classList.remove('show');
   if(e.target===byId('spModalBackdrop'))closeSpModal();
+  if(e.target===byId('ngListBackdrop'))byId('ngListBackdrop').classList.remove('show');
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
+  if(byId('moveJobBackdrop').classList.contains('show')){ closeMoveModal(); return; }
   if(byId('assignBacklogBackdrop').classList.contains('show')){ closeAssignModal(); return; }
-  closeTaskModal(); byId('dayDetailBackdrop').classList.remove('show'); closeSpModal();
+  closeTaskModal(); byId('dayDetailBackdrop').classList.remove('show'); closeSpModal(); byId('ngListBackdrop').classList.remove('show');
 });
 document.addEventListener('DOMContentLoaded',()=>{
   ensureMetaDefaults(); populateModalTimeSlots(); initTimeline();
   // โหลดชีทงานค้างก่อน เพื่อรู้ว่างานไหนถูกปิดไปแล้ว (จะได้ไม่โชว์ในตาราง)
   Promise.all([loadBacklogSheet(),loadAssignedKeys()]).then(()=>{ lastTimelineSnapshot=''; loadData(); });
+  loadNgList();
   loadData();
   updateHolidayPrintButton();
   setInterval(()=>{
