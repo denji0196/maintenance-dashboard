@@ -16,8 +16,8 @@
     .container { max-width:1450px; margin:0 auto; padding:24px; }
 
     /* ── NAV TABS ── */
-    .nav-tabs { display:flex; gap:10px; margin-bottom:18px; background:rgba(255,255,255,0.75); border:1px solid rgba(191,219,254,0.7); border-radius:18px; padding:8px; box-shadow:var(--shadow); position:sticky; top:10px; z-index:500; backdrop-filter:blur(10px); }
-    .nav-tab { flex:1; border:0; border-radius:12px; padding:12px 16px; font:inherit; font-weight:800; font-size:15px; cursor:pointer; background:transparent; color:var(--muted); transition:0.2s ease; }
+    .nav-tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; background:rgba(255,255,255,0.75); border:1px solid rgba(191,219,254,0.7); border-radius:18px; padding:8px; box-shadow:var(--shadow); position:sticky; top:10px; z-index:500; backdrop-filter:blur(10px); }
+    .nav-tab { flex:1; min-width:150px; border:0; border-radius:12px; padding:12px 16px; font:inherit; font-weight:800; font-size:15px; cursor:pointer; background:transparent; color:var(--muted); transition:0.2s ease; }
     .nav-tab:hover { background:#eff6ff; color:var(--primary); }
     .nav-tab.active { background:linear-gradient(135deg,#1d4ed8,#2563eb); color:white; box-shadow:0 8px 18px rgba(37,99,235,0.35); }
     .page { display:none; }
@@ -278,6 +278,50 @@
     .mini-btn { padding:6px 10px; font-size:12px; border-radius:9px; }
     .overdue-flag { font-size:10.5px; font-weight:800; color:#b91c1c; }
 
+    /* ═══ PAGE 4 : LTBD ACTION PLAN (สีประจำหน้า = ม่วง) ═══ */
+    .ltbd-drop { border:2px dashed #c4b5fd; border-radius:18px; background:linear-gradient(180deg,#faf7ff,#f3edff); padding:34px 20px; text-align:center; cursor:pointer; transition:0.18s ease; }
+    .ltbd-drop:hover, .ltbd-drop.over { border-color:#7c3aed; background:linear-gradient(180deg,#f5f0ff,#ebe0ff); transform:translateY(-1px); box-shadow:0 10px 24px rgba(124,58,237,0.14); }
+    .ltbd-drop .ic { font-size:38px; line-height:1; }
+    .ltbd-drop .t1 { font-size:16px; font-weight:800; color:#5b21b6; margin-top:8px; }
+    .ltbd-drop .t2 { font-size:12.5px; color:#7c6aa8; margin-top:4px; }
+    .ltbd-head-card { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; background:linear-gradient(135deg,#faf7ff,#f3edff); border:1px solid #ddd6fe; border-radius:16px; padding:14px 16px; margin:16px 0 14px; }
+    .ltbd-hf .k { font-size:11px; color:#7c6aa8; font-weight:800; letter-spacing:0.02em; }
+    .ltbd-hf .v { font-size:14px; font-weight:700; color:#312e81; word-break:break-word; margin-top:2px; }
+    .ltbd-hf input[type="text"] { margin-top:3px; padding:7px 10px; font-size:13px; border-radius:10px; }
+    .ltbd-type { display:inline-block; font-size:11px; font-weight:800; border-radius:8px; padding:2px 8px; white-space:nowrap; }
+    .ty-rev { background:#ede9fe; color:#6d28d9; }
+    .ty-cm  { background:#fce7f3; color:#be185d; }
+    .ty-yok { background:#dbeafe; color:#1d4ed8; }
+    .ty-etc { background:#e2e8f0; color:#334155; }
+    .ltbd-wrap { overflow:auto; border:1px solid #ddd6fe; border-radius:16px; max-height:64vh; }
+    .ltbd-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; min-width:980px; }
+    .ltbd-table th { position:sticky; top:0; z-index:1; background:linear-gradient(180deg,#3b0764,#5b21b6); color:#ede9fe; padding:10px; font-size:12.5px; text-align:left; white-space:nowrap; }
+    .ltbd-table td { border-bottom:1px solid rgba(148,163,184,0.22); padding:8px 10px; vertical-align:top; }
+    .ltbd-table tr:hover td { background:#faf5ff; }
+    .ltbd-table tr.dup td { background:#fff7ed; }
+    .ltbd-table tr.overdue td { background:#fff1f2; }
+    .ltbd-table input[type="date"], .ltbd-table input[type="text"], .ltbd-table select { padding:6px 8px; font-size:12.5px; border-radius:9px; }
+    .ltbd-topic { min-width:280px; line-height:1.55; }
+    .dup-flag { font-size:10.5px; font-weight:800; color:#c2410c; }
+    .st-lt-wait   { background:#fef3c7; color:#92400e; }
+    .st-lt-doing  { background:#dbeafe; color:#1d4ed8; }
+    .st-lt-done   { background:#dcfce7; color:#15803d; }
+    .st-lt-cancel { background:#e2e8f0; color:#334155; }
+    /* วันที่มีแผน LTBD บนปฏิทิน — ใช้ม่วง ให้ต่างจากแดง(งานค้าง) และส้ม(แผนยังไม่จบ) */
+    .bigcal-cell.ltbd-day { box-shadow:inset 0 0 0 2px #7c3aed, 0 8px 20px rgba(124,58,237,0.18); }
+    .bigcal-cell.ltbd-day::after { content:''; position:absolute; top:0; right:0; border-style:solid; border-width:0 20px 20px 0; border-color:transparent #7c3aed transparent transparent; border-top-right-radius:12px; }
+    .bigcal-cell.ltbd-day:hover { border-color:#7c3aed; }
+    .bigcal-cell.ltbd-only { background:linear-gradient(180deg,#f7f3ff,#efe7ff); border-color:#c4b5fd; }
+    .bigcal-cell.ltbd-only .bigcal-daynum { color:#5b21b6; }
+    .pill-ltbd { background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; }
+    .lt { border:1px solid var(--line); border-left:4px solid #7c3aed; border-radius:12px; padding:11px 13px; background:#faf7ff; margin-bottom:9px; }
+    .lt-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+    .lt-line { font-weight:800; font-size:15px; color:#5b21b6; }
+    .lt-mc { font-weight:700; font-size:13px; color:#0f172a; background:#eef2f7; border-radius:7px; padding:1px 9px; }
+    .lt-who { margin-left:auto; font-size:12px; color:var(--muted); font-weight:700; }
+    .lt-topic { font-size:13.5px; line-height:1.6; color:#0f172a; font-weight:600; }
+    .lt-prob { font-size:12px; color:#7c6aa8; margin-top:4px; }
+
     @keyframes holidayGlow {
   0% {
     background-position: 0% 50%;
@@ -304,6 +348,7 @@
     <button class="nav-tab active" id="tabDaily"     onclick="switchPage('daily')">📋 Daily Dashboard</button>
     <button class="nav-tab"        id="tabCalendar"  onclick="switchPage('calendar')">📅 ปฏิทินงานค้าง</button>
     <button class="nav-tab"        id="tabSparepart" onclick="switchPage('sparepart')">🔧 Spare Part ส่งซ่อม/รอของ</button>
+    <button class="nav-tab"        id="tabLtbd"      onclick="switchPage('ltbd')">📄 LTBD Action Plan</button>
     <a class="nav-tab" href="https://denji0196.github.io/pm-dash/" style="text-decoration:none;text-align:center;line-height:1.4;">📊 PM Data</a>
   </nav>
 
@@ -455,6 +500,10 @@
           <span class="heat-swatch" style="background:#f2fbf5;"></span>
           <span>เคลียร์หมดแล้ว</span>
         </span>
+        <span class="heat-scale" style="margin-left:8px;">
+          <span class="heat-swatch" style="background:#efe7ff;border-color:#7c3aed;box-shadow:inset 0 0 0 2px #7c3aed;"></span>
+          <span style="color:#5b21b6;font-weight:800;">มีแผน LTBD (มุมม่วง)</span>
+        </span>
         <span style="margin-left:auto;">💡 กดที่วันเพื่อดูรายละเอียด</span>
       </div>
       <div class="heat-legend" style="margin-top:-6px;">
@@ -462,6 +511,7 @@
         <span><b style="color:#3730a3;">🌙 กล่องขวา = กะดึก</b></span>
         <span style="color:#b91c1c;font-weight:800;">ค้าง = งานค้างจากแจ้งซ่อม</span>
         <span style="color:#1d4ed8;font-weight:800;">แผน = แผนงานที่ยังไม่จบ</span>
+        <span style="color:#6d28d9;font-weight:800;">LTBD = แผนจากฟอร์ม LTBD</span>
       </div>
       <div class="bigcal-grid" id="bigcalGrid"></div>
     </section>
@@ -514,6 +564,57 @@
       <div class="sub" id="spNote" style="margin-top:12px;"></div>
     </section>
   </div><!-- /pageSparepart -->
+
+  <!-- ═══════════ PAGE 4 : LTBD ACTION PLAN ═══════════ -->
+  <div class="page" id="pageLtbd">
+    <section class="card span-12" style="margin-bottom:18px;">
+      <h2>📄 นำเข้าฟอร์ม LTBD → ลงแผนงาน</h2>
+      <div class="sub">ลากไฟล์ฟอร์ม LTBD (.xlsx) มาวาง ระบบจะอ่าน Line / Machine พร้อมแผนงานในหัวข้อ <b>Revise Standard</b>, <b>Countermeasure &amp; Kaizen</b> และ <b>Yokoten Standard</b> — วันที่อ่านจาก <b>เดือนที่หัวคอลัมน์ + เลขวันที่ในช่อง Gantt</b> ตรวจแล้วค่อยกดบันทึก</div>
+      <input type="file" id="ltbdFile" accept=".xlsx,.xlsm,.xls" multiple style="display:none;" />
+      <div class="ltbd-drop" id="ltbdDrop">
+        <div class="ic">📥</div>
+        <div class="t1">ลากไฟล์มาวาง หรือกดเพื่อเลือกไฟล์</div>
+        <div class="t2">รองรับ .xlsx / .xlsm — เลือกได้หลายไฟล์พร้อมกัน</div>
+      </div>
+      <div id="ltbdParseArea"></div>
+    </section>
+
+    <section class="card span-12">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <h2 style="margin:0;">📋 แผนงาน LTBD ทั้งหมด</h2>
+        <div class="actions" style="margin-top:0;">
+          <button class="btn-primary" onclick="refreshLtbdPage()">🔄 Update</button>
+        </div>
+      </div>
+
+      <div class="sp-stats" id="ltbdStats"></div>
+
+      <div class="sp-filterbar">
+        <select id="ltbdFilterType" onchange="renderLtbdSaved()">
+          <option value="">ทุกประเภท</option>
+          <option>Revise Standard</option>
+          <option>Countermeasure &amp; Kaizen</option>
+          <option>Yokoten Standard</option>
+        </select>
+        <select id="ltbdFilterStatus" onchange="renderLtbdSaved()">
+          <option value="">ทุกสถานะ</option>
+          <option>รอดำเนินการ</option>
+          <option>กำลังทำ</option>
+          <option>เสร็จแล้ว</option>
+          <option>ยกเลิก</option>
+        </select>
+        <input type="text" id="ltbdSearch" placeholder="🔍 ค้นหา Line / Machine / หัวข้อ / ผู้รับผิดชอบ..." oninput="renderLtbdSaved()" style="flex:1;min-width:230px;" />
+        <label class="checkbox-item" style="font-size:13px;">
+          <input type="checkbox" id="ltbdHideDone" checked onchange="renderLtbdSaved()" /> ซ่อนที่เสร็จ/ยกเลิกแล้ว
+        </label>
+      </div>
+
+      <div class="ltbd-wrap">
+        <table class="ltbd-table" id="ltbdSavedTable"></table>
+      </div>
+      <div class="sub" id="ltbdNote" style="margin-top:12px;"></div>
+    </section>
+  </div><!-- /pageLtbd -->
 
 </div>
 
@@ -780,6 +881,76 @@
   </div>
 </div>
 
+<!-- LTBD EDIT MODAL (page 4) -->
+<div class="modal-backdrop" id="ltbdEditBackdrop">
+  <div class="modal" style="width:min(620px,100%);">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">✏️ แก้ไขแผนงาน LTBD</h3>
+        <div class="sub" id="ltbdEditSubtitle" style="margin:6px 0 0 0;">-</div>
+      </div>
+      <button class="close-btn" type="button" onclick="closeLtbdEdit()">ปิด</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Line</label>
+          <input type="text" id="ltbdEditLine" />
+        </div>
+        <div class="field">
+          <label>Machine</label>
+          <input type="text" id="ltbdEditMachine" />
+        </div>
+      </div>
+      <div class="field">
+        <label>ประเภท</label>
+        <select id="ltbdEditType">
+          <option>Revise Standard</option>
+          <option>Countermeasure &amp; Kaizen</option>
+          <option>Yokoten Standard</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>หัวข้อ / Action Plan</label>
+        <textarea id="ltbdEditTopic" style="min-height:80px;"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>วันที่จะทำ</label>
+          <input type="date" id="ltbdEditDate" />
+        </div>
+        <div class="field">
+          <label>ผู้รับผิดชอบ</label>
+          <input type="text" id="ltbdEditWho" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>สถานะ</label>
+          <select id="ltbdEditStatus">
+            <option>รอดำเนินการ</option>
+            <option>กำลังทำ</option>
+            <option>เสร็จแล้ว</option>
+            <option>ยกเลิก</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>วันที่ทำเสร็จ</label>
+          <input type="date" id="ltbdEditDone" />
+        </div>
+      </div>
+      <div class="field">
+        <label>หมายเหตุ</label>
+        <textarea id="ltbdEditNote" style="min-height:60px;"></textarea>
+      </div>
+      <div class="actions" style="margin-top:0;justify-content:flex-end;">
+        <button class="btn-danger" type="button" onclick="deleteLtbdAction()">🗑️ ลบรายการนี้</button>
+        <button class="btn-primary" type="button" onclick="saveLtbdEdit()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8";
@@ -809,7 +980,7 @@ function escapeHtml(t){return String(t??'').replace(/&/g,'&amp;').replace(/</g,'
 let currentPage='daily';
 function switchPage(p){
   currentPage=p;
-  ['daily','calendar','sparepart'].forEach(x=>{
+  ['daily','calendar','sparepart','ltbd'].forEach(x=>{
     const page=byId('page'+x.charAt(0).toUpperCase()+x.slice(1));
     const tab =byId('tab'+x.charAt(0).toUpperCase()+x.slice(1));
     if(page)page.classList.toggle('active',x===p);
@@ -817,6 +988,7 @@ function switchPage(p){
   });
   if(p==='calendar')refreshCalendarPage();
   if(p==='sparepart')loadSpareparts();
+  if(p==='ltbd')refreshLtbdPage();
 }
 
 function ensureMetaDefaults(){
@@ -1722,7 +1894,7 @@ function fillSampleTimeline(){
     });
     state.timeline[name].ACTUAL[si]=true;
   });
-  renderTimeline(); saveData();
+  renderTimeline();
 }
 
 function clearTimeline(shouldSave=true){
@@ -2391,7 +2563,8 @@ function renderShiftPanel(){
 
 async function refreshCalendarPage(){
   safeSetText('backlogStatus','กำลังโหลดข้อมูลจาก Google Sheet...');
-  await Promise.all([loadBacklogSheet(),loadPendingPlans(),loadShiftAssignments(),loadAssignedKeys()]);
+  // เพิ่ม loadLtbdActions() เข้ามาด้วย เพื่อให้ปฏิทินรู้ว่าวันไหนมีแผน LTBD
+  await Promise.all([loadBacklogSheet(),loadPendingPlans(),loadShiftAssignments(),loadAssignedKeys(),loadLtbdActions()]);
   renderShiftPanel();
   renderBigCal();
   renderBacklogTable();
@@ -2424,11 +2597,16 @@ function renderBigCal(){
     const ds=`${bigcal.year}-${pad2(bigcal.month+1)}-${pad2(d)}`;
     const nBacklog=(backlogData.byDate[ds]||[]).length;
     const nPlan=(pendingPlans.byDate[ds]||[]).length;
-    const total=nBacklog+nPlan;
-    let cls='bigcal-cell '+heatClass(nBacklog,nPlan,ds,today);
+    const nLtbd=(ltbdByDate[ds]||[]).length;          // ← แผนจากฟอร์ม LTBD
+    const total=nBacklog+nPlan+nLtbd;
+    // วันที่มีแผน LTBD จะได้กรอบม่วง + มุมม่วง ให้แยกออกจากวันอื่นชัดเจน
+    let cls='bigcal-cell ';
+    if(nLtbd && !nBacklog && !nPlan) cls+='ltbd-only';
+    else cls+=heatClass(nBacklog,nPlan,ds,today);
+    if(nLtbd) cls+=' ltbd-day';
     if(ds===today)cls+=' today';
     let pills='';
-    if(hasShiftData() && total){
+    if(hasShiftData() && (nBacklog+nPlan)){
       // แยกชัดเจน: กล่องซ้าย ☀️ กะเช้า / กล่องขวา 🌙 กะดึก
       // ในกล่อง: "ค้าง" (สีแดง = จากชีทแจ้งซ่อม) และ "แผน" (สีน้ำเงิน = จาก dashboard)
       const rows=backlogData.byDate[ds]||[];
@@ -2453,6 +2631,7 @@ function renderBigCal(){
       if(nBacklog)pills+=`<span class="pill pill-backlog">🔴 ค้าง ${nBacklog}</span>`;
       if(nPlan)pills+=`<span class="pill pill-plan">🟠 แผน ${nPlan}</span>`;
     }
+    if(nLtbd)pills+=`<span class="pill pill-ltbd">🟣 LTBD ${nLtbd}</span>`;
     if(!total&&ds<=today)pills=`<span class="pill pill-done">✓ เคลียร์</span>`;
     html+=`<div class="${cls.trim()}" onclick="openDayDetail('${ds}')"><div class="bigcal-daynum"><span>${d}</span>${total?`<span class="cnt">${total} งาน</span>`:''}</div>${pills}</div>`;
   }
@@ -2462,8 +2641,30 @@ function renderBigCal(){
 function openDayDetail(ds){
   const backlog=backlogData.byDate[ds]||[];
   const plans=pendingPlans.byDate[ds]||[];
+  const ltbds=ltbdByDate[ds]||[];
   safeSetText('dayDetailTitle',`งานค้างวันที่ ${ds}`);
   let html='';
+
+  // ── แผนจากฟอร์ม LTBD (ขึ้นก่อน เพราะเป็นงานที่นัดหมายไว้ล่วงหน้า) ──
+  if(ltbds.length){
+    html+=`<div class="daydetail-section-title">🟣 แผนงานจากฟอร์ม LTBD <span class="pill pill-ltbd">${ltbds.length} รายการ</span></div>`;
+    ltbds.forEach(it=>{
+      html+=`<div class="lt">
+        <div class="lt-top">
+          <span class="lt-line">${escapeHtml(it.line||'-')}</span>
+          <span class="lt-mc">${escapeHtml(it.machine||'-')}</span>
+          <span class="ltbd-type ${ltbdTypeClass(it.action_type)}">${escapeHtml(it.action_type||'-')}</span>
+          <span class="lt-who">👤 ${escapeHtml(it.in_charge||'-')}</span>
+        </div>
+        <div class="lt-topic">${escapeHtml(it.topic||'-')}</div>
+        ${it.problem?`<div class="lt-prob">จากปัญหา: ${escapeHtml(it.problem)}</div>`:''}
+        <div class="actions" style="margin-top:9px;justify-content:flex-end;">
+          <span class="sp-status ${ltbdStatusClass(it.status)}" style="align-self:center;">${escapeHtml(it.status||'-')}</span>
+          <button class="btn-assign mini-btn" onclick="openLtbdEdit(${it.id})">✏️ แก้ไข / ปิดงาน</button>
+        </div>
+      </div>`;
+    });
+  }
 
   // ── งานค้างจากชีท (แยกตามกะถ้าจัดกะไว้แล้ว) ──
   const itemHtml=(r,shift)=>{
@@ -2483,7 +2684,7 @@ function openDayDetail(ds){
       ${row('Remain',bkVal(r,'remain'),'rem')}
     </div>`;
   };
-  html+=`<div class="daydetail-section-title">📋 งานค้างจาก Google Sheet <span class="pill pill-backlog">${backlog.length} รายการ</span></div>`;
+  html+=`<div class="daydetail-section-title" style="margin-top:14px;">📋 งานค้างจาก Google Sheet <span class="pill pill-backlog">${backlog.length} รายการ</span></div>`;
   if(backlog.length===0){
     html+=`<div class="sub" style="margin:0;">ไม่มีงานค้างจากชีทในวันนี้</div>`;
   }else if(hasShiftData()){
@@ -2777,9 +2978,11 @@ function pickAssignSlot(i){
 
 async function saveAssignBacklog(){
   const isNg = assignState.src==='ng';
-  const r=assignState.row, ng=assignState.ngItem;
-  if(!isNg && !r){ closeAssignModal(); return; }
+  const isLtbd = assignState.src==='ltbd';
+  const r=assignState.row, ng=assignState.ngItem, lt=assignState.ltbdItem;
+  if(!isNg && !isLtbd && !r){ closeAssignModal(); return; }
   if(isNg && !ng){ closeAssignModal(); return; }
+  if(isLtbd && !lt){ closeAssignModal(); return; }
 
   const tech=safeValue('assignTech');
   if(!tech){ alert('กรุณาเลือกผู้รับผิดชอบ'); return; }
@@ -2792,22 +2995,36 @@ async function saveAssignBacklog(){
   if(isHoliday && !date){ alert('กรุณาเลือกวันหยุด'); return; }
 
   const table=isHoliday?'holiday_plans':'plans';
-  const payload = isNg ? {
-    date, technician:tech, type:'PLAN',
-    start_slot:start, end_slot:end,
-    job_type:'Breakdown',
-    detail:`[งาน NG] ${ng.detail||''}${ng.reason?' | เหตุผลเดิม: '+ng.reason:''}`.trim(),
-    line:ng.line||'', machine:ng.machine||'',
-    request_qc:false, request_mfg:false
-  } : {
-    date, technician:tech, type:'PLAN',
-    start_slot:start, end_slot:end,
-    job_type:'Breakdown',
-    detail:`[งานค้าง] ${bkVal(r,'problem')||''}${bkVal(r,'remain')?' | คงเหลือ: '+bkVal(r,'remain'):''}`.trim(),
-    line:bkVal(r,'line')||'', machine:bkVal(r,'mc')||'',
-    request_qc:false, request_mfg:false,
-    backlog_key:assignState.key
-  };
+  let payload;
+  if(isLtbd){
+    payload={
+      date, technician:tech, type:'PLAN',
+      start_slot:start, end_slot:end,
+      job_type:'Improvement',
+      detail:`[LTBD · ${lt.action_type||''}] ${lt.topic||''}`.trim(),
+      line:lt.line||'', machine:lt.machine||'',
+      request_qc:false, request_mfg:false
+    };
+  }else if(isNg){
+    payload={
+      date, technician:tech, type:'PLAN',
+      start_slot:start, end_slot:end,
+      job_type:'Breakdown',
+      detail:`[งาน NG] ${ng.detail||''}${ng.reason?' | เหตุผลเดิม: '+ng.reason:''}`.trim(),
+      line:ng.line||'', machine:ng.machine||'',
+      request_qc:false, request_mfg:false
+    };
+  }else{
+    payload={
+      date, technician:tech, type:'PLAN',
+      start_slot:start, end_slot:end,
+      job_type:'Breakdown',
+      detail:`[งานค้าง] ${bkVal(r,'problem')||''}${bkVal(r,'remain')?' | คงเหลือ: '+bkVal(r,'remain'):''}`.trim(),
+      line:bkVal(r,'line')||'', machine:bkVal(r,'mc')||'',
+      request_qc:false, request_mfg:false,
+      backlog_key:assignState.key
+    };
+  }
 
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{
@@ -2827,7 +3044,13 @@ async function saveAssignBacklog(){
     closeAssignModal();
     lastTimelineSnapshot='';
 
-    if(isNg){
+    if(isLtbd){
+      // ลงตารางแล้ว → เปลี่ยนสถานะเป็น "กำลังทำ"
+      await patchLtbdAction(lt.id,{status:'กำลังทำ'});
+      await loadLtbdActions();
+      renderLtbdSaved();
+      if(currentPage==='calendar')renderBigCal();
+    }else if(isNg){
       // ลงงานแล้ว → เอาออกจากรายการ NG (ไม่ลบข้อมูลใน Supabase)
       await markNgCleared(ng);
       ngItems=ngItems.filter(x=>x!==ng);
@@ -3009,6 +3232,544 @@ function deleteSparepart(id){
   .catch(e=>alert('DELETE ERROR\n\n'+e.message));
 }
 
+// ═══════════════════════════════════════════════════════
+// PAGE 4 : LTBD ACTION PLAN  (ตาราง Supabase: ltbd_actions)
+// อ่านฟอร์ม LTBD (.xlsx) → ดึงแผนงาน 3 หัวข้อ (Revise Standard /
+// Countermeasure & Kaizen / Yokoten Standard) พร้อมวันที่ที่จะทำและผู้รับผิดชอบ
+// ═══════════════════════════════════════════════════════
+let ltbdItems=[];            // ข้อมูลที่บันทึกแล้วใน Supabase
+let ltbdParsed=[];           // แถวที่เพิ่ง parse จากไฟล์ ยังไม่บันทึก
+let ltbdExistingKeys=new Set();
+let ltbdEditId=null;
+const ltbdByDate={};         // ใช้บนปฏิทินหน้างานค้าง
+
+const LTBD_SECTIONS=[
+  { label:'Revise Standard',          re:/revise\s*standard/i },
+  { label:'Countermeasure & Kaizen',  re:/countermeasure/i    },
+  { label:'Yokoten Standard',         re:/yokoten/i           }
+];
+const LTBD_MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+
+function ltbdTypeClass(t){
+  if(/revise/i.test(t||''))return 'ty-rev';
+  if(/counter/i.test(t||''))return 'ty-cm';
+  if(/yokoten/i.test(t||''))return 'ty-yok';
+  return 'ty-etc';
+}
+function ltbdStatusClass(s){
+  switch(s){
+    case 'กำลังทำ': return 'st-lt-doing';
+    case 'เสร็จแล้ว':return 'st-lt-done';
+    case 'ยกเลิก':  return 'st-lt-cancel';
+    default:        return 'st-lt-wait';
+  }
+}
+
+// ── ตัวช่วยอ่าน cell จาก SheetJS (r,c เริ่มที่ 0) ──
+function ltCx(ws,r,c){
+  if(r<0||c<0)return '';
+  const cell=ws[XLSX.utils.encode_cell({r,c})];
+  if(!cell)return '';
+  const v=(cell.w!==undefined&&cell.w!==null)?cell.w:cell.v;
+  return (v===null||v===undefined)?'':String(v).trim();
+}
+function ltNum(ws,r,c){
+  const cell=ws[XLSX.utils.encode_cell({r,c})];
+  if(!cell||cell.v===null||cell.v===undefined)return null;
+  if(typeof cell.v==='number')return cell.v;
+  const n=parseFloat(String(cell.v).replace(/[^\d.\-]/g,''));
+  return isNaN(n)?null:n;
+}
+function ltFixYear(y){
+  y=Number(y);
+  if(y<100)return 2000+y;      // '26 → 2026
+  if(y>2400)return y-543;      // พ.ศ. → ค.ศ.
+  return y;
+}
+function ltbdRowKey(o){
+  return [o.line,o.machine,o.action_type,o.item_no,o.topic]
+    .map(x=>String(x||'').replace(/\s+/g,' ').trim()).join('|').slice(0,400);
+}
+
+// ── ตัวอ่านฟอร์มหลัก: ค้นจากหัวข้อ ไม่ผูกกับเลขแถว ──
+function parseLtbdWorkbook(wb,fileName){
+  const shName = wb.SheetNames.find(n=>/ltbd|form/i.test(n)) || wb.SheetNames[0];
+  const ws = wb.Sheets[shName];
+  if(!ws||!ws['!ref']) throw new Error('อ่านชีทในไฟล์ไม่ได้');
+  const rng = XLSX.utils.decode_range(ws['!ref']);
+  const R0=rng.s.r, R1=Math.min(rng.e.r, R0+600);
+  const C0=rng.s.c, C1=Math.min(rng.e.c, C0+120);
+
+  // เก็บ cell ที่มีข้อความไว้ใช้ค้นหา
+  const cells=[];
+  for(let r=R0;r<=R1;r++)for(let c=C0;c<=C1;c++){
+    const t=ltCx(ws,r,c);
+    if(t)cells.push({r,c,t});
+  }
+  const findCell=(re)=>cells.find(x=>re.test(x.t))||null;
+  // ค่าที่อยู่ "ใต้" ป้ายกำกับ (ฟอร์มนี้ merge 2 แถว ค่าจริงจึงอยู่ที่ +2)
+  const below=(pos)=>{
+    if(!pos)return '';
+    for(const d of [2,1,3]){ const v=ltCx(ws,pos.r+d,pos.c); if(v)return v; }
+    return '';
+  };
+  // ค่าที่อยู่ "ขวามือ" ของป้ายกำกับ (เช่น Problem :)
+  const right=(pos)=>{
+    if(!pos)return '';
+    for(let c=pos.c+1;c<=Math.min(pos.c+14,C1);c++){ const v=ltCx(ws,pos.r,c); if(v)return v; }
+    return '';
+  };
+
+  const header={
+    file:      fileName||'',
+    sheet:     shName,
+    ltbd_no:   below(findCell(/^LTBD\s*No/i)),
+    plant:     below(findCell(/^Plant$/i)),
+    product:   below(findCell(/^Product$/i)),
+    line:      below(findCell(/Line\s*No/i)),
+    machine:   below(findCell(/Machine\s*No/i)),
+    problem:   right(findCell(/^Problem\s*:?$/i)),
+    owner:     below(findCell(/^Incharged?$/i)),
+    start_date:below(findCell(/^Start\s*Date$/i))
+  };
+
+  // หาแถวเริ่มของแต่ละ section
+  const secs=[];
+  LTBD_SECTIONS.forEach(s=>{
+    const p=findCell(s.re);
+    if(p)secs.push({label:s.label,r:p.r});
+  });
+  secs.sort((a,b)=>a.r-b.r);
+
+  const rows=[];
+  const warnings=[];
+
+  secs.forEach((sec,i)=>{
+    const endR = (i+1<secs.length) ? secs[i+1].r : R1+1;
+    const sub = cells.filter(x=>x.r>=sec.r && x.r<endR);
+
+    // 1) หาคอลัมน์เดือน  เช่น  Aug'26 / Sep-26 / October 2026
+    const mcols=[];
+    sub.forEach(x=>{
+      const m=x.t.match(/^([A-Za-z]{3})[a-z]*[\s'\-\/\.]*(\d{2,4})$/);
+      if(m && LTBD_MONTHS[m[1].toLowerCase()]){
+        mcols.push({c:x.c,y:ltFixYear(m[2]),m:LTBD_MONTHS[m[1].toLowerCase()]});
+      }
+    });
+    mcols.sort((a,b)=>a.c-b.c);
+
+    // 2) หาแถว/คอลัมน์สัปดาห์ W1..W4
+    const wCells=sub.filter(x=>/^W\s*[1-6]$/i.test(x.t));
+    if(!mcols.length||!wCells.length){
+      warnings.push(`${sec.label}: ไม่พบหัวคอลัมน์เดือน/สัปดาห์ จึงข้ามหัวข้อนี้`);
+      return;
+    }
+    const wRow=Math.max(...wCells.map(x=>x.r));
+    const wcols=[...new Set(wCells.map(x=>x.c))].sort((a,b)=>a-b);
+    const monthOf=(c)=>{ let best=null; mcols.forEach(m=>{ if(m.c<=c)best=m; }); return best; };
+
+    // 3) คอลัมน์เลขข้อ / ผู้รับผิดชอบ
+    const itemCell = sub.find(x=>/^(check\s*list|no\.?|item)$/i.test(x.t));
+    const icol = itemCell ? itemCell.c : Math.min(...sub.map(x=>x.c));
+    const incCell = sub.find(x=>/in\s*charge/i.test(x.t));
+    const inccol = incCell ? incCell.c : -1;
+    const firstW = wcols[0];
+
+    // 4) ไล่อ่านแถวข้อมูล
+    for(let r=wRow+1;r<endR;r++){
+      const itemNo=ltCx(ws,r,icol);
+      if(!itemNo)continue;
+
+      let topic='';
+      for(let c=icol+1;c<firstW;c++){ const v=ltCx(ws,r,c); if(v){ topic=v; break; } }
+      if(!topic)continue;   // มีแต่เลขข้อ ไม่มีหัวข้อ → ไม่ใช่แผนจริง
+
+      // วันที่ = เดือนจากหัวคอลัมน์ + เลขวันในช่อง Gantt
+      let planDate=null, dateWarn='';
+      for(const c of wcols){
+        const n=ltNum(ws,r,c);
+        if(n!==null && n>=1 && n<=31){
+          const mo=monthOf(c);
+          if(mo){
+            const dim=new Date(mo.y,mo.m,0).getDate();
+            if(n<=dim) planDate=`${mo.y}-${pad2(mo.m)}-${pad2(Math.round(n))}`;
+            else dateWarn=`วันที่ ${n} เกินจำนวนวันของเดือน ${mo.m}/${mo.y}`;
+          }
+          break;
+        }
+      }
+
+      let inCharge = inccol>=0 ? ltCx(ws,r,inccol) : '';
+      if(!inCharge && inccol>=0){
+        for(const d of [1,2]){ const v=ltCx(ws,r+d,inccol); if(v){ inCharge=v; break; } }
+      }
+      if(!inCharge) inCharge = header.owner || '';
+
+      const o={
+        ltbd_no:header.ltbd_no, line:header.line, machine:header.machine,
+        plant:header.plant, product:header.product, problem:header.problem,
+        action_type:sec.label, item_no:String(itemNo), topic,
+        plan_date:planDate, in_charge:inCharge,
+        status:'รอดำเนินการ', note:'', source_file:header.file,
+        _use:true, _warn:dateWarn || (planDate?'':'ไม่พบวันที่ในแถวนี้')
+      };
+      o.row_key=ltbdRowKey(o);
+      rows.push(o);
+    }
+  });
+
+  if(!rows.length)warnings.push('ไม่พบแถวแผนงานเลย — ตรวจว่าไฟล์นี้เป็นฟอร์ม LTBD จริงหรือไม่');
+  return {header,rows,warnings};
+}
+
+// ── รับไฟล์จาก dropzone / file input ──
+async function handleLtbdFiles(fileList){
+  const files=[...fileList].filter(f=>/\.(xlsx|xlsm|xls)$/i.test(f.name));
+  if(!files.length){ alert('รองรับเฉพาะไฟล์ .xlsx / .xlsm / .xls'); return; }
+  if(typeof XLSX==='undefined'){ alert('ไลบรารีอ่าน Excel ยังโหลดไม่เสร็จ\nกรุณาต่ออินเทอร์เน็ตแล้วรีเฟรชหน้าใหม่'); return; }
+
+  byId('ltbdParseArea').innerHTML='<div class="sub" style="margin:16px 0 0;">⏳ กำลังอ่านไฟล์...</div>';
+  ltbdParsed=[];
+  const heads=[], warns=[];
+
+  for(const f of files){
+    try{
+      const buf=await f.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array'});
+      const {header,rows,warnings}=parseLtbdWorkbook(wb,f.name);
+      heads.push(header);
+      warnings.forEach(w=>warns.push(`${f.name}: ${w}`));
+      ltbdParsed.push(...rows);
+    }catch(err){
+      console.error(err);
+      warns.push(`${f.name}: อ่านไม่สำเร็จ — ${err.message}`);
+    }
+  }
+
+  // เช็คว่าเคยนำเข้าไปแล้วหรือยัง (กันบันทึกซ้ำตอนอัปโหลดไฟล์เดิม)
+  await loadLtbdExistingKeys();
+  ltbdParsed.forEach(o=>{ o._dup=ltbdExistingKeys.has(o.row_key); if(o._dup)o._use=false; });
+
+  renderLtbdPreview(heads,warns);
+}
+
+function renderLtbdPreview(heads,warns){
+  const box=byId('ltbdParseArea');
+  if(!ltbdParsed.length){
+    box.innerHTML=`<div class="sub" style="margin:16px 0 0;color:#b91c1c;">⚠️ อ่านไฟล์แล้วไม่พบแผนงาน<br>${warns.map(escapeHtml).join('<br>')}</div>`;
+    return;
+  }
+
+  let html='';
+  heads.forEach((h,hi)=>{
+    html+=`<div class="ltbd-head-card">
+      <div class="ltbd-hf"><div class="k">ไฟล์</div><div class="v">${escapeHtml(h.file||'-')}</div></div>
+      <div class="ltbd-hf"><div class="k">LTBD No.</div><div class="v">${escapeHtml(h.ltbd_no||'-')}</div></div>
+      <div class="ltbd-hf"><div class="k">Plant / Product</div><div class="v">${escapeHtml([h.plant,h.product].filter(Boolean).join(' / ')||'-')}</div></div>
+      <div class="ltbd-hf"><div class="k">Line (แก้ได้)</div><input type="text" value="${escapeHtml(h.line||'')}" oninput="ltbdBulkSet('line',${hi},this.value)" /></div>
+      <div class="ltbd-hf"><div class="k">Machine (แก้ได้)</div><input type="text" value="${escapeHtml(h.machine||'')}" oninput="ltbdBulkSet('machine',${hi},this.value)" /></div>
+      <div class="ltbd-hf" style="grid-column:1/-1;"><div class="k">Problem</div><div class="v">${escapeHtml(h.problem||'-')}</div></div>
+    </div>`;
+  });
+
+  if(warns.length){
+    html+=`<div class="sub" style="color:#b45309;margin:0 0 12px;">⚠️ ${warns.map(escapeHtml).join('<br>⚠️ ')}</div>`;
+  }
+
+  const nUse=ltbdParsed.filter(o=>o._use).length;
+  const nDup=ltbdParsed.filter(o=>o._dup).length;
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+    <div class="sub" style="margin:0;">พบแผนงาน <b>${ltbdParsed.length}</b> รายการ${nDup?` · <span class="dup-flag">ซ้ำกับที่เคยนำเข้าแล้ว ${nDup} รายการ (ติ๊กออกให้อัตโนมัติ)</span>`:''}</div>
+    <div class="actions" style="margin:0;">
+      <button class="btn-secondary" onclick="ltbdToggleAll(true)">เลือกทั้งหมด</button>
+      <button class="btn-secondary" onclick="ltbdToggleAll(false)">ไม่เลือกเลย</button>
+      <button class="btn-primary" onclick="saveLtbdParsed()">💾 บันทึกลง Supabase (<span id="ltbdUseCount">${nUse}</span>)</button>
+    </div>
+  </div>`;
+
+  html+=`<div class="ltbd-wrap"><table class="ltbd-table"><thead><tr>
+    <th style="width:44px;">ใช้</th><th style="width:150px;">ประเภท</th><th style="width:44px;">ข้อ</th>
+    <th>หัวข้อ / Action Plan</th><th style="width:158px;">วันที่จะทำ</th><th style="width:140px;">ผู้รับผิดชอบ</th>
+  </tr></thead><tbody>`;
+
+  ltbdParsed.forEach((o,i)=>{
+    html+=`<tr class="${o._dup?'dup':''}">
+      <td><input type="checkbox" ${o._use?'checked':''} onchange="ltbdSetUse(${i},this.checked)" style="width:18px;height:18px;accent-color:#7c3aed;" /></td>
+      <td><span class="ltbd-type ${ltbdTypeClass(o.action_type)}">${escapeHtml(o.action_type)}</span></td>
+      <td>${escapeHtml(o.item_no)}</td>
+      <td class="ltbd-topic">${escapeHtml(o.topic)}${o._dup?'<br><span class="dup-flag">↺ เคยนำเข้าแล้ว</span>':''}${o._warn?`<br><span class="dup-flag">⚠️ ${escapeHtml(o._warn)}</span>`:''}</td>
+      <td><input type="date" value="${o.plan_date||''}" onchange="ltbdSetField(${i},'plan_date',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(o.in_charge||'')}" oninput="ltbdSetField(${i},'in_charge',this.value)" /></td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  box.innerHTML=html;
+}
+
+function ltbdSetUse(i,v){ if(ltbdParsed[i]){ ltbdParsed[i]._use=v; ltbdUpdateUseCount(); } }
+function ltbdSetField(i,k,v){ if(ltbdParsed[i]){ ltbdParsed[i][k]=v||null; if(k!=='plan_date')ltbdParsed[i].row_key=ltbdRowKey(ltbdParsed[i]); } }
+function ltbdToggleAll(v){ ltbdParsed.forEach(o=>o._use=v); renderLtbdPreviewCheckboxes(); }
+function ltbdUpdateUseCount(){ const el=byId('ltbdUseCount'); if(el)el.textContent=ltbdParsed.filter(o=>o._use).length; }
+function renderLtbdPreviewCheckboxes(){
+  document.querySelectorAll('#ltbdParseArea tbody input[type="checkbox"]').forEach((cb,i)=>{ if(ltbdParsed[i])cb.checked=ltbdParsed[i]._use; });
+  ltbdUpdateUseCount();
+}
+// แก้ Line/Machine ทีเดียวทั้งไฟล์
+function ltbdBulkSet(field,fileIdx,val){
+  const files=[...new Set(ltbdParsed.map(o=>o.source_file))];
+  const target=files[fileIdx];
+  ltbdParsed.forEach(o=>{ if(o.source_file===target){ o[field]=val.trim(); o.row_key=ltbdRowKey(o); } });
+}
+
+function loadLtbdExistingKeys(){
+  return fetch(`${SUPABASE_URL}/rest/v1/ltbd_actions?select=row_key`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.ok?r.json():[]).then(rows=>{
+    ltbdExistingKeys=new Set((rows||[]).map(x=>x.row_key).filter(Boolean));
+  }).catch(()=>{ ltbdExistingKeys=new Set(); });
+}
+
+async function saveLtbdParsed(){
+  const use=ltbdParsed.filter(o=>o._use);
+  if(!use.length){ alert('ยังไม่ได้เลือกรายการที่จะบันทึก'); return; }
+  const noDate=use.filter(o=>!o.plan_date).length;
+  if(noDate && !confirm(`มี ${noDate} รายการที่ยังไม่มีวันที่\nรายการเหล่านี้จะไม่ขึ้นบนปฏิทินจนกว่าจะใส่วันที่\n\nบันทึกต่อเลยไหม?`))return;
+
+  const payload=use.map(o=>({
+    ltbd_no:o.ltbd_no||null, line:o.line||null, machine:o.machine||null,
+    plant:o.plant||null, product:o.product||null, problem:o.problem||null,
+    action_type:o.action_type, item_no:o.item_no||null, topic:o.topic,
+    plan_date:o.plan_date||null, in_charge:o.in_charge||null,
+    status:'รอดำเนินการ', note:o.note||null,
+    source_file:o.source_file||null, row_key:o.row_key
+  }));
+
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/ltbd_actions?on_conflict=row_key`,{
+      method:'POST',
+      headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates,return=minimal'},
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok){
+      const txt=await res.text();
+      if(res.status===404||/Could not find the table|does not exist/i.test(txt)){
+        alert('ยังไม่มีตาราง ltbd_actions ใน Supabase\n\nกรุณารัน SQL ที่แนบมาพร้อมไฟล์นี้ก่อน แล้วลองใหม่');
+        return;
+      }
+      throw new Error(txt);
+    }
+    byId('ltbdParseArea').innerHTML=`<div class="sub" style="margin:16px 0 0;color:#15803d;font-weight:800;">✓ บันทึก ${use.length} รายการเรียบร้อย — ดูได้ในตารางด้านล่าง และบนปฏิทินหน้า "ปฏิทินงานค้าง"</div>`;
+    ltbdParsed=[];
+    byId('ltbdFile').value='';
+    await refreshLtbdPage();
+  }catch(err){
+    console.error(err);
+    alert('บันทึกไม่สำเร็จ\n\n'+err.message);
+  }
+}
+
+// ── โหลดข้อมูลที่บันทึกแล้ว + สร้าง index ตามวันที่ให้ปฏิทิน ──
+function loadLtbdActions(){
+  return fetch(`${SUPABASE_URL}/rest/v1/ltbd_actions?order=plan_date.asc.nullslast,id.asc`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(async r=>{
+    if(!r.ok){
+      const txt=await r.text();
+      if(r.status===404||/Could not find the table|does not exist/i.test(txt)){
+        const n=byId('ltbdNote');
+        if(n)n.innerHTML='⚠️ ยังไม่พบตาราง <b>ltbd_actions</b> ใน Supabase — ต้องรัน SQL สร้างตารางก่อน (ดูคำแนะนำที่แนบมาพร้อมไฟล์นี้)';
+        return null;
+      }
+      throw new Error(txt);
+    }
+    return r.json();
+  })
+  .then(rows=>{
+    if(!Array.isArray(rows))return;
+    ltbdItems=rows;
+    Object.keys(ltbdByDate).forEach(k=>delete ltbdByDate[k]);
+    rows.forEach(it=>{
+      // งานที่เสร็จ/ยกเลิกแล้ว ไม่ต้องขึ้นปฏิทิน
+      if(!it.plan_date||it.status==='เสร็จแล้ว'||it.status==='ยกเลิก')return;
+      (ltbdByDate[it.plan_date]=ltbdByDate[it.plan_date]||[]).push(it);
+    });
+    const n=byId('ltbdNote'); if(n&&!/ltbd_actions/.test(n.innerHTML))n.textContent='';
+  })
+  .catch(e=>{ console.error(e); const n=byId('ltbdNote'); if(n)n.textContent='โหลดข้อมูลไม่สำเร็จ: '+e.message; });
+}
+
+async function refreshLtbdPage(){
+  await loadLtbdActions();
+  renderLtbdSaved();
+}
+
+function renderLtbdSaved(){
+  const t=byId('ltbdSavedTable'); if(!t)return;
+  const fType=safeValue('ltbdFilterType'), fSt=safeValue('ltbdFilterStatus');
+  const q=safeValue('ltbdSearch').toLowerCase().trim();
+  const hideDone=byId('ltbdHideDone')?.checked;
+  const today=toISODate(new Date());
+
+  const rows=ltbdItems.filter(it=>{
+    if(fType&&it.action_type!==fType)return false;
+    if(fSt&&it.status!==fSt)return false;
+    if(hideDone&&!fSt&&(it.status==='เสร็จแล้ว'||it.status==='ยกเลิก'))return false;
+    if(q){
+      const blob=[it.line,it.machine,it.topic,it.in_charge,it.problem,it.ltbd_no,it.action_type].join(' ').toLowerCase();
+      if(!blob.includes(q))return false;
+    }
+    return true;
+  });
+
+  const open=ltbdItems.filter(i=>i.status!=='เสร็จแล้ว'&&i.status!=='ยกเลิก');
+  const nOverdue=open.filter(i=>i.plan_date&&i.plan_date<today).length;
+  const nSoon=open.filter(i=>{
+    if(!i.plan_date||i.plan_date<today)return false;
+    const d=(new Date(i.plan_date)-new Date(today))/86400000;
+    return d<=7;
+  }).length;
+  const nDone=ltbdItems.filter(i=>i.status==='เสร็จแล้ว').length;
+  byId('ltbdStats').innerHTML=`
+    <div class="sp-stat"><div class="n" style="color:#6d28d9;">${open.length}</div><div class="l">แผนที่ยังไม่ปิด</div></div>
+    <div class="sp-stat"><div class="n" style="color:${nOverdue?'#b91c1c':'#15803d'};">${nOverdue}</div><div class="l">เลยกำหนดแล้ว</div></div>
+    <div class="sp-stat"><div class="n" style="color:#c2410c;">${nSoon}</div><div class="l">ครบกำหนดใน 7 วัน</div></div>
+    <div class="sp-stat"><div class="n" style="color:#15803d;">${nDone}</div><div class="l">ทำเสร็จแล้ว</div></div>`;
+
+  let html=`<thead><tr>
+    <th style="width:150px;">ประเภท</th><th style="width:150px;">Line / Machine</th>
+    <th>หัวข้อ / Action Plan</th><th style="width:110px;">วันที่จะทำ</th>
+    <th style="width:120px;">ผู้รับผิดชอบ</th><th style="width:120px;">สถานะ</th><th style="width:160px;"></th>
+  </tr></thead><tbody>`;
+
+  if(rows.length===0){
+    html+=`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:26px;">ยังไม่มีแผนงาน LTBD — ลากไฟล์ฟอร์มมาวางด้านบนเพื่อเริ่มนำเข้า</td></tr>`;
+  }
+
+  rows.forEach(it=>{
+    const od=it.plan_date&&it.plan_date<today&&it.status!=='เสร็จแล้ว'&&it.status!=='ยกเลิก';
+    html+=`<tr class="${od?'overdue':''}">
+      <td><span class="ltbd-type ${ltbdTypeClass(it.action_type)}">${escapeHtml(it.action_type||'-')}</span>${it.ltbd_no?`<br><span style="font-size:11px;color:var(--muted);">${escapeHtml(it.ltbd_no)}</span>`:''}</td>
+      <td><b style="color:#5b21b6;">${escapeHtml(it.line||'-')}</b><br><span style="font-size:12px;">${escapeHtml(it.machine||'-')}</span></td>
+      <td class="ltbd-topic">${escapeHtml(it.topic||'-')}${it.problem?`<br><span style="font-size:11.5px;color:#7c6aa8;">จากปัญหา: ${escapeHtml(it.problem)}</span>`:''}${it.note?`<br><span style="font-size:11.5px;color:#92400e;">📝 ${escapeHtml(it.note)}</span>`:''}</td>
+      <td>${escapeHtml(it.plan_date||'—')}${od?'<br><span class="overdue-flag">⚠ เลยกำหนด</span>':''}${it.done_date?`<br><span style="font-size:11px;color:#15803d;">เสร็จ ${escapeHtml(it.done_date)}</span>`:''}</td>
+      <td>${escapeHtml(it.in_charge||'-')}</td>
+      <td><span class="sp-status ${ltbdStatusClass(it.status)}">${escapeHtml(it.status||'-')}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn-assign mini-btn" onclick="openAssignFromLtbd(${it.id})">➕ ลงตาราง</button>
+        <button class="btn-secondary mini-btn" onclick="openLtbdEdit(${it.id})">✏️</button>
+      </td>
+    </tr>`;
+  });
+  html+='</tbody>';
+  t.innerHTML=html;
+}
+
+// ── แก้ไข / ปิดงาน ──
+function openLtbdEdit(id){
+  const it=ltbdItems.find(x=>x.id===id);
+  if(!it){ alert('ไม่พบรายการนี้ กรุณากด Update แล้วลองใหม่'); return; }
+  ltbdEditId=id;
+  safeSetText('ltbdEditSubtitle',`${it.line||'-'} | ${it.machine||'-'} | ${it.ltbd_no||'ไม่มีเลข LTBD'}`);
+  safeSetValue('ltbdEditLine',it.line||'');
+  safeSetValue('ltbdEditMachine',it.machine||'');
+  safeSetValue('ltbdEditType',it.action_type||'Revise Standard');
+  safeSetValue('ltbdEditTopic',it.topic||'');
+  safeSetValue('ltbdEditDate',it.plan_date||'');
+  safeSetValue('ltbdEditWho',it.in_charge||'');
+  safeSetValue('ltbdEditStatus',it.status||'รอดำเนินการ');
+  safeSetValue('ltbdEditDone',it.done_date||'');
+  safeSetValue('ltbdEditNote',it.note||'');
+  byId('ltbdEditBackdrop').classList.add('show');
+}
+function closeLtbdEdit(){ byId('ltbdEditBackdrop').classList.remove('show'); ltbdEditId=null; }
+
+function patchLtbdAction(id,body){
+  return fetch(`${SUPABASE_URL}/rest/v1/ltbd_actions?id=eq.${id}`,{
+    method:'PATCH',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify(body)
+  }).then(async r=>{ if(!r.ok)throw new Error(await r.text()); return true; });
+}
+
+async function saveLtbdEdit(){
+  if(!ltbdEditId)return;
+  const status=safeValue('ltbdEditStatus');
+  let done=safeValue('ltbdEditDone')||null;
+  if(status==='เสร็จแล้ว'&&!done)done=toISODate(new Date());  // ปิดงานแล้วไม่ใส่วันที่ → เติมวันนี้ให้
+  const body={
+    line:safeValue('ltbdEditLine').trim()||null,
+    machine:safeValue('ltbdEditMachine').trim()||null,
+    action_type:safeValue('ltbdEditType'),
+    topic:safeValue('ltbdEditTopic').trim(),
+    plan_date:safeValue('ltbdEditDate')||null,
+    in_charge:safeValue('ltbdEditWho').trim()||null,
+    status, done_date:done,
+    note:safeValue('ltbdEditNote').trim()||null
+  };
+  if(!body.topic){ alert('หัวข้อห้ามว่าง'); return; }
+  try{
+    await patchLtbdAction(ltbdEditId,body);
+    closeLtbdEdit();
+    await loadLtbdActions();
+    renderLtbdSaved();
+    if(currentPage==='calendar'){ renderBigCal(); byId('dayDetailBackdrop').classList.remove('show'); }
+  }catch(err){
+    console.error(err);
+    alert('บันทึกไม่สำเร็จ\n\n'+err.message);
+  }
+}
+
+async function deleteLtbdAction(){
+  if(!ltbdEditId)return;
+  const it=ltbdItems.find(x=>x.id===ltbdEditId);
+  if(!confirm(`ลบแผนงานนี้?\n\n${it?.topic||''}\n\nการลบนี้ย้อนกลับไม่ได้ (ถ้าอยากเก็บประวัติไว้ ให้เปลี่ยนสถานะเป็น "ยกเลิก" แทน)`))return;
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/ltbd_actions?id=eq.${ltbdEditId}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'}});
+    if(!r.ok)throw new Error(await r.text());
+    closeLtbdEdit();
+    await loadLtbdActions();
+    renderLtbdSaved();
+    if(currentPage==='calendar'){ renderBigCal(); byId('dayDetailBackdrop').classList.remove('show'); }
+  }catch(err){ alert('ลบไม่สำเร็จ\n\n'+err.message); }
+}
+
+// ── ส่งแผน LTBD เข้าตารางเวลาหน้างานประจำวัน (ใช้ modal จ่ายงานร่วมกัน) ──
+function openAssignFromLtbd(id){
+  const it=ltbdItems.find(x=>x.id===id);
+  if(!it){ alert('ไม่พบรายการนี้'); return; }
+  assignState.src='ltbd';
+  assignState.ltbdItem=it;
+  assignState.row=null; assignState.ngItem=null; assignState.key='';
+  assignState.mode='normal';
+  assignState.start=-1; assignState.end=-1;
+
+  safeSetText('assignSubtitle',`LTBD | ${it.line||'-'} | ${it.machine||'-'} | กำหนด ${it.plan_date||'ยังไม่ระบุ'}`);
+  byId('assignPreview').innerHTML=`
+    <b>${escapeHtml(it.action_type||'-')}</b><br>
+    ${escapeHtml(it.topic||'-')}<br>
+    <b style="color:#6d28d9;">ผู้รับผิดชอบตามฟอร์ม:</b> ${escapeHtml(it.in_charge||'-')}`;
+
+  const sel=byId('assignTech');
+  sel.innerHTML=technicians.map(n=>{
+    const s=nameShift(n);
+    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    return `<option value="${escapeHtml(n)}">${escapeHtml(n)}${tag}</option>`;
+  }).join('');
+
+  setAssignMode('normal');
+  byId('assignBacklogBackdrop').classList.add('show');
+}
+
+function setupLtbdDropzone(){
+  const dz=byId('ltbdDrop'), fi=byId('ltbdFile');
+  if(!dz||!fi)return;
+  dz.addEventListener('click',()=>fi.click());
+  fi.addEventListener('change',e=>{ if(e.target.files.length)handleLtbdFiles(e.target.files); });
+  ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); }));
+  dz.addEventListener('drop',e=>{ if(e.dataTransfer.files.length)handleLtbdFiles(e.dataTransfer.files); });
+  // กันเบราว์เซอร์เปิดไฟล์ทับหน้าเว็บถ้าลากพลาดออกนอกกล่อง
+  ['dragover','drop'].forEach(ev=>window.addEventListener(ev,e=>{ if(!dz.contains(e.target))e.preventDefault(); }));
+}
+
 // ═══════════ EVENTS / INIT ═══════════
 document.addEventListener('click',e=>{
   if(e.target===byId('taskModalBackdrop'))closeTaskModal();
@@ -3016,20 +3777,24 @@ document.addEventListener('click',e=>{
   if(e.target===byId('moveJobBackdrop'))closeMoveModal();
   if(e.target===byId('dayDetailBackdrop')&&!byId('assignBacklogBackdrop').classList.contains('show'))byId('dayDetailBackdrop').classList.remove('show');
   if(e.target===byId('spModalBackdrop'))closeSpModal();
+  if(e.target===byId('ltbdEditBackdrop'))closeLtbdEdit();
   if(e.target===byId('ngListBackdrop'))byId('ngListBackdrop').classList.remove('show');
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
   if(byId('moveJobBackdrop').classList.contains('show')){ closeMoveModal(); return; }
   if(byId('assignBacklogBackdrop').classList.contains('show')){ closeAssignModal(); return; }
+  if(byId('ltbdEditBackdrop').classList.contains('show')){ closeLtbdEdit(); return; }
   closeTaskModal(); byId('dayDetailBackdrop').classList.remove('show'); closeSpModal(); byId('ngListBackdrop').classList.remove('show');
 });
 document.addEventListener('DOMContentLoaded',()=>{
   ensureMetaDefaults(); populateModalTimeSlots(); initTimeline();
+  setupLtbdDropzone();
   // โหลดชีทงานค้างก่อน เพื่อรู้ว่างานไหนถูกปิดไปแล้ว (จะได้ไม่โชว์ในตาราง)
   Promise.all([loadBacklogSheet(),loadAssignedKeys()]).then(()=>{ lastTimelineSnapshot=''; loadData(); });
   loadNgList();
   loadData();
+  loadLtbdActions();   // โหลดไว้ล่วงหน้า ให้ปฏิทินมีข้อมูล LTBD ตั้งแต่เปิดหน้าแรก
   updateHolidayPrintButton();
   setInterval(()=>{
     if(document.hidden)return; // เปิดแท็บอื่นอยู่ ไม่ต้องยิง request
@@ -3038,12 +3803,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     }else if(currentPage==='sparepart'){
       loadSpareparts();
     }
-    // หน้า calendar ไม่ auto-refresh ทุก 10 วิ เพราะดึงจาก Google Sheet (ใช้ปุ่ม Update แทน)
+    // หน้า calendar / ltbd ไม่ auto-refresh ทุก 10 วิ (ใช้ปุ่ม Update แทน)
   },10000);
 });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<!-- อ่านไฟล์ Excel ฟอร์ม LTBD -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Confirm Modal -->
 <div class="modal-backdrop" id="confirmModalBackdrop">
   <div class="modal">
