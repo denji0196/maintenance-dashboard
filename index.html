@@ -80,6 +80,24 @@
     .popup button { margin:5px; padding:10px 15px; cursor:pointer; }
     .actual-ok { background:linear-gradient(135deg,#00cd90,#01af92); }
     .actual-ng { background:linear-gradient(135deg,#ee3c68,#e4293e); }
+
+    /* ── ปิดงาน OK: บันทึกวัน/เวลาที่เข้าไปทำจริง ── */
+    .wt-popup { width:min(400px,94vw); text-align:left; max-height:92vh; overflow-y:auto; }
+    .wt-popup h3 { margin:0 0 4px; font-size:17px; color:#15803d; }
+    .wt-sub { font-size:12.5px; color:var(--muted); font-weight:600; line-height:1.5; margin-bottom:12px; }
+    .wt-label { font-size:13px; color:var(--muted); font-weight:700; margin:12px 0 6px; }
+    .wt-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+    .popup .wt-chip { margin:0; border:1.5px solid #cbd5e1; background:#fff; color:#334155; border-radius:999px; padding:6px 12px; font-size:12.5px; font-weight:700; }
+    .popup .wt-chip:hover { border-color:#16a34a; color:#15803d; }
+    .popup .wt-chip.on { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+    .wt-times { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; }
+    .wt-times span { font-weight:800; color:var(--muted); }
+    .wt-dur { margin-top:8px; font-size:13px; font-weight:800; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:7px 10px; }
+    .wt-dur.bad { color:#b91c1c; background:#fef2f2; border-color:#fecaca; }
+    .wt-popup textarea { min-height:64px; }
+    .wt-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+    .popup .wt-actions button { margin:0; border-radius:10px; padding:10px 16px; font-weight:800; }
+    .wt-log { margin:8px 0; font-size:12.5px; font-weight:700; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:6px 10px; }
     .cal-day { border-radius:10px; padding:10px 4px; cursor:pointer; font-size:13px; font-weight:600; transition:0.15s; border:1.5px solid transparent; }
     .cal-day:hover { border-color:#2563eb; }
     .cal-day.today { border-color:#2563eb; color:#2563eb; }
@@ -1778,14 +1796,154 @@ function toggleActualBlock(name,start,end){
   if(ex){showActualViewPopup(name,start,end,ex,state.actualReason[`${name}_${start}`]||'');return;}
   showDecisionPopup().then(res=>{
     if(!res)return;
-    showReasonPopup(res).then(reason=>{
-      if(reason===null)return;
+    // OK → ถามวัน/เวลาที่เข้าไปทำจริง (พร้อมหมายเหตุ) / NG → ถามเหตุผลแบบเดิม
+    const ask = res==='OK'
+      ? showWorkTimePopup(name,start,end,'')
+      : showReasonPopup(res).then(r=>r===null?null:{reason:r,work:null});
+    ask.then(out=>{
+      if(!out)return;
+      const reason=out.reason||'';
       for(let i=start;i<=end;i++){state.timeline[name].ACTUAL[i]=true;state.actualStatus[`${name}_${i}`]=res;state.actualReason[`${name}_${i}`]=reason;}
       const det=state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'';
       saveActualToSupabase(name,start,end,res,reason,det);
+      if(out.work)saveWorkTimeLog(name,start,end,out.work,reason);
       renderTimeline();
     });
   });
+}
+
+// ═══════════════════════════════════════════════════════
+// ปิดงาน OK → บันทึกวัน/เวลาที่เข้าไปทำจริง (ตาราง Supabase: work_time_logs)
+// ═══════════════════════════════════════════════════════
+const WT_TABLE='work_time_logs';
+
+function wtNormHM(t){ const m=String(t||'').trim().match(/^(\d{1,2}):(\d{2})/); return m?`${pad2((+m[1])%24)}:${m[2]}`:''; }
+function wtToMin(hm){ const [h,m]=String(hm||'0:0').split(':').map(Number); return h*60+m; }
+// เวลาตามแผนจากช่อง slot — part 0 = กะเช้า, 1 = กะดึก
+function wtSlotTimes(si,ei,part){
+  const a=(timeSlots[si]||'').split('/')[part]||'', b=(timeSlots[ei]||'').split('/')[part]||'';
+  return { s:wtNormHM(a.replace(/[()]/g,'').split('-')[0]), e:wtNormHM(b.replace(/[()]/g,'').split('-')[1]) };
+}
+function wtTimeOptions(sel){
+  let o='';
+  for(let m=0;m<1440;m+=15){ const hm=`${pad2(Math.floor(m/60))}:${pad2(m%60)}`; o+=`<option value="${hm}"${hm===sel?' selected':''}>${hm}</option>`; }
+  return o;
+}
+function wtDurText(s,e){
+  let d=wtToMin(e)-wtToMin(s); const cross=d<0; if(d<0)d+=1440;
+  return { min:d, text:`⏱ ใช้เวลา ${Math.floor(d/60)} ชม. ${d%60} นาที${cross?' (ข้ามเที่ยงคืน)':''}` };
+}
+
+function showWorkTimePopup(name,start,end,presetReason){
+  return new Promise(resolve=>{
+    const d=state.slotDetails[getSlotKey(name,'PLAN',start)]||{};
+    const planDate=d.date||(holidayState.active&&holidayState.date?holidayState.date:safeValue('workDate'))||toISODate(new Date());
+    const today=toISODate(new Date());
+    const y=new Date(); y.setDate(y.getDate()-1); const yesterday=toISODate(y);
+    const day=wtSlotTimes(start,end,0), night=wtSlotTimes(start,end,1);
+    const isNight=(typeof nameShift==='function' && nameShift(name)==='night');
+    const def=isNight?night:day;
+    const job=[d.line,d.machine].filter(Boolean).join(' · ')||'-';
+
+    showPopup(`<div class="popup wt-popup">
+      <h3>✅ ปิดงาน OK — เข้าไปทำเมื่อไหร่?</h3>
+      <div class="wt-sub">👤 ${escapeHtml(name)} | ${escapeHtml(job)}<br>${escapeHtml(d.detail||'-')}<br>แผน: ${escapeHtml(planDate)} · ${escapeHtml(getTimeRange(start,end))}</div>
+
+      <div class="wt-label">📅 วันที่เข้าไปทำ</div>
+      <div class="wt-chips" id="wtDateChips">
+        <button type="button" class="wt-chip" data-v="${planDate}">ตามแผน</button>
+        <button type="button" class="wt-chip" data-v="${today}">วันนี้</button>
+        <button type="button" class="wt-chip" data-v="${yesterday}">เมื่อวาน</button>
+      </div>
+      <input type="date" id="wtDate" value="${planDate}" />
+
+      <div class="wt-label">🕐 เวลาที่เข้าไปทำ</div>
+      <div class="wt-chips" id="wtTimeChips">
+        <button type="button" class="wt-chip${!isNight?' on':''}" data-s="${day.s}" data-e="${day.e}">☀️ ตามแผนกะเช้า ${day.s}–${day.e}</button>
+        <button type="button" class="wt-chip${isNight?' on':''}" data-s="${night.s}" data-e="${night.e}">🌙 ตามแผนกะดึก ${night.s}–${night.e}</button>
+      </div>
+      <div class="wt-times">
+        <select id="wtStart">${wtTimeOptions(def.s)}</select><span>ถึง</span><select id="wtEnd">${wtTimeOptions(def.e)}</select>
+      </div>
+      <div class="wt-dur" id="wtDur"></div>
+
+      <div class="wt-label">📝 หมายเหตุ (ไม่ใส่ก็ได้)</div>
+      <textarea id="wtReason" placeholder="เช่น เปลี่ยนเซนเซอร์ใหม่ ทดสอบแล้วปกติ">${escapeHtml(presetReason||'')}</textarea>
+
+      <div class="wt-actions">
+        <button type="button" id="wtCancel" style="background:#e2e8f0;color:#183153;">Cancel</button>
+        <button type="button" id="wtOk" style="background:#16a34a;color:#fff;">✅ บันทึกปิดงาน</button>
+      </div>
+    </div>`);
+
+    const dateIn=byId('wtDate'), sIn=byId('wtStart'), eIn=byId('wtEnd');
+    const markDate=()=>byId('wtDateChips').querySelectorAll('.wt-chip').forEach(b=>b.classList.toggle('on',b.dataset.v===dateIn.value));
+    const markTime=()=>byId('wtTimeChips').querySelectorAll('.wt-chip').forEach(b=>b.classList.toggle('on',b.dataset.s===sIn.value&&b.dataset.e===eIn.value));
+    const updDur=()=>{
+      const el=byId('wtDur'); const r=wtDurText(sIn.value,eIn.value);
+      el.textContent = r.min===0 ? '⚠️ เวลาเริ่มกับเวลาสิ้นสุดต้องไม่เท่ากัน' : r.text;
+      el.classList.toggle('bad',r.min===0);
+    };
+    byId('wtDateChips').querySelectorAll('.wt-chip').forEach(b=>b.addEventListener('click',()=>{ dateIn.value=b.dataset.v; markDate(); }));
+    byId('wtTimeChips').querySelectorAll('.wt-chip').forEach(b=>b.addEventListener('click',()=>{ sIn.value=b.dataset.s; eIn.value=b.dataset.e; markTime(); updDur(); }));
+    dateIn.addEventListener('change',markDate);
+    sIn.addEventListener('change',()=>{ markTime(); updDur(); });
+    eIn.addEventListener('change',()=>{ markTime(); updDur(); });
+    markDate(); markTime(); updDur();
+
+    byId('wtCancel').addEventListener('click',()=>{ closePopup(); resolve(null); });
+    byId('wtOk').addEventListener('click',()=>{
+      if(!dateIn.value){ alert('กรุณาเลือกวันที่เข้าไปทำ'); return; }
+      const dur=wtDurText(sIn.value,eIn.value);
+      if(dur.min===0){ alert('เวลาเริ่มกับเวลาสิ้นสุดต้องไม่เท่ากัน'); return; }
+      const reason=(byId('wtReason').value||'').trim();
+      closePopup();
+      resolve({ reason, work:{ date:dateIn.value, start:sIn.value, end:eIn.value, minutes:dur.min, planDate } });
+    });
+  });
+}
+
+function saveWorkTimeLog(name,start,end,work,reason){
+  const d=state.slotDetails[getSlotKey(name,'PLAN',start)]||{};
+  const payload={
+    plan_date:work.planDate, technician:name, start_slot:start, end_slot:end,
+    is_holiday:!!(holidayState.active&&holidayState.date),
+    line:d.line||'', machine:d.machine||'', job_type:d.jobType||'', detail:d.detail||'',
+    result:'OK', reason:reason||'',
+    work_date:work.date, time_start:work.start, time_end:work.end, duration_min:work.minutes,
+    updated_at:new Date().toISOString()
+  };
+  // 1 งาน = 1 แถว (กด OK ซ้ำ = อัปเดตเวลาแถวเดิม)
+  return fetch(`${SUPABASE_URL}/rest/v1/${WT_TABLE}?on_conflict=plan_date,technician,start_slot,end_slot`,{
+    method:'POST',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(payload)
+  }).then(async r=>{
+    if(r.ok)return true;
+    const txt=await r.text();
+    console.error('WORK TIME LOG ERROR',r.status,txt);
+    if(r.status===404||/work_time_logs/i.test(txt)){
+      alert('บันทึกสถานะ OK แล้ว แต่ยังบันทึกวัน/เวลาเข้าทำไม่ได้\n\nยังไม่มีตาราง work_time_logs ใน Supabase — ให้รัน SQL ที่แนบมาก่อน');
+    }else{
+      alert('บันทึกสถานะ OK แล้ว แต่บันทึกวัน/เวลาเข้าทำไม่สำเร็จ\n\n'+txt);
+    }
+    return false;
+  }).catch(e=>{ console.error(e); alert('บันทึกวัน/เวลาเข้าทำไม่สำเร็จ (เน็ต?)\n\n'+e.message); return false; });
+}
+
+// แสดงวัน/เวลาเข้าทำที่บันทึกไว้ ใน popup ดูผล ACTUAL
+function fillWorkTimeInfo(name,start,end){
+  const el=byId('wtViewInfo'); if(!el)return;
+  const d=state.slotDetails[getSlotKey(name,'PLAN',start)]||{};
+  const planDate=d.date||(holidayState.active&&holidayState.date?holidayState.date:safeValue('workDate'));
+  fetch(`${SUPABASE_URL}/rest/v1/${WT_TABLE}?plan_date=eq.${planDate}&technician=eq.${encodeURIComponent(name)}&start_slot=eq.${start}&end_slot=eq.${end}&select=work_date,time_start,time_end,duration_min`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(r=>r.ok?r.json():[]).then(rows=>{
+    const x=rows&&rows[0]; const box=byId('wtViewInfo'); if(!box)return;
+    if(!x){ box.style.display='none'; return; }
+    const m=x.duration_min||0;
+    box.textContent=`🕐 เข้าทำ: ${x.work_date} · ${String(x.time_start).slice(0,5)}–${String(x.time_end).slice(0,5)} (${Math.floor(m/60)} ชม. ${m%60} นาที)`;
+    box.style.display='block';
+  }).catch(()=>{});
 }
 
 function saveActualToSupabase(name,start,end,result,reason,detail){
@@ -1824,6 +1982,7 @@ function showActualViewPopup(name,start,end,status,reason){
   showPopup(`<div class="popup" style="width:340px;text-align:left;">
     <h3 style="margin:0 0 12px;font-size:16px;">ACTUAL: ${name} | ${timeSlots[start]} - ${timeSlots[end]}</h3>
     <div style="margin-bottom:8px;font-size:13px;color:#5b708b;font-weight:600;">Status: <span style="padding:3px 10px;border-radius:8px;font-weight:700;font-size:13px;background:${status==='OK'?'#00cd90':'#ee3c68'};color:white;">${status}</span></div>
+    <div class="wt-log" id="wtViewInfo" style="display:none;"></div>
     <div style="font-size:13px;color:#5b708b;font-weight:600;margin-bottom:6px;">Reason</div>
     <textarea id="viewReasonInput" disabled style="width:100%;height:80px;border-radius:8px;border:1px solid #cbd5e1;padding:8px;font:inherit;">${reason}</textarea>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
@@ -1833,10 +1992,23 @@ function showActualViewPopup(name,start,end,status,reason){
       <button onclick="updateStatusToOK('${name}',${start},${end})" style="background:#00cd90;color:white;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;">OK</button>
     </div>
   </div>`);
+  if(status==='OK')fillWorkTimeInfo(name,start,end);
 }
 function enableEditActual(){const ta=byId('viewReasonInput'),btn=byId('saveEditBtn');if(ta)ta.disabled=false;if(btn){btn.disabled=false;btn.style.opacity='1';}}
 function saveEditActual(name,start,end){const r=(byId('viewReasonInput')?.value||'').trim();const cs=state.actualStatus[`${name}_${start}`]||'OK';closePopup();for(let i=start;i<=end;i++)state.actualReason[`${name}_${i}`]=r;saveActualToSupabase(name,start,end,cs,r,state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'');renderTimeline();}
-function updateStatusToOK(name,start,end){closePopup();const r=state.actualReason[`${name}_${start}`]||'';for(let i=start;i<=end;i++){state.actualStatus[`${name}_${i}`]='OK';state.timeline[name].ACTUAL[i]=true;}saveActualToSupabase(name,start,end,'OK',r,state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'');renderTimeline();}
+// กด OK จาก popup ดูผล (เช่น NG → OK หรือแก้เวลาเข้าทำ) → ถามวัน/เวลาเข้าทำเหมือนกัน
+function updateStatusToOK(name,start,end){
+  closePopup();
+  const prev=state.actualReason[`${name}_${start}`]||'';
+  showWorkTimePopup(name,start,end,prev).then(out=>{
+    if(!out)return;
+    const r=out.reason;
+    for(let i=start;i<=end;i++){state.actualStatus[`${name}_${i}`]='OK';state.actualReason[`${name}_${i}`]=r;state.timeline[name].ACTUAL[i]=true;}
+    saveActualToSupabase(name,start,end,'OK',r,state.slotDetails[getSlotKey(name,'PLAN',start)]?.detail||'');
+    saveWorkTimeLog(name,start,end,out.work,r);
+    renderTimeline();
+  });
+}
 function cancelViewActual(){closePopup();}
 
 // ── Supabase save / load ──
