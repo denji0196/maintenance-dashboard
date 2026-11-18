@@ -404,30 +404,484 @@
     @media (max-width:768px) { .bigcal-cell { min-height:74px; padding:5px; } .pill { font-size:9px; padding:1px 6px; } .nav-tab { font-size:13px; padding:10px 8px; } }
     @media (max-width:480px) { .field-row { grid-template-columns:1fr; } }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style id="designLayer">
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN LAYER — สกิน "Soft" (โค้งมน นุ่มตา)
+       แก้เฉพาะหน้าตา ไม่แตะ logic — ลบ <style id="designLayer"> ทิ้งได้ทั้งก้อน
+       ═══════════════════════════════════════════════════════════════ */
+    :root {
+      --ink:#1b2440; --soft:#f5f7fb; --line-soft:#edf0f6;
+      --signal:#ffc533; --day:#ffb22e; --night:#6366f1;
+      --bg:#f1f3f9; --card:#ffffff; --text:#1b2440; --muted:#6b7690; --line:#e2e6ee;
+      --primary:#3b6cf6; --primary-2:#2a57dc; --danger:#ef4444; --ok:#1fb874;
+      --shadow:0 1px 2px rgba(27,36,64,.04),0 10px 28px rgba(27,36,64,.07); --radius:24px;
+      --f-display:"Prompt","IBM Plex Sans Thai","Leelawadee UI","Segoe UI",Tahoma,sans-serif;
+      --f-body:"IBM Plex Sans Thai","Leelawadee UI","Segoe UI",Tahoma,sans-serif;
+    }
+    html { -webkit-text-size-adjust:100%; }
+    body { font-family:var(--f-body); background:var(--bg); color:var(--text); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+    .container { padding:0 24px 56px; }
+
+    /* ── เมนูลอยทรงแคปซูล ── */
+    .topbar { background:transparent; position:sticky; top:0; z-index:500; padding:12px 24px 0; }
+    .topbar-in { max-width:1402px; margin:0 auto; padding:6px 8px 6px 18px; display:flex; align-items:center; gap:18px; background:#fff; border-radius:999px; box-shadow:var(--shadow); }
+    .brand { display:flex; align-items:center; gap:9px; color:var(--ink); font:600 15.5px/1 var(--f-display); white-space:nowrap; }
+    .brand-mark { width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,var(--day) 0 50%,var(--night) 50% 100%); flex:none; }
+    .nav-tabs { flex:1; display:flex; flex-wrap:nowrap; gap:4px; margin:0; padding:0; background:none; border:0; border-radius:0; box-shadow:none; position:static; backdrop-filter:none; overflow-x:auto; scrollbar-width:none; }
+    .nav-tabs::-webkit-scrollbar { display:none; }
+    .nav-tab { flex:none; min-width:0; border-radius:999px; padding:10px 16px; font:500 14.5px/1.2 var(--f-display); color:var(--muted); background:none; white-space:nowrap; transition:background-color .15s ease,color .15s ease; }
+    .nav-tab:hover { background:var(--soft); color:var(--ink); }
+    .nav-tab.active { background:var(--ink); color:#fff; box-shadow:none; }
+    .nav-tab.ext { margin-left:auto; }
+    .nav-tab.ext::after { content:"↗"; margin-left:5px; font-size:12px; }
+    .page { padding-top:22px; }
+    #pageDaily { padding-top:0; }
+
+    /* ── หัวหน้า Daily ── */
+    .hero { background:none; color:var(--text); padding:26px 4px 4px; border-radius:0; box-shadow:none; display:grid; grid-template-columns:1fr auto; gap:6px 24px; align-items:end; }
+    .hero h1 { margin:0 0 2px; font:500 15.5px/1.4 var(--f-display); color:var(--muted); }
+    .hero-date { font:600 clamp(34px,5.6vw,76px)/1.2 var(--f-display); letter-spacing:-0.015em; color:var(--ink); }
+    .hero-dow { font-weight:400; font-size:.34em; letter-spacing:0; color:var(--muted); margin-left:.6em; white-space:nowrap; }
+    .hero-stat { background:none; border:0; border-radius:0; padding:0; backdrop-filter:none; min-width:0; text-align:left; display:flex; gap:8px; align-items:baseline; color:var(--muted); font-size:13px; }
+    .hero-stat .label { font-size:13px; opacity:1; }
+    .hero-stat .value { font:600 13px/1.4 var(--f-body); margin:0; font-variant-numeric:tabular-nums; color:var(--text); }
+    .hero-side { display:flex; flex-direction:column; align-items:flex-end; gap:10px; padding-bottom:4px; text-align:right; }
+    .sb-status { font-size:14px; color:var(--muted); }
+    .sb-status b { color:var(--ink); font-weight:600; }
+    #holidayBtn { background:#fff !important; color:var(--ink) !important; border:0 !important; box-shadow:var(--shadow); border-radius:999px !important; padding:11px 20px !important; font:500 14px/1.3 var(--f-display) !important; letter-spacing:0 !important; }
+    #holidayBtn[style*="220, 38, 38"], #holidayBtn[style*="220,38,38"] { background:var(--danger) !important; color:#fff !important; }
+    #holidayPrintBtn { border-radius:50% !important; animation:none !important; background:var(--ink) !important; box-shadow:none !important; }
+
+    .shiftband { grid-column:1 / -1; margin-top:30px; --now:0%; }
+    .sb-track { position:relative; display:grid; grid-template-columns:1fr 1fr; height:40px; border-radius:999px; background:#fff; padding:4px; gap:4px; box-shadow:var(--shadow); }
+    .sb-half { display:flex; align-items:center; gap:10px; padding:0 16px; min-width:0; border-radius:999px; }
+    .sb-half b, .sb-half span { position:relative; z-index:2; }
+    .sb-half b { font:600 14.5px/1 var(--f-display); white-space:nowrap; }
+    .sb-half span { font-size:12.5px; font-variant-numeric:tabular-nums; white-space:nowrap; opacity:.85; }
+    .sb-day { background:linear-gradient(90deg,#ffd27a,var(--day)); color:#4a2c00; }
+    .sb-night { background:linear-gradient(90deg,#8183f8,#4f46e5); color:#fff; }
+    .sb-past { position:absolute; left:4px; top:4px; bottom:4px; width:calc(var(--now) - 4px); max-width:calc(100% - 8px); border-radius:999px 0 0 999px; pointer-events:none; background:rgba(255,255,255,.5); transition:width 1.1s cubic-bezier(.2,.7,.2,1); z-index:1; }
+    .sb-now { z-index:3; position:absolute; top:50%; left:var(--now); width:22px; height:22px; margin:-11px 0 0 -11px; background:#fff; border:5px solid var(--ink); border-radius:50%; box-sizing:border-box; transition:left 1.1s cubic-bezier(.2,.7,.2,1); }
+    .sb-now span { position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:12px; background:var(--ink); color:#fff; font:600 12.5px/1 var(--f-display); font-variant-numeric:tabular-nums; padding:6px 10px; border-radius:999px; white-space:nowrap; }
+    .sb-now.edge-l span { left:-6px; transform:none; }
+    .sb-now.edge-r span { left:auto; right:-6px; transform:none; }
+    .sb-ticks { display:flex; justify-content:space-between; margin-top:9px; padding:0 6px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+    /* ── กล่องเนื้อหา ── */
+    .grid { margin-top:24px; gap:20px; }
+    .card { background:#fff; border:0; border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter:none; padding:24px 26px; }
+    .card h2 { font:600 20px/1.35 var(--f-display); color:var(--ink); margin:0 0 10px; }
+    .sub { color:var(--muted); font-size:13.5px; line-height:1.6; }
+    .card.tips { background:none; box-shadow:none; padding:0 6px; }
+    .card.tips h2 { font-size:15px; margin-bottom:6px; color:var(--muted); }
+    .footer-tips { font-size:13px; }
+
+    /* ── ปุ่ม / ช่องกรอก ── */
+    button { border-radius:999px; font-family:var(--f-display); font-weight:500; padding:11px 18px; transition:background-color .15s ease,box-shadow .15s ease,color .15s ease; }
+    button:focus-visible, .nav-tab:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .btn-primary { background:var(--primary); }
+    .btn-primary:hover { background:var(--primary-2); }
+    .btn-secondary, .close-btn { background:var(--soft); color:var(--ink); box-shadow:none; }
+    .btn-secondary:hover, .close-btn:hover { background:#e9edf5; }
+    .btn-danger { background:var(--danger); } .btn-danger:hover { background:#dc2626; }
+    .btn-assign { background:#7c3aed; } .btn-assign:hover { background:#6d28d9; }
+    .btn-move { background:#0e9fb3; } .btn-move:hover { background:#0c8799; }
+    .btn-ojt { background:#0fa596; }  .btn-ojt:hover { background:#0d9488; }
+    .btn-bkclose { background:var(--ok); color:#fff; } .btn-bkclose:hover { background:#17a064; }
+    .mini-btn { padding:7px 11px; }
+    #ngListBtn { border:0; background:#ffecec; color:#c62828; font-weight:600; }
+    #ngListBtn:hover { background:#ffdede; }
+    #ngListBtn.zero { background:#e7f8ef; color:#15803d; }
+    select, textarea, input[type="text"], input[type="date"], input[type="time"], input[type="number"] { border-radius:14px; border-color:var(--line); background:#fff; font-family:var(--f-body); padding:11px 14px; }
+    select:focus, textarea:focus, input[type="text"]:focus, input[type="date"]:focus { border-color:var(--primary); box-shadow:0 0 0 4px rgba(59,108,246,.14); }
+    .field label { font-weight:500; }
+    .checkbox-group { background:var(--soft); border:0; border-radius:16px; }
+    .checkbox-item { font-weight:600; }
+
+    /* ── ตารางเวลา: โครงเดิม (1 คน = PLAN + ACTUAL) แต่ไม่มีเส้นตารางแข็ง ๆ งานเป็นการ์ดโค้ง ── */
+    .timeline-toolbar { background:none; border:0; box-shadow:none; padding:0; border-radius:0; margin-bottom:14px; }
+    .timeline-table { border:0; border-radius:0; padding-bottom:4px; }
+    .timeline-table table { background:none; border:0; border-radius:0; overflow:visible; box-shadow:none; backdrop-filter:none; }
+    .timeline-table th, .timeline-table td { border:0; padding:3px; }
+    .timeline-table th { background:#fff; color:var(--muted); font:500 12.5px/1.3 var(--f-display); letter-spacing:0; text-shadow:none; box-shadow:none; padding:4px 3px 12px; }
+    .timeline-table th:first-child { position:sticky; left:0; z-index:3; text-align:left; padding-left:6px; }
+    .t-day { display:inline-block; white-space:nowrap; font-size:13.5px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; padding:4px 9px; border-radius:999px; }
+    .t-night { display:block; white-space:nowrap; font-size:11.5px; font-weight:400; color:#8b8ff0; margin-top:1px; font-variant-numeric:tabular-nums; }
+    .timeline-table th.now-day .t-day { background:var(--ink); color:#fff; }
+    .timeline-table th.now-night .t-night { display:inline-block; background:var(--night); color:#fff; padding:3px 9px; border-radius:999px; font-weight:500; }
+    .timeline-table td.left { background:#fff; color:var(--ink); box-shadow:none; font-weight:600; }
+    .timeline-table td.left[rowspan] { position:sticky; left:0; z-index:1; min-width:132px; text-align:left; padding:6px 10px 6px 6px; font:500 14.5px/1.3 var(--f-display); }
+    .tn { display:flex; align-items:center; gap:10px; }
+    .tn-av { flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font:600 15px/1 var(--f-display); color:#fff; }
+    .timeline-table td.left:not([rowspan]) { min-width:62px; font:500 10.5px/1 var(--f-display); letter-spacing:.06em; color:#9aa3b8; }
+    .timeline-table tbody tr:nth-child(odd):not(:first-child) td { border-top:1px solid var(--line-soft); padding-top:8px; }
+    .timeline-table tbody tr:nth-child(even) td { padding-bottom:8px; }
+    .timeline-table .slot { min-width:92px; background:none; transition:none; font-size:12px; line-height:1.3; border-left:1px dashed #eceff5; }
+    .timeline-table tbody tr:nth-child(odd) .slot { height:62px; }
+    .timeline-table tbody tr:nth-child(even) .slot { height:34px; }
+    .slot::after { content:none; }
+    .timeline-table tbody .slot:hover { outline:none; transform:none; box-shadow:none; background:#eef3ff; border-radius:14px; }
+    .timeline-table tbody .slot.plan-on, .timeline-table tbody .slot.actual-ok, .timeline-table tbody .slot.actual-ng,
+    .timeline-table tbody .slot.plan-on:hover, .timeline-table tbody .slot.actual-ok:hover, .timeline-table tbody .slot.actual-ng:hover { background:none; box-shadow:none; text-shadow:none; }
+    .timeline-table tbody .slot.plan-on { text-align:left; white-space:normal; font-weight:500; }
+    .pl { display:flex; align-items:center; gap:9px; height:54px; overflow:hidden; background:#e5edff; color:#1e3a8a; border-radius:16px; padding:6px 12px; transition:box-shadow .15s ease; }
+    .is-bk .pl { background:#ffe6e2; color:#7f1d1d; }
+    .slot.plan-on:hover .pl { box-shadow:inset 0 0 0 2px var(--primary); }
+    .slot.plan-on.is-bk:hover .pl { box-shadow:inset 0 0 0 2px var(--danger); }
+    .pl-b { min-width:0; flex:1; }
+    .pl-h { font:600 13px/1.25 var(--f-display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pl-t { font-size:11.5px; font-weight:400; line-height:1.3; margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
+    .pl-b:has(.pl-g) .pl-t { -webkit-line-clamp:1; }
+    .pl-type { display:inline-block; font:600 10px/1.5 var(--f-display); padding:0 7px; margin-right:5px; border-radius:999px; background:#fff; color:#2a57dc; vertical-align:1px; }
+    .pl-type.bk { background:var(--danger); color:#fff; }
+    .pl-g { display:flex; align-items:center; gap:4px; margin-top:2px; height:14px; overflow:hidden; }
+    .pl-g .badge { margin-left:0; }
+    .badge { font-size:9.5px; padding:1px 6px; border-radius:999px; }
+    .bk-thumb { flex:none; width:40px; height:40px; object-fit:cover; border-radius:12px; background:#f3c9c4; }
+    .bk-cam { font-size:11px; line-height:1; }
+    .actual-ok::after, .actual-ng::after { position:static; inset:auto; display:block; height:26px; border-radius:999px; color:#fff; font:600 12px/26px var(--f-display); letter-spacing:.08em; text-align:center; pointer-events:none; }
+    .actual-ok::after { content:"OK"; background:var(--ok); }
+    .actual-ng::after { content:"NG"; background:var(--danger); }
+
+    /* ── Modal / popup ── */
+    .modal-backdrop, .overlay { background:rgba(27,36,64,.45); }
+    .modal { border:0; border-radius:28px; box-shadow:0 30px 70px rgba(27,36,64,.28); }
+    .modal-backdrop.show .modal { animation:dlPop .18s ease-out; }
+    @keyframes dlPop { from { opacity:0; transform:translateY(10px) scale(.985); } to { opacity:1; transform:none; } }
+    .modal-header { background:#fff; padding:22px 26px 16px; border-bottom:0; }
+    .modal-title { font:600 20px/1.35 var(--f-display); color:var(--ink); }
+    .modal-body { padding:8px 26px 26px; }
+    .popup { border-radius:24px; box-shadow:0 30px 70px rgba(27,36,64,.28); padding:24px; }
+    .wt-popup h3 { font-family:var(--f-display); }
+
+    /* ── ปฏิทินงานค้าง ── */
+    .bigcal-month { font:600 26px/1.2 var(--f-display); color:var(--ink); }
+    .bigcal-head { font:500 13px/1 var(--f-display); }
+    .bigcal-cell { border:1.5px solid transparent; border-radius:18px; background:var(--soft); transition:border-color .15s ease; }
+    .bigcal-cell:hover { border-color:var(--primary); box-shadow:none; transform:none; }
+    .bigcal-cell.empty, .bigcal-cell.empty:hover { background:transparent; border-color:transparent; }
+    .bigcal-cell.today { border-color:var(--ink); box-shadow:inset 0 0 0 1.5px var(--ink); }
+    .bigcal-daynum { font:600 15px/1.2 var(--f-display); }
+    .bigcal-cell.holiday { background:#ffeef0; border-color:transparent; }
+    .heat-b1 { background:#fff0f0; border-color:transparent; }
+    .heat-b2 { background:#ffdede; border-color:transparent; }
+    .heat-b3 { background:#ffc6c6; border-color:transparent; }
+    .heat-p1 { background:#fff6e1; border-color:transparent; }
+    .heat-p2 { background:#ffebbd; border-color:transparent; }
+    .heat-p3 { background:#ffde92; border-color:transparent; }
+    .heat-clear { background:#ecf8f1; border-color:transparent; }
+    .bigcal-cell.ltbd-only { background:#f2ecff; border-color:transparent; }
+    .bigcal-cell.ltbd-day { box-shadow:inset 0 0 0 2px #7c3aed; }
+    .bigcal-cell.ltbd-day::after { border-top-right-radius:16px; }
+    .ss-col { border-radius:10px; background:#fff; border:0; }
+    .ss-day { border-top:3px solid var(--day); } .ss-night { border-top:3px solid var(--night); }
+    .shift-chip { font-family:var(--f-display); font-weight:500; border-width:0; background:var(--soft); padding:9px 16px; transition:background-color .15s ease; }
+    .shift-chip:hover { transform:none; background:#e9edf5; }
+    .shift-chip.shift-day { background:#ffe7a6; color:#6b3f00; }
+    .shift-chip.shift-night { background:#dfe1ff; color:#3730a3; }
+    tr.sec-day td { background:#fff3d1; } tr.sec-night td { background:#e6e8ff; }
+    tr.shift-sec td { font:600 13.5px/1.4 var(--f-display); }
+
+    /* ── ตารางข้อมูล ── */
+    .backlog-table-wrap, .sp-table-wrap, .ltbd-wrap { border:0; border-radius:18px; background:var(--soft); }
+    .backlog-table th, .sp-table th { background:#e9edf5; color:var(--ink); font:600 13px/1.3 var(--f-display); padding:12px; text-align:left; }
+    .ltbd-table th { background:#ece5ff; color:#4c1d95; font:600 13px/1.3 var(--f-display); padding:12px; }
+    .backlog-table td, .sp-table td, .ltbd-table td { border-bottom:1px solid var(--line-soft); background:#fff; padding:10px 12px; }
+    .backlog-table tr:hover td, .sp-table tr:hover td { background:#f4f7ff; }
+    .tag, .pill, .status-chip, .sp-cat, .sp-status, .ltbd-type, .ojt-b { font-weight:600; border-radius:999px; }
+    .sp-cat, .sp-status, .ltbd-type, .status-chip { padding:3px 10px; }
+
+    .sp-stat { background:var(--soft); border:0; border-radius:20px; padding:16px 20px; }
+    .sp-stat .n { font:600 32px/1.1 var(--f-display); font-variant-numeric:tabular-nums; }
+    .sp-stat .l { font-weight:500; font-size:13px; }
+    .ltbd-drop { background:#f7f3ff; border-radius:22px; }
+    .ltbd-drop:hover, .ltbd-drop.over { background:#efe8ff; transform:none; box-shadow:none; }
+    .ltbd-drop .t1 { font-family:var(--f-display); font-weight:600; font-size:17px; }
+    .ltbd-head-card { background:#f7f3ff; border:0; border-radius:18px; }
+    .ojt-card { background:var(--soft); border:0; border-left:0; border-radius:22px; padding:18px 20px; box-shadow:inset 0 4px 0 #0fa596; transition:background-color .15s ease; }
+    .ojt-card:hover { box-shadow:inset 0 4px 0 #0fa596; transform:none; background:#eef6f5; }
+    .ojt-card h3 { font:600 17px/1.45 var(--f-display); color:var(--ink); }
+    .ojt-stage { background:var(--ink); border-radius:20px; }
+    .ojt-stepno { font-family:var(--f-display); font-weight:600; }
+    .ojt-steptext { font-weight:500; border-radius:18px; border-left-width:1px; }
+    .ojt-shift, .ojt-steped { border-radius:18px; }
+    .bc, .ng-item, .lt, .daydetail-item, .move-info, .assign-preview { border-radius:16px; }
+    .bc-line, .ng-line, .lt-line { font-family:var(--f-display); font-weight:600; }
+    .slot-opt, .mode-btn { border-radius:14px; }
+
+    /* ── ปิดงานค้างจากหน้า Daily + รูปงานค้าง ── */
+    .bk-box { background:#fff4f2; border-radius:18px; padding:14px 16px; font-size:13.5px; line-height:1.6; }
+    .bk-box .bk-h { font:600 14px/1.4 var(--f-display); color:#c62828; margin-bottom:4px; }
+    .bk-box .bk-l { color:var(--muted); }
+    .bk-photo { margin-top:10px; background:var(--ink); border-radius:16px; display:flex; align-items:center; justify-content:center; min-height:120px; overflow:hidden; }
+    .bk-photo img { max-width:100%; max-height:300px; display:block; cursor:zoom-in; }
+    .bk-photo .bk-none { color:#b4bdd3; font-size:13px; padding:28px 16px; text-align:center; }
+    .bk-cap { font-size:12px; color:var(--muted); margin-top:6px; word-break:break-all; }
+    #bkCloseBackdrop { z-index:10080; }
+    .bk-two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .bk-pick { border:2px dashed #cfd6e4; border-radius:18px; padding:16px; text-align:center; cursor:pointer; font-size:13.5px; color:var(--muted); background:var(--soft); }
+    .bk-pick:hover { border-color:var(--ok); color:#17a064; }
+    .bk-pick img { max-width:100%; max-height:220px; border-radius:12px; display:block; margin:0 auto 8px; }
+    .bk-result { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .bk-result button { padding:15px; font-size:16px; font-weight:600; }
+    .bk-ng { background:#ffecec; color:#c62828; } .bk-ng:hover { background:#ffdede; }
+    .bk-msg { font-size:13.5px; font-weight:600; min-height:20px; }
+    .bk-msg.err { color:#c62828; } .bk-msg.ok { color:#17a064; }
+
+    /* ── ตารางเวลา: แยกคนด้วยแถบสลับสี + เส้นหนา, แยกงานด้วยบล็อกสีเข้ม, เห็นเส้นช่วงเวลาชัด ── */
+    .timeline-table { border:1px solid #c3cddc; border-radius:20px; padding-bottom:0; }
+    .timeline-table th { background:var(--ink); color:#fff; padding:10px 2px 11px; border-right:1px solid rgba(255,255,255,.12); }
+    .timeline-table th:first-child { background:var(--ink); padding-left:14px; font-size:13px; }
+    .timeline-table th:nth-child(2) { font-size:12px; }
+    .t-day { color:#fff; font-weight:600; }
+    .t-night { color:#b4bcff; }
+    .timeline-table th.now-day .t-day { background:var(--signal); color:var(--ink); }
+    .timeline-table th.now-night .t-night { background:var(--signal); color:var(--ink); }
+    .timeline-table td { border-right:1px solid #dbe2ec; }
+    .timeline-table td:last-child, .timeline-table th:last-child { border-right:0; }
+    .timeline-table tbody tr { background:#fff; }
+    .timeline-table tbody tr:nth-child(4n+3), .timeline-table tbody tr:nth-child(4n) { background:#f1f5fb; }
+    .timeline-table tbody tr:nth-child(odd):not(:first-child) td { border-top:3px solid #aebace; padding-top:3px; }
+    .timeline-table tbody tr:nth-child(even) td { border-top:1px solid #e3e8f0; padding-bottom:3px; }
+    .timeline-table td.left[rowspan] { background:#e6edf9; border-right:1px solid #c3cddc; padding:8px 10px; font-weight:600; font-size:15px; }
+    .timeline-table td.left:not([rowspan]) { background:#eef2f9; color:var(--ink); font:700 11.5px/1 var(--f-display); letter-spacing:.03em; }
+    .timeline-table tbody tr:nth-child(even) td.left:not([rowspan]) { color:#55627e; }
+    .timeline-table .slot { border-left:0; }
+    .timeline-table tbody tr:nth-child(odd) .slot { height:66px; vertical-align:top; }
+    .timeline-table tbody .slot:hover { background:#dce7ff; border-radius:10px; }
+    .pl { height:auto; min-height:58px; align-items:flex-start; background:#bcd3ff; color:#0d2760; border-radius:12px; padding:7px 8px 7px 12px; box-shadow:inset 4px 0 0 #2f6bff; }
+    .is-bk .pl { background:#ffcbc4; color:#66120e; box-shadow:inset 4px 0 0 var(--danger); }
+    .slot.plan-on:hover .pl { box-shadow:inset 4px 0 0 #2f6bff,0 0 0 2px #2f6bff; }
+    .slot.plan-on.is-bk:hover .pl { box-shadow:inset 4px 0 0 var(--danger),0 0 0 2px var(--danger); }
+    .pl-h { white-space:normal; overflow:visible; word-break:break-word; font-weight:700; font-size:12.5px; }
+    .pl-t { -webkit-line-clamp:3; font-weight:500; font-size:11.5px; margin-top:3px; }
+    .pl-b:has(.pl-g) .pl-t { -webkit-line-clamp:2; }
+    .pl-type { background:rgba(255,255,255,.8); }
+    .bk-thumb { width:44px; height:44px; border-radius:10px; }
+    .actual-ok::after, .actual-ng::after { height:28px; line-height:28px; border-radius:9px; font-weight:700; font-size:12.5px; }
+    /* ── สถานะบันทึกเบื้องหลัง + รูปกำลังโหลด ── */
+    .bk-spin { display:inline-block; width:12px; height:12px; border:2px solid rgba(120,130,160,.35); border-top-color:currentColor; border-radius:50%; animation:ngSpin .7s linear infinite; vertical-align:-2px; margin-right:6px; }
+    .pl-type.sv { background:#fff; color:#b45309; }
+    .slot.is-saving .pl { background:#ffe9b8; color:#6b3f00; box-shadow:inset 4px 0 0 #f59e0b; }
+    .slot.is-saving { pointer-events:none; }
+    .bk-photo { position:relative; background-size:contain; background-position:center; background-repeat:no-repeat; }
+    .bk-photo.loading img { opacity:0; }
+    .bk-photo img { transition:opacity .2s ease; position:relative; }
+    .bk-ld { position:absolute; inset:auto 0 10px 0; text-align:center; color:#fff; font-size:12.5px; text-shadow:0 1px 3px rgba(0,0,0,.6); display:none; }
+    .bk-photo.loading .bk-ld { display:block; }
+    #bkToasts { position:fixed; right:16px; bottom:16px; z-index:10090; display:flex; flex-direction:column; gap:10px; width:min(380px,calc(100vw - 32px)); }
+    .bk-toast { display:flex; align-items:center; gap:12px; background:#fff; border-radius:18px; padding:12px 14px; box-shadow:0 12px 34px rgba(27,36,64,.22); font-size:13.5px; line-height:1.45; }
+    .bk-ti { flex:none; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; font-weight:700; color:#fff; background:#f59e0b; }
+    .bk-ti .bk-spin { margin:0; border-color:rgba(255,255,255,.45); border-top-color:#fff; }
+    .bk-toast.ok .bk-ti { background:var(--ok,#1fb874); } .bk-toast.err .bk-ti { background:var(--danger,#ef4444); }
+    .bk-tx { flex:1; min-width:0; } .bk-tx b { font-family:var(--f-display,inherit); font-weight:600; }
+    .bk-toast button { flex:none; padding:7px 12px; font-size:12.5px; background:var(--soft,#f5f7fb); color:var(--ink,#1b2440); }
+    .bk-toast button.x { padding:6px 9px; background:none; color:var(--muted,#6b7690); }
+    /* ── กล่องงานสูงเท่ากันทุกกล่อง + ปุ่มลงผลในแถว ACTUAL ── */
+    .timeline-table tbody tr:nth-child(odd) .slot { height:88px; vertical-align:middle; }
+    .pl { height:80px; min-height:0; align-items:center; }
+    .pl-h { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .pl-t, .pl-b:has(.pl-g) .pl-t { -webkit-line-clamp:2; }
+    .pl-t .badge { margin:0 4px 0 0; vertical-align:1px; }
+    .bk-thumb { width:54px; height:54px; }
+    .act-todo::after { content:"กดลงผล"; position:static; inset:auto; display:block; height:28px; box-sizing:border-box; border:1.5px dashed #9aabc8; border-radius:9px; background:#fff; color:#4a5876; font:600 12px/25px var(--f-display,inherit); text-align:center; white-space:nowrap; overflow:hidden; pointer-events:none; }
+    .act-todo.act-bk::after { content:"กดปิดงานค้าง"; border:1.5px solid #1fb874; color:#11804f; background:#eafaf2; }
+    .timeline-table tbody .slot.act-todo:hover { background:none; }
+    .slot.act-todo:hover::after { border-style:solid; border-color:var(--primary,#3b6cf6); color:var(--primary,#3b6cf6); }
+    .slot.act-todo.act-bk:hover::after { background:#1fb874; border-color:#1fb874; color:#fff; }
+    .bk-big { display:block; width:100%; padding:13px; font-size:15.5px; font-weight:600; margin:6px 0 10px; }
+    .bk-sec { background:var(--soft,#f5f7fb); border-radius:18px; padding:4px 14px 14px; margin:14px 0; }
+    .bk-sec .wt-label { margin-top:12px; }
+    #bkCloseBackdrop .wt-chip { margin:0; border:1.5px solid #cbd5e1; background:#fff; color:#334155; border-radius:999px; padding:6px 12px; font-size:12.5px; font-weight:600; }
+    #bkCloseBackdrop .wt-chip:hover { border-color:#16a34a; color:#15803d; }
+    #bkCloseBackdrop .wt-chip.on { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+    #bkCloseBackdrop textarea { min-height:60px; }
+    #bkCloseBackdrop .bk-photo { min-height:100px; } #bkCloseBackdrop .bk-photo img { max-height:220px; }
+    /* ── เลือกกะต่องานค้าง + กรองตามกะ ── */
+    .bks-filter { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0 14px; }
+    .bks-filter button { padding:8px 16px; border-radius:999px; background:var(--soft,#f5f7fb); color:var(--ink,#1b2440); font-size:13.5px; font-weight:500; }
+    .bks-filter button:hover { background:#e9edf5; }
+    .bks-filter button.on { background:var(--ink,#1b2440); color:#fff; }
+    .bks-filter button[data-f="day"].on { background:#f59e0b; color:#3d2500; }
+    .bks-filter button[data-f="night"].on { background:#4f46e5; color:#fff; }
+    .bks-hint { font-size:12.5px; color:var(--muted,#6b7690); margin-left:4px; }
+    .backlog-table .bks-sel { width:auto; min-width:0; max-width:136px; padding:5px 8px 5px 10px; border-radius:999px; font-size:12.5px; font-weight:600; border:1.5px solid #d6dce8; background-color:#fff; cursor:pointer; }
+    .backlog-table .bks-sel.bks-day { background-color:#fff3d1; border-color:#f5b73b; color:#7a4a00; }
+    .backlog-table .bks-sel.bks-night { background-color:#e6e8ff; border-color:#8b8ff0; color:#3730a3; }
+    .backlog-table .bks-sel.bks-both { background-color:#f4f0ff; border-color:#c4b5fd; color:#4c1d95; }
+    .backlog-table .bks-sel.manual { border-width:2px; }
+    .bks-pin { font-size:10.5px; color:var(--muted,#6b7690); margin-top:3px; padding-left:8px; }
+    /* ── ระบบสมาชิก ── */
+    body.auth-locked > .topbar, body.auth-locked > .container { display:none !important; }
+    .auth-screen { position:fixed; inset:0; z-index:20000; background:var(--bg,#f1f3f9); display:flex; align-items:center; justify-content:center; padding:20px 16px; overflow:auto; }
+    .auth-screen[hidden] { display:none; }
+    .auth-card { width:min(400px,100%); background:#fff; border-radius:28px; box-shadow:0 1px 2px rgba(27,36,64,.04),0 18px 48px rgba(27,36,64,.12); padding:28px 26px 24px; }
+    .auth-brand { display:flex; align-items:center; gap:10px; font:600 20px/1.2 var(--f-display,inherit); color:var(--ink,#1b2440); margin-bottom:20px; }
+    .auth-brand .brand-mark { width:26px; height:26px; }
+    .auth-tabs { display:grid; grid-template-columns:1fr 1fr; gap:4px; background:var(--soft,#f5f7fb); border-radius:999px; padding:4px; margin-bottom:18px; }
+    .auth-tabs button { padding:10px; border-radius:999px; background:none; color:var(--muted,#6b7690); font-weight:500; }
+    .auth-tabs button.on { background:#fff; color:var(--ink,#1b2440); box-shadow:0 1px 3px rgba(27,36,64,.12); }
+    .auth-f { display:block; font-size:13.5px; font-weight:500; color:var(--muted,#6b7690); margin-bottom:12px; }
+    .auth-f input { display:block; width:100%; margin-top:6px; font-size:16px; padding:12px 14px; border-radius:14px; border:1.5px solid var(--line,#e2e6ee); box-sizing:border-box; color:var(--ink,#1b2440); }
+    .auth-go { width:100%; padding:14px; font-size:16px; margin-top:6px; }
+    .auth-note { font-size:12.5px; color:var(--muted,#6b7690); text-align:center; margin:12px 0 0; }
+    .auth-msg { font-size:14px; font-weight:500; margin-top:12px; min-height:20px; text-align:center; }
+    .auth-msg.err { color:#c62828; } .auth-msg.ok { color:#15803d; } .auth-msg.wait { color:#b45309; }
+    .auth-user { display:flex; align-items:center; gap:6px; flex:none; }
+    .auth-user[hidden] { display:none; }
+    .auth-user .au-name { font:500 14px/1.2 var(--f-display,inherit); color:var(--ink,#1b2440); padding:0 6px; white-space:nowrap; max-width:140px; overflow:hidden; text-overflow:ellipsis; }
+    .auth-user button { padding:8px 12px; font-size:13px; background:var(--soft,#f5f7fb); color:var(--ink,#1b2440); position:relative; white-space:nowrap; }
+    .auth-user button:hover { background:#e9edf5; }
+    .au-badge { position:absolute; top:-5px; right:-5px; min-width:18px; height:18px; border-radius:999px; background:var(--danger,#ef4444); color:#fff; font-size:11px; line-height:18px; text-align:center; padding:0 4px; }
+    .au-badge[hidden] { display:none; }
+    .au-sec { font:600 14px/1.4 var(--f-display,inherit); color:var(--ink,#1b2440); margin:16px 0 8px; }
+    .au-sec:first-child { margin-top:0; }
+    .au-empty { padding:4px 0 6px; }
+    .au-row { display:grid; grid-template-columns:1fr auto; gap:8px 12px; align-items:center; padding:12px 14px; border-radius:16px; background:var(--soft,#f5f7fb); margin-bottom:8px; }
+    .au-row.pending { background:#fff6e1; }
+    .au-who b { display:block; font-size:15px; color:var(--ink,#1b2440); }
+    .au-who span { font-size:13px; color:var(--muted,#6b7690); }
+    .au-who small { display:block; font-size:11.5px; color:#98a2b6; margin-top:2px; }
+    .au-act { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+    .au-act button { padding:7px 12px; font-size:12.5px; }
+    .au-reset { grid-column:1 / -1; display:flex; gap:8px; }
+    .au-reset[hidden] { display:none; }
+    .au-reset input { flex:1; }
+    @media (max-width:768px){ .auth-user .au-name { display:none; } .au-row { grid-template-columns:1fr; } .au-act { justify-content:flex-start; } }
+    /* ── จอคอม: ตารางเวลาพอดีจอ ไม่ต้องเลื่อนซ้ายขวา (จอเล็กกว่า 1100px ยังเลื่อนได้) ── */
+    @media (min-width:1100px) {
+      .container { max-width:none; padding-left:20px; padding-right:20px; }
+      .topbar-in { max-width:none; }
+      .timeline-table table { table-layout:fixed; width:100%; min-width:0; }
+      .timeline-table th:first-child { width:128px; }
+      .timeline-table th:nth-child(2) { width:54px; }
+      .timeline-table td.left[rowspan], .timeline-table td.left:not([rowspan]), .timeline-table .slot { min-width:0; }
+      .timeline-table th { padding-left:0; padding-right:0; overflow:hidden; }
+      .t-day { font-size:clamp(11px,0.86vw,13.5px); padding:4px clamp(3px,0.45vw,9px); }
+      .t-night { font-size:clamp(10px,0.74vw,11.5px); }
+      .pl { padding:6px 9px; }
+      .tn span:last-child { overflow:hidden; text-overflow:ellipsis; }
+    }
+    /* ── จอเล็ก ── */
+    @media (max-width:900px) {
+      .hero { grid-template-columns:1fr; align-items:start; }
+      .hero-side { align-items:center; text-align:left; flex-direction:row; flex-wrap:wrap; }
+      .sb-half span { display:none; }
+    }
+    @media (max-width:768px) {
+      .container { padding:0 12px 40px; }
+      .topbar { padding:8px 12px 0; }
+      .topbar-in { padding:5px 6px 5px 12px; gap:8px; }
+      .brand-name { display:none; }
+      .nav-tab { font-size:13.5px; padding:9px 12px; }
+      .nav-tab.ext { margin-left:0; }
+      .card { padding:18px 16px; border-radius:22px; }
+      .card h2 { font-size:18px; }
+      .hero { padding-top:20px; }
+      .sb-ticks span:nth-child(even) { display:none; }
+      .timeline-table td.left[rowspan] { min-width:104px; font-size:13.5px; }
+      .tn-av { width:28px; height:28px; font-size:13px; }
+      .tn { gap:7px; }
+      .modal { border-radius:24px; } .modal-header { padding:18px 18px 12px; } .modal-body { padding:6px 18px 20px; }
+      .bk-two { grid-template-columns:1fr; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+    }
+  </style>
 </head>
 <body>
+<!-- ═══════════ ระบบสมาชิก (ใช้เมื่อ REQUIRE_LOGIN = true) ═══════════ -->
+<div class="auth-screen" id="authScreen" hidden>
+  <div class="auth-card">
+    <div class="auth-brand"><span class="brand-mark" aria-hidden="true"></span>งานซ่อมบำรุง</div>
+    <div class="auth-tabs" role="tablist">
+      <button type="button" id="authTabLogin" role="tab" class="on">เข้าสู่ระบบ</button>
+      <button type="button" id="authTabReg" role="tab">สมัครสมาชิก</button>
+    </div>
+    <form id="authLoginForm" autocomplete="on">
+      <label class="auth-f">รหัสพนักงาน<input id="authEmp" autocomplete="username" autocapitalize="characters" spellcheck="false"></label>
+      <label class="auth-f">รหัสผ่าน<input id="authPass" type="password" autocomplete="current-password"></label>
+      <button type="submit" class="btn-primary auth-go">เข้าสู่ระบบ</button>
+      <p class="auth-note">ลืมรหัสผ่าน ให้แอดมินรีเซ็ตให้</p>
+    </form>
+    <form id="authRegForm" hidden autocomplete="off">
+      <label class="auth-f">รหัสพนักงาน<input id="authRegEmp" autocapitalize="characters" spellcheck="false" placeholder="ตัวอักษรอังกฤษ / ตัวเลข"></label>
+      <label class="auth-f">ชื่อ (ที่ใช้ในงาน)<input id="authRegName" placeholder="เช่น สุทิวัส"></label>
+      <label class="auth-f">รหัสผ่าน<input id="authRegPass" type="password" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัว"></label>
+      <label class="auth-f">ยืนยันรหัสผ่าน<input id="authRegPass2" type="password" autocomplete="new-password"></label>
+      <button type="submit" class="btn-primary auth-go">สมัครสมาชิก</button>
+      <p class="auth-note">สมัครแล้วต้องรอแอดมินอนุมัติก่อนจึงจะเข้าใช้งานได้</p>
+    </form>
+    <div class="auth-msg" id="authMsg" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="authAdminBackdrop">
+  <div class="modal" style="width:min(760px,100%);max-height:90vh;overflow:auto;">
+    <div class="modal-header"><h3 class="modal-title">จัดการผู้ใช้</h3><button class="close-btn" type="button" onclick="authCloseAdmin()">ปิด</button></div>
+    <div class="modal-body"><div id="authAdminList"></div></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="authPwBackdrop">
+  <div class="modal" style="width:min(420px,100%);">
+    <div class="modal-header"><h3 class="modal-title">เปลี่ยนรหัสผ่าน</h3><button class="close-btn" type="button" onclick="authClosePw()">ปิด</button></div>
+    <div class="modal-body">
+      <form id="authPwForm" onsubmit="authSavePw(event)">
+        <label class="auth-f">รหัสผ่านเดิม<input id="authPwOld" type="password" autocomplete="current-password"></label>
+        <label class="auth-f">รหัสผ่านใหม่<input id="authPwNew" type="password" autocomplete="new-password" placeholder="อย่างน้อย 6 ตัว"></label>
+        <label class="auth-f">ยืนยันรหัสผ่านใหม่<input id="authPwNew2" type="password" autocomplete="new-password"></label>
+        <button type="submit" class="btn-primary auth-go">บันทึก</button>
+        <div class="auth-msg" id="authPwMsg"></div>
+      </form>
+    </div>
+  </div>
+</div>
+<header class="topbar"><div class="topbar-in">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">งานซ่อมบำรุง</span></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" id="tabDaily"     onclick="switchPage('daily')">Daily Dashboard</button>
+    <button class="nav-tab"        id="tabCalendar"  onclick="switchPage('calendar')">ปฏิทินงานค้าง</button>
+    <button class="nav-tab"        id="tabSparepart" onclick="switchPage('sparepart')">Spare Part</button>
+    <button class="nav-tab"        id="tabLtbd"      onclick="switchPage('ltbd')">LTBD Action Plan</button>
+    <button class="nav-tab"        id="tabOjt"       onclick="switchPage('ojt')">OJT</button>
+    <a class="nav-tab ext" href="PMData" style="text-decoration:none;">PM Data</a>
+  </nav>
+  <div class="auth-user" id="authUser" hidden>
+    <span class="au-name" id="authUserName"></span>
+    <button type="button" id="authAdminBtn" hidden onclick="authOpenAdmin()">ผู้ใช้<span class="au-badge" id="authAdminBadge" hidden></span></button>
+    <button type="button" onclick="authOpenPw()" title="เปลี่ยนรหัสผ่าน">รหัสผ่าน</button>
+    <button type="button" onclick="authLogout()">ออกจากระบบ</button>
+  </div>
+</div></header>
 <div class="container">
 
-  <!-- ═══════════ NAV ═══════════ -->
-  <nav class="nav-tabs">
-    <button class="nav-tab active" id="tabDaily"     onclick="switchPage('daily')">📋 Daily Dashboard</button>
-    <button class="nav-tab"        id="tabCalendar"  onclick="switchPage('calendar')">📅 ปฏิทินงานค้าง</button>
-    <button class="nav-tab"        id="tabSparepart" onclick="switchPage('sparepart')">🔧 Spare Part ส่งซ่อม/รอของ</button>
-    <button class="nav-tab"        id="tabLtbd"      onclick="switchPage('ltbd')">📄 LTBD Action Plan</button>
-    <button class="nav-tab"        id="tabOjt"       onclick="switchPage('ojt')">🎓 OJT</button>
-    <a class="nav-tab" href="https://denji0196.github.io/pm-dash/" style="text-decoration:none;text-align:center;line-height:1.4;">📊 PM Data</a>
-  </nav>
+
 
   <!-- ═══════════ PAGE 1 : DAILY ═══════════ -->
   <div class="page active" id="pageDaily">
   <section class="hero">
-    <div>
-      <h1>Dashboard งานประจำวัน - พนักงานซ่อม</h1>
-      <p>ใช้บันทึกงานในตารางเวลาโดยตรง กดที่ช่อง PLAN เพื่อกรอกรายละเอียดงาน และกดที่ ACTUAL เพื่อทำเครื่องหมายว่างานได้ทำจริงแล้ว</p>
-    </div>
-    <div class="hero-stats">
-      <button id="holidayBtn" onclick="openCalendar()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);color:white;border-radius:16px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.03em;">📅 plan holiday</button>
+    <div class="hero-main">
+      <h1>งานประจำวัน พนักงานซ่อม</h1>
+      <div class="hero-date" id="heroDateNice">–</div>
       <div class="hero-stat"><div class="label">วันที่ทำงาน</div><div class="value" id="heroDate">-</div></div>
+    </div>
+    <div class="hero-side">
+      <button id="holidayBtn" onclick="openCalendar()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);color:white;border-radius:16px;padding:12px 20px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.03em;">📅 plan holiday</button>
+      <div class="sb-status" id="sbStatus"></div>
+    </div>
+    <div class="shiftband" id="shiftBand">
+      <div class="sb-track">
+        <div class="sb-half sb-day"><b>ช่วงเช้า</b><span>07:30 – 19:30</span></div>
+        <div class="sb-half sb-night"><b>ช่วงดึก</b><span>19:30 – 07:30</span></div>
+        <div class="sb-past"></div>
+        <div class="sb-now" id="sbNow"><span id="sbNowLabel"></span></div>
+      </div>
+      <div class="sb-ticks" aria-hidden="true"><span>07:30</span><span>10:30</span><span>13:30</span><span>16:30</span><span>19:30</span><span>22:30</span><span>01:30</span><span>04:30</span><span>07:30</span></div>
     </div>
   </section>
 
@@ -516,7 +970,7 @@
       </div>
       <div class="timeline-table" id="timelineWrap"></div>
     </div>
-    <div class="card span-12">
+    <div class="card span-12 tips">
       <h2>คำแนะนำการใช้งาน</h2>
       <div class="footer-tips">
         1. เปิดไฟล์นี้ในเว็บเบราว์เซอร์ได้ทันทีโดยไม่ต้องติดตั้งโปรแกรมเพิ่ม<br>
@@ -532,8 +986,8 @@
   <!-- ═══════════ PAGE 2 : CALENDAR / BACKLOG ═══════════ -->
   <div class="page" id="pageCalendar">
     <section class="card span-12" style="margin-bottom:18px;">
-      <h2>👥 จัดกะพนักงาน</h2>
-      <div class="sub">รายชื่อดึงจากชีทแจ้งซ่อม — กดชื่อเพื่อสลับ: <b>ไม่ระบุ</b> → <b style="color:#92400e;">☀️ กะเช้า</b> → <b style="color:#3730a3;">🌙 กะดึก</b> แล้วปฏิทิน/ตารางด้านล่างจะแยกสีตามกะให้อัตโนมัติ</div>
+      <h2>จัดกะพนักงาน</h2>
+      <div class="sub">รายชื่อดึงจากชีทแจ้งซ่อม — กดชื่อเพื่อสลับ: <b>ไม่ระบุ</b> → <b style="color:#92400e;">กะ A</b> → <b style="color:#3730a3;">กะ C</b> แล้วปฏิทิน/ตารางด้านล่างจะแยกสีตามกะให้อัตโนมัติ</div>
       <div class="shift-panel" id="shiftPanel"><span class="sub" style="margin:0;">กด 🔄 Update ข้อมูล เพื่อโหลดรายชื่อ</span></div>
       <div class="sub" id="shiftNote" style="margin:10px 0 0;"></div>
     </section>
@@ -573,8 +1027,8 @@
         <span style="margin-left:auto;">💡 กดที่วันเพื่อดูรายละเอียด</span>
       </div>
       <div class="heat-legend" style="margin-top:-6px;">
-        <span>ในแต่ละวัน: <b style="color:#92400e;">☀️ กล่องซ้าย = กะเช้า</b></span>
-        <span><b style="color:#3730a3;">🌙 กล่องขวา = กะดึก</b></span>
+        <span>ในแต่ละวัน: <b style="color:#92400e;">กล่องซ้าย = กะ A</b></span>
+        <span><b style="color:#3730a3;">กล่องขวา = กะ C</b></span>
         <span style="color:#b91c1c;font-weight:800;">ค้าง = งานค้างจากแจ้งซ่อม</span>
         <span style="color:#1d4ed8;font-weight:800;">แผน = แผนงานที่ยังไม่จบ</span>
         <span style="color:#6d28d9;font-weight:800;">LTBD = แผนจากฟอร์ม LTBD</span>
@@ -583,8 +1037,15 @@
     </section>
 
     <section class="card span-12">
-      <h2>📋 งานค้างทั้งหมด (ชีทแจ้งซ่อม: งานค้าง = YES และ สถานะงานค้าง ≠ OK)</h2>
+      <h2>งานค้างทั้งหมด (ชีทแจ้งซ่อม: งานค้าง = YES และ สถานะงานค้าง ≠ OK)</h2>
       <div class="sub" id="backlogStatus">กำลังโหลดข้อมูลจาก Google Sheet...</div>
+      <div class="bks-filter" id="bksFilter" role="group" aria-label="ดูงานค้างตามกะ">
+        <button type="button" data-f="all" class="on">ทั้งหมด</button>
+        <button type="button" data-f="day">กะ A</button>
+        <button type="button" data-f="night">กะ C</button>
+        <button type="button" data-f="none">ยังไม่ระบุกะ</button>
+        <span class="bks-hint">เปลี่ยนกะของแต่ละงานได้ที่ช่อง "กะ"</span>
+      </div>
       <div class="backlog-table-wrap">
         <table class="backlog-table" id="backlogTable"></table>
       </div>
@@ -595,7 +1056,7 @@
   <div class="page" id="pageSparepart">
     <section class="card span-12">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-        <h2 style="margin:0;">🔧 ติดตาม Spare Part ส่งซ่อม / รอของเข้า</h2>
+        <h2 style="margin:0;">ติดตาม Spare Part ส่งซ่อม / รอของเข้า</h2>
         <div class="actions" style="margin-top:0;">
           <button class="btn-primary" onclick="openSpModal()">➕ เพิ่มรายการ</button>
           <button class="btn-secondary" onclick="loadSpareparts()">🔄 Update</button>
@@ -634,7 +1095,7 @@
   <!-- ═══════════ PAGE 4 : LTBD ACTION PLAN ═══════════ -->
   <div class="page" id="pageLtbd">
     <section class="card span-12" style="margin-bottom:18px;">
-      <h2>📄 นำเข้าฟอร์ม LTBD → ลงแผนงาน</h2>
+      <h2>นำเข้าฟอร์ม LTBD → ลงแผนงาน</h2>
       <div class="sub">ลากไฟล์ฟอร์ม LTBD (.xlsx) มาวาง ระบบจะอ่าน Line / Machine พร้อมแผนงานในหัวข้อ <b>Revise Standard</b>, <b>Countermeasure &amp; Kaizen</b> และ <b>Yokoten Standard</b> — วันที่อ่านจาก <b>เดือนที่หัวคอลัมน์ + เลขวันที่ในช่อง Gantt</b> ตรวจแล้วค่อยกดบันทึก</div>
       <input type="file" id="ltbdFile" accept=".xlsx,.xlsm,.xls" multiple style="display:none;" />
       <div class="ltbd-drop" id="ltbdDrop">
@@ -647,7 +1108,7 @@
 
     <section class="card span-12">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-        <h2 style="margin:0;">📋 แผนงาน LTBD ทั้งหมด</h2>
+        <h2 style="margin:0;">แผนงาน LTBD ทั้งหมด</h2>
         <div class="actions" style="margin-top:0;">
           <button class="btn-primary" onclick="refreshLtbdPage()">🔄 Update</button>
         </div>
@@ -686,7 +1147,7 @@
   <div class="page" id="pageOjt">
     <section class="card span-12">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-        <h2 style="margin:0;">🎓 OJT — คู่มือสอนงานทีละขั้นตอน</h2>
+        <h2 style="margin:0;">OJT — คู่มือสอนงานทีละขั้นตอน</h2>
         <div class="actions" style="margin-top:0;">
           <button class="btn-ojt" onclick="ojtNew()">➕ สร้างหัวข้อ OJT</button>
           <button class="btn-secondary" onclick="ojtLoad()">🔄 Update</button>
@@ -721,6 +1182,7 @@
       <button class="close-btn" type="button" onclick="closeTaskModal()">ปิด</button>
     </div>
     <div class="modal-body">
+      <div id="bkTaskBox" style="display:none;"></div>
       <!-- Time range -->
       <div class="field">
         <label>เวลาเริ่ม</label>
@@ -771,6 +1233,7 @@
       <div class="actions" style="margin-top:0;justify-content:flex-end;">
         <button class="btn-danger" type="button" onclick="clearTaskModalData()">ล้างข้อมูลช่องนี้</button>
         <button class="btn-move" type="button" id="moveJobBtn" onclick="openMoveModal()">🔄 ย้ายวัน</button>
+        <button class="btn-bkclose" type="button" id="bkCloseBtn" style="display:none;" onclick="bkCloseFromModal()">✅ ปิดงานค้าง</button>
         <button class="btn-primary" type="button" onclick="saveTaskModal()">บันทึก</button>
       </div>
     </div>
@@ -1104,6 +1567,9 @@
 <script>
 const SUPABASE_URL = "https://bnmizbnglickjalzotak.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJubWl6Ym5nbGlja2phbHpvdGFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjk0NzYsImV4cCI6MjA5MDYwNTQ3Nn0.6_1qPnmDrv2FVbBRiTEY05NlYjVJidUrWEMSWIPKEL8";
+// true = ต้องล็อกอิน (รหัสพนักงาน + รหัสผ่าน, แอดมินอนุมัติ) — ต้องรัน auth_setup.sql ใน Supabase ก่อน
+// false = เปิดใช้ได้เลยไม่ต้องล็อกอิน
+const REQUIRE_LOGIN = false;
 
 // ── Google Sheet งานค้าง (แก้ชื่อชีท/คำที่ใช้กรองตรงนี้ได้) ──
 const BACKLOG_SHEET_ID     = "1t6uMvJqXE3GFpQTw9VlR0hDxWVIwvHaI2OomvYuH1hU";
@@ -1115,12 +1581,16 @@ const BACKLOG_YES_WORDS     = ["yes","y","ใช่","true","✓","✔"];
 const BACKLOG_DONE_WORDS    = ["ok","เสร็จ","ปิด","จบ","เรียบร้อย","closed","complete","done","finish"];
 
 // ── กรองฝั่ง Google ก่อนส่งกลับ (ชีทแจ้งซ่อมมี ~19,400 แถว x 50 คอลัมน์ ถ้าดึงทั้งหมดจะ timeout) ──
+// B=id (key ของแถว) R=รูปถ่าย งานค้าง
 // A=id check D=DATE H=LINE I=MC J=BDtime K=Problem M=repair P=User Q=remain
 // V=งานค้าง Z=ผู้แก้ไขงานค้าง AQ=สถานะงานค้าง AR=RANK AT=ผลลัพธ์
 // หมายเหตุ: (AQ is null or AQ <> 'OK') จำเป็น เพราะแถวที่ช่องสถานะว่างจะหายไปถ้าใช้ AQ <> 'OK' เฉย ๆ
-const BACKLOG_TQ = "select A,D,H,I,J,K,M,P,Q,V,Z,AQ,AR,AT "
+const BACKLOG_TQ = "select A,B,D,H,I,J,K,M,P,Q,R,V,Z,AQ,AR,AT "
                  + "where V = 'YES' and (AQ is null or AQ <> 'OK') "
                  + "order by D desc";
+// ── ปิดงานค้างจากหน้า Daily + ดึงรูปงานค้าง: ใส่ URL ของ Apps Script (ไฟล์ Code.gs) ที่ลงท้ายด้วย /exec ──
+const BACKLOG_API_URL   = "https://script.google.com/macros/s/AKfycbzwBMGTuzIkB6jk9u7_4xmyu66-OrMTSokpatgQ4RuhACqTsVIozvvED0-uKkPR_boLhg/exec";                  // เช่น "https://script.google.com/macros/s/XXXX/exec"
+const BACKLOG_API_TOKEN = "mt-backlog-2026";   // ต้องตรงกับ TOKEN ใน Code.gs
 const BACKLOG_TIMEOUT_MS = 30000;   // เดิม 15000 — เผื่อรอบแรกที่ Google ยังไม่ cache
 
 const technicians = ["ธนเทพ","สงคราม","สุทิวัส","วีระพงษ์","อาคม","ณัฐวุฒิ","ธีระ","ธนัทดนัย","วิโรจน์","New operator"];
@@ -1397,6 +1867,10 @@ async function forceRefreshData(){
   }
 }
 
+// วงกลมตัวอักษรหน้าชื่อพนักงาน (สีคงที่ตามชื่อ)
+const TN_COLORS=['#3b6cf6','#0fa596','#f59e0b','#8b5cf6','#ef6461','#0ea5e9','#22a55b','#d9469a','#64748b','#c2410c'];
+function tnInitial(n){ const m=String(n||'').match(/[ก-ฮA-Za-z0-9]/); return m?m[0].toUpperCase():'?'; }
+function tnColor(n){ let h=0; for(const ch of String(n||''))h=(h*31+ch.codePointAt(0))>>>0; return TN_COLORS[h%TN_COLORS.length]; }
 function renderTimeline(){
   const wrap=byId('timelineWrap');
   if(!wrap)return;
@@ -1407,7 +1881,7 @@ function renderTimeline(){
   technicians.forEach(name=>{
     // PLAN row
     html+='<tr>';
-    html+=`<td class="left" rowspan="2">${escapeHtml(name)}</td><td class="left">PLAN</td>`;
+    html+=`<td class="left" rowspan="2"><span class="tn"><span class="tn-av" style="background:${tnColor(name)}">${escapeHtml(tnInitial(name))}</span><span>${escapeHtml(name)}</span></span></td><td class="left">PLAN</td>`;
     let idx=0;
     while(idx<timeSlots.length){
       const d=getRangeDetail(name,'PLAN',idx);
@@ -1416,7 +1890,10 @@ function renderTimeline(){
         const span=d.endIndex-d.startIndex+1;
         const lbl=[d.line,d.machine,d.jobType,d.detail].filter(Boolean).join(' | ');
         const badges=buildBadges(d);
-        html+=`<td colspan="${span}" class="slot plan-on" title="${escapeHtml(lbl)}" onclick="openTaskModal('${name}','PLAN',${d.startIndex})">${escapeHtml(lbl)}${badges}</td>`;
+        // การ์ดงาน: บรรทัดบน = Line + Machine, บรรทัดล่าง = ประเภท + รายละเอียด (ตัดที่ 2 บรรทัด ดูเต็มได้ตอนกด)
+        const head=[d.line,d.machine].filter(Boolean).join(' ');
+        const thumb=d.backlogKey?bkThumb(d.backlogKey,span<2):'';
+        html+=`<td colspan="${span}" class="slot plan-on${d.backlogKey?' is-bk':''}${d.backlogKey&&bkPending[d.backlogKey]?' is-'+bkPending[d.backlogKey].state:''}" title="${escapeHtml(lbl)}" onclick="openTaskModal('${name}','PLAN',${d.startIndex})"><div class="pl">${span<2?'':thumb}<div class="pl-b"><div class="pl-h">${escapeHtml(head||d.jobType||'-')}</div><div class="pl-t">${d.backlogKey&&bkPending[d.backlogKey]?(bkPending[d.backlogKey].state==='saving'?'<span class="pl-type sv"><i class="bk-spin"></i>กำลังบันทึก</span>':'<span class="pl-type bk">บันทึกไม่สำเร็จ</span>'):(d.backlogKey?'<span class="pl-type bk">ค้าง</span>':'')}${d.jobType&&head&&span>1?`<span class="pl-type">${escapeHtml(d.jobType)}</span>`:''}${badges}${escapeHtml(d.detail||'')}</div></div></div></td>`;
         idx=d.endIndex+1;
       } else {
         html+=`<td class="slot" onclick="openTaskModal('${name}','PLAN',${idx})"></td>`;
@@ -1439,7 +1916,8 @@ function renderTimeline(){
           if(s==='OK')st='ok';
         }
         const cls=st==='ng'?'actual-ng':st==='ok'?'actual-ok':'';
-        html+=`<td class="slot ${cls}" colspan="${span}" onclick="toggleActualBlock('${name}',${d.startIndex},${d.endIndex})"></td>`;
+        const todo=st?'':(d.backlogKey?(bkPending[d.backlogKey]?'':' act-todo act-bk'):' act-todo');
+        html+=`<td class="slot ${cls}${todo}" colspan="${span}" onclick="toggleActualBlock('${name}',${d.startIndex},${d.endIndex})"></td>`;
         idx=d.endIndex+1;
       } else {
         html+=`<td class="slot"></td>`;
@@ -1491,6 +1969,7 @@ function openTaskModal(name,type,index){
   // ปุ่มย้ายวัน: ใช้ได้กับงานที่มีข้อมูลอยู่แล้ว (ทั้งวันปกติและวันหยุด)
   const mv=byId('moveJobBtn');
   if(mv)mv.style.display=(d && typeof d.startIndex==='number') ? 'inline-block' : 'none';
+  bkPaintTaskModal(name,d);
   byId('taskModalBackdrop').classList.add('show');
 }
 
@@ -1616,7 +2095,7 @@ function openMoveModal(){
   const ts=byId('moveTech');
   ts.innerHTML=technicians.map(n=>{
     const s=nameShift(n);
-    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    const tag=s==='day'?' — กะ A':s==='night'?' — กะ C':'';
     return `<option value="${escapeHtml(n)}"${n===technician?' selected':''}>${escapeHtml(n)}${tag}</option>`;
   }).join('');
 
@@ -1788,10 +2267,7 @@ function showDecisionPopup(){
 
 function toggleActualBlock(name,start,end){
   const d=state.slotDetails[getSlotKey(name,'PLAN',start)];
-  if(d&&d.backlogKey){
-    alert('งานนี้มาจากชีทแจ้งซ่อม (งานค้าง)\n\nการปิดงานต้องไปปิดในชีทแจ้งซ่อมเท่านั้น\nเมื่อปิดในชีทแล้ว งานจะหายจากตารางนี้อัตโนมัติ');
-    return;
-  }
+  if(d&&d.backlogKey){ openBkClose(name,start,end); return; }
   const ex=state.actualStatus[`${name}_${start}`];
   if(ex){showActualViewPopup(name,start,end,ex,state.actualReason[`${name}_${start}`]||'');return;}
   showDecisionPopup().then(res=>{
@@ -1859,8 +2335,8 @@ function showWorkTimePopup(name,start,end,presetReason){
 
       <div class="wt-label">🕐 เวลาที่เข้าไปทำ</div>
       <div class="wt-chips" id="wtTimeChips">
-        <button type="button" class="wt-chip${!isNight?' on':''}" data-s="${day.s}" data-e="${day.e}">☀️ ตามแผนกะเช้า ${day.s}–${day.e}</button>
-        <button type="button" class="wt-chip${isNight?' on':''}" data-s="${night.s}" data-e="${night.e}">🌙 ตามแผนกะดึก ${night.s}–${night.e}</button>
+        <button type="button" class="wt-chip${!isNight?' on':''}" data-s="${day.s}" data-e="${day.e}">☀️ ตามแผนช่วงเช้า ${day.s}–${day.e}</button>
+        <button type="button" class="wt-chip${isNight?' on':''}" data-s="${night.s}" data-e="${night.e}">🌙 ตามแผนช่วงดึก ${night.s}–${night.e}</button>
       </div>
       <div class="wt-times">
         <select id="wtStart">${wtTimeOptions(def.s)}</select><span>ถึง</span><select id="wtEnd">${wtTimeOptions(def.e)}</select>
@@ -2664,11 +3140,19 @@ function loadBacklogSheet(attempt){
           user:    findCol(['user','ผู้ซ่อม','ผู้ดำเนินการ']),
           remain:  findCol(['remain','คงเหลือ','สิ่งที่เหลือ']),
           flag:    flagIdx,
-          status:  doneIdx
+          status:  doneIdx,
+          id:      cols.findIndex(l=>norm(l)==='id'),
+          idcheck: cols.findIndex(l=>norm(l)==='idcheck'),
+          photo:   cols.findIndex(l=>norm(l)==='รูปถ่ายงานค้าง')
         };
 
         // key ประจำแถวงานค้าง (ใช้ผูกกับแผนใน dashboard เพื่อให้ปิดจากชีทแล้วหายไปเอง)
+        // งานที่เพิ่งกดปิดจากหน้า Daily: ซ่อนทันที ไม่ต้องรอ Google ส่งข้อมูลรอบใหม่
+        const closedLocal=bkClosedLocal(new Set(cleanRows.map(r=>backlogRowKey(r))));
+        if(Object.keys(closedLocal).length){ cleanRows=cleanRows.filter(r=>!closedLocal[backlogRowKey(r)]); backlogData.rows=cleanRows; }
         backlogData.openKeys=new Set(cleanRows.map(r=>backlogRowKey(r)).filter(Boolean));
+        backlogData.byKey={};
+        cleanRows.forEach(r=>{ const k=backlogRowKey(r); if(k&&!backlogData.byKey[k])backlogData.byKey[k]=r; });
 
         backlogData.byDate={};
         if(dateIdx>=0){
@@ -2745,6 +3229,23 @@ function loadPendingPlans(){
 // ถ้ายังไม่มีตาราง จะเก็บลงเครื่องนี้ (localStorage) ไปก่อนโดยอัตโนมัติ
 const shiftState={ map:{}, source:'local' };
 
+// งานค้างที่เพิ่งกดปิด OK จากเครื่องนี้: ซ่อนไว้ระหว่างรอข้อมูลชีทรอบใหม่ (Google ส่งข้อมูลช้าได้ไม่กี่นาที)
+//  - ชีทยืนยันว่าปิดแล้ว (งานไม่อยู่ในรายการ) → เลิกจำ
+//  - ผ่านไป 10 นาทีแล้วชีทยังบอกว่าเปิดอยู่ (เช่น แก้กลับในชีท) → เชื่อชีท ให้งานกลับมา
+const BK_HIDE_MS=10*60*1000;
+function bkClosedLocal(openKeys){
+  let m={}; try{ m=JSON.parse(localStorage.getItem('bkClosedKeys')||'{}')||{}; }catch(e){}
+  const now=Date.now(), out={};
+  Object.keys(m).forEach(k=>{
+    if(now-m[k]>=BK_HIDE_MS)return;
+    if(openKeys&&!openKeys.has(k))return;
+    out[k]=m[k];
+  });
+  if(openKeys){ try{ localStorage.setItem('bkClosedKeys',JSON.stringify(out)); }catch(e){} }
+  return out;
+}
+function bkMarkClosed(key){ const m=bkClosedLocal(); m[key]=Date.now(); try{ localStorage.setItem('bkClosedKeys',JSON.stringify(m)); }catch(e){} }
+
 // สร้าง key ประจำแถวงานค้าง จากข้อมูลที่ไม่เปลี่ยน (วันที่|line|mc|problem)
 function backlogRowKey(r){
   const p=[bkVal(r,'date'),bkVal(r,'line'),bkVal(r,'mc'),bkVal(r,'problem')].map(x=>String(x||'').trim()).join('|');
@@ -2790,7 +3291,15 @@ function nameShift(n){
   return s||null;
 }
 // งาน 1 เคสอาจมีคนจากทั้ง 2 กะ → คืนว่าเกี่ยวกับกะไหนบ้าง
+// ถ้าเลือกกะให้งานนั้นเอง (ช่อง "กะ" ในตารางงานค้าง) จะใช้ค่าที่เลือกก่อน
 function rowShiftSet(r){
+  const ov=bkShiftState.map[backlogRowKey(r)];
+  if(ov==='day')return {day:true,night:false,any:true,manual:true};
+  if(ov==='night')return {day:false,night:true,any:true,manual:true};
+  if(ov==='both')return {day:true,night:true,any:true,manual:true};
+  return rowShiftSetAuto(r);
+}
+function rowShiftSetAuto(r){
   const set={day:false,night:false,any:false};
   rowNames(r).forEach(n=>{
     const s=nameShift(n);
@@ -2799,7 +3308,50 @@ function rowShiftSet(r){
   });
   return set;
 }
-function hasShiftData(){ return Object.keys(shiftState.map).length>0; }
+function hasShiftData(){ return Object.keys(shiftState.map).length>0||Object.keys(bkShiftState.map).length>0; }
+
+// ── กะที่เลือกเองต่องานค้าง: เก็บใน Supabase ตาราง backlog_shifts (ถ้ายังไม่มีตาราง เก็บในเครื่องนี้แทน)
+const bkShiftState={ map:{}, source:'local', filter:'all' };
+try{ bkShiftState.filter=localStorage.getItem('bkShiftFilter')||'all'; }catch(e){}
+function readLocalBkShift(){ try{ return JSON.parse(localStorage.getItem('bkShiftMap')||'{}')||{}; }catch(e){ return {}; } }
+function writeLocalBkShift(){ try{ localStorage.setItem('bkShiftMap',JSON.stringify(bkShiftState.map)); }catch(e){} }
+function loadBacklogShifts(){
+  return fetch(`${SUPABASE_URL}/rest/v1/backlog_shifts?select=backlog_key,shift`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}})
+  .then(async r=>{ if(!r.ok)throw new Error(await r.text()); return r.json(); })
+  .then(rows=>{
+    const remote={}; (rows||[]).forEach(x=>{ if(x&&x.backlog_key&&x.shift)remote[x.backlog_key]=x.shift; });
+    bkShiftState.source='supabase';
+    const local=readLocalBkShift();
+    if(!Object.keys(remote).length&&Object.keys(local).length){   // เคยเลือกไว้ในเครื่องก่อนมีตาราง → ยกขึ้น Supabase
+      bkShiftState.map=local; Object.entries(local).forEach(([k,s])=>persistBkShift(k,s));
+    }else{ bkShiftState.map=remote; writeLocalBkShift(); }
+  })
+  .catch(()=>{ bkShiftState.map=readLocalBkShift(); bkShiftState.source='local'; });
+}
+function persistBkShift(key,shift){
+  writeLocalBkShift();
+  if(bkShiftState.source!=='supabase')return;
+  const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'};
+  const req=shift
+    ? fetch(`${SUPABASE_URL}/rest/v1/backlog_shifts?on_conflict=backlog_key`,{method:'POST',headers:{...h,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({backlog_key:key,shift,updated_at:new Date().toISOString()})})
+    : fetch(`${SUPABASE_URL}/rest/v1/backlog_shifts?backlog_key=eq.${encodeURIComponent(key)}`,{method:'DELETE',headers:{...h,Prefer:'return=minimal'}});
+  req.then(r=>{ if(!r.ok)bkShiftState.source='local'; }).catch(()=>{ bkShiftState.source='local'; });
+}
+function setBkShift(rowIdx,val){
+  const r=backlogData.rows[rowIdx]; if(!r)return;
+  const key=backlogRowKey(r); if(!key)return;
+  if(val==='auto')delete bkShiftState.map[key]; else bkShiftState.map[key]=val;
+  persistBkShift(key,val==='auto'?null:val);
+  renderBacklogTable(); renderBigCal();
+}
+function setBkShiftFilter(f){
+  bkShiftState.filter=f; try{ localStorage.setItem('bkShiftFilter',f); }catch(e){}
+  renderBacklogTable();
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('#bksFilter button[data-f]');
+  if(b)setBkShiftFilter(b.dataset.f);
+});
 
 function readLocalShiftMap(){
   try{ return JSON.parse(localStorage.getItem('shiftMap')||'{}'); }catch(e){ return {}; }
@@ -2877,13 +3429,13 @@ function renderShiftPanel(){
   box.innerHTML=names.map(n=>{
     const s=shiftState.map[n];
     const cls=s==='day'?'shift-day':s==='night'?'shift-night':'';
-    const ic=s==='day'?'☀️ ':s==='night'?'🌙 ':'';
+    const ic=s==='day'?'A · ':s==='night'?'C · ':'';
     return `<span class="shift-chip ${cls}" onclick="cycleShift(decodeURIComponent('${encodeURIComponent(n)}'))">${ic}${escapeHtml(n)}</span>`;
   }).join('');
   const nD=names.filter(n=>shiftState.map[n]==='day').length;
   const nN=names.filter(n=>shiftState.map[n]==='night').length;
   if(note){
-    let t=`☀️ กะเช้า ${nD} คน · 🌙 กะดึก ${nN} คน · ไม่ระบุ ${names.length-nD-nN} คน`;
+    let t=`กะ A ${nD} คน · กะ C ${nN} คน · ไม่ระบุ ${names.length-nD-nN} คน`;
     if(backlogData.nameColIndex<0)t+='  |  ใช้รายชื่อช่างจากหน้างานประจำวัน (ในชีทแจ้งซ่อมไม่พบคอลัมน์ชื่อ)';
     if(shiftState.source==='local')t+='  (บันทึกเฉพาะเครื่องนี้ — สร้างตาราง shift_assignments ใน Supabase เพื่อให้ทุกเครื่องเห็นเหมือนกัน)';
     note.textContent=t;
@@ -2893,7 +3445,7 @@ function renderShiftPanel(){
 async function refreshCalendarPage(){
   safeSetText('backlogStatus','กำลังโหลดข้อมูลจาก Google Sheet...');
   // เพิ่ม loadLtbdActions() เข้ามาด้วย เพื่อให้ปฏิทินรู้ว่าวันไหนมีแผน LTBD
-  await Promise.all([loadBacklogSheet(),loadPendingPlans(),loadShiftAssignments(),loadAssignedKeys(),loadLtbdActions()]);
+  await Promise.all([loadBacklogSheet(),loadPendingPlans(),loadShiftAssignments(),loadBacklogShifts(),loadAssignedKeys(),loadLtbdActions()]);
   renderShiftPanel();
   renderBigCal();
   renderBacklogTable();
@@ -2936,7 +3488,7 @@ function renderBigCal(){
     if(ds===today)cls+=' today';
     let pills='';
     if(hasShiftData() && (nBacklog+nPlan)){
-      // แยกชัดเจน: กล่องซ้าย ☀️ กะเช้า / กล่องขวา 🌙 กะดึก
+      // แยกชัดเจน: กล่องซ้าย กะ A / กล่องขวา กะ C
       // ในกล่อง: "ค้าง" (สีแดง = จากชีทแจ้งซ่อม) และ "แผน" (สีน้ำเงิน = จาก dashboard)
       const rows=backlogData.byDate[ds]||[];
       let cD=0,cN=0,cU=0;
@@ -2951,7 +3503,7 @@ function renderBigCal(){
         if(cp)o+=`<div class="ss-pl">แผน ${cp}</div>`;
         return o+'</div>';
       };
-      pills=`<div class="shift-split">${col('☀️','ss-day','เช้า',cD,pD)}${col('🌙','ss-night','ดึก',cN,pN)}</div>`;
+      pills=`<div class="shift-split">${col('กะ','ss-day','A',cD,pD)}${col('กะ','ss-night','C',cN,pN)}</div>`;
       if(cU||pU){
         const parts=[]; if(cU)parts.push(`ค้าง ${cU}`); if(pU)parts.push(`แผน ${pU}`);
         pills+=`<div class="ss-un">ไม่ระบุกะ: ${parts.join(' · ')}</div>`;
@@ -3021,11 +3573,11 @@ function openDayDetail(ds){
     const gN=backlog.filter(r=>rowShiftSet(r).night);
     const gU=backlog.filter(r=>!rowShiftSet(r).any);
     if(gD.length){
-      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-day">☀️ กะเช้า ${gD.length}</span></div>`;
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-day">กะ A ${gD.length}</span></div>`;
       gD.forEach(r=>{ html+=itemHtml(r,'day'); });
     }
     if(gN.length){
-      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-night">🌙 กะดึก ${gN.length}</span></div>`;
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-night">กะ C ${gN.length}</span></div>`;
       gN.forEach(r=>{ html+=itemHtml(r,'night'); });
     }
     if(gU.length){
@@ -3056,11 +3608,11 @@ function openDayDetail(ds){
     const pN=plans.filter(p=>shiftState.map[p.technician]==='night');
     const pU=plans.filter(p=>!shiftState.map[p.technician]);
     if(pD.length){
-      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-day">☀️ กะเช้า ${pD.length}</span></div>`;
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-day">กะ A ${pD.length}</span></div>`;
       pD.forEach(p=>{ html+=planItem(p,'day'); });
     }
     if(pN.length){
-      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-night">🌙 กะดึก ${pN.length}</span></div>`;
+      html+=`<div class="daydetail-section-title" style="font-size:13px;"><span class="pill pill-night">กะ C ${pN.length}</span></div>`;
       pN.forEach(p=>{ html+=planItem(p,'night'); });
     }
     if(pU.length){
@@ -3095,11 +3647,18 @@ function renderBacklogTable(){
 
   const renderRow=(r,ri,shift)=>{
     const rowCls=shift==='day'?'row-day':shift==='night'?'row-night':'';
-    const st=rowShiftSet(r);
-    const badge=(st.day&&st.night)?'☀️+🌙':shift==='day'?'☀️ เช้า':shift==='night'?'🌙 ดึก':'—';
+    const auto=rowShiftSetAuto(r), key=backlogRowKey(r), ov=bkShiftState.map[key]||'auto';
+    const autoTxt=(auto.day&&auto.night)?'A+C':auto.day?'กะ A':auto.night?'กะ C':'—';
+    const cur=ov==='auto'?((auto.day&&auto.night)?'both':auto.day?'day':auto.night?'night':'none'):ov;
+    const sel=`<select class="bks-sel bks-${cur}${ov!=='auto'?' manual':''}" title="เลือกกะของงานนี้" aria-label="กะของงาน ${escapeHtml(bkVal(r,'line')||'')} ${escapeHtml(bkVal(r,'mc')||'')}" onchange="setBkShift(${idxMap.get(r)},this.value)">
+        <option value="auto"${ov==='auto'?' selected':''}>อัตโนมัติ: ${autoTxt}</option>
+        <option value="day"${ov==='day'?' selected':''}>กะ A</option>
+        <option value="night"${ov==='night'?' selected':''}>กะ C</option>
+        <option value="both"${ov==='both'?' selected':''}>A+C ทั้งสองกะ</option>
+      </select>`;
     return `<tr class="${rowCls}">
       <td>${ri}</td>
-      <td class="shift-badge">${badge}</td>
+      <td class="shift-badge">${sel}${ov!=='auto'?'<div class="bks-pin">เลือกเอง</div>':''}</td>
       <td class="bt-date">${escapeHtml(bkVal(r,'date')||'-')}</td>
       <td class="bt-line">${escapeHtml(bkVal(r,'line')||'-')}</td>
       <td class="bt-mc">${escapeHtml(bkVal(r,'mc')||'-')}</td>
@@ -3127,13 +3686,18 @@ function renderBacklogTable(){
       if(st.night)gN.push(r);
       if(!st.any)gU.push(r);
     });
+    const f=bkShiftState.filter;
+    if(f==='day'){ gN.length=0; gU.length=0; }
+    if(f==='night'){ gD.length=0; gU.length=0; }
+    if(f==='none'){ gD.length=0; gN.length=0; }
     let ri=1;
+    if(!gD.length&&!gN.length&&!gU.length)html+=`<tr><td colspan="${colCount}" style="text-align:center;color:var(--muted);padding:26px;">ไม่มีงานค้างในกะที่เลือก</td></tr>`;
     if(gD.length){
-      html+=`<tr class="shift-sec sec-day"><td colspan="${colCount}">☀️ กะเช้า — งานค้าง ${gD.length} รายการ</td></tr>`;
+      html+=`<tr class="shift-sec sec-day"><td colspan="${colCount}">กะ A — งานค้าง ${gD.length} รายการ</td></tr>`;
       gD.forEach(r=>{ html+=renderRow(r,ri++,'day'); });
     }
     if(gN.length){
-      html+=`<tr class="shift-sec sec-night"><td colspan="${colCount}">🌙 กะดึก — งานค้าง ${gN.length} รายการ</td></tr>`;
+      html+=`<tr class="shift-sec sec-night"><td colspan="${colCount}">กะ C — งานค้าง ${gN.length} รายการ</td></tr>`;
       gN.forEach(r=>{ html+=renderRow(r,ri++,'night'); });
     }
     if(gU.length){
@@ -3145,6 +3709,8 @@ function renderBacklogTable(){
   }
   html+='</tbody>';
   t.innerHTML=html;
+  document.querySelectorAll('#bksFilter button[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f===bkShiftState.filter));
+  const fb=byId('bksFilter'); if(fb)fb.style.display=grouped?'':'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3188,7 +3754,7 @@ function openAssignModal(idx){
   const sel=byId('assignTech');
   sel.innerHTML=technicians.map(n=>{
     const s=nameShift(n);
-    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    const tag=s==='day'?' — กะ A':s==='night'?' — กะ C':'';
     return `<option value="${escapeHtml(n)}">${escapeHtml(n)}${tag}</option>`;
   }).join('');
 
@@ -3215,7 +3781,7 @@ function openAssignFromNg(idx){
   const sel=byId('assignTech');
   sel.innerHTML=technicians.map(n=>{
     const s=nameShift(n);
-    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    const tag=s==='day'?' — กะ A':s==='night'?' — กะ C':'';
     return `<option value="${escapeHtml(n)}"${n===it.technician?' selected':''}>${escapeHtml(n)}${tag}</option>`;
   }).join('');
 
@@ -4079,7 +4645,7 @@ function openAssignFromLtbd(id){
   const sel=byId('assignTech');
   sel.innerHTML=technicians.map(n=>{
     const s=nameShift(n);
-    const tag=s==='day'?' — ☀️ กะเช้า':s==='night'?' — 🌙 กะดึก':'';
+    const tag=s==='day'?' — กะ A':s==='night'?' — กะ C':'';
     return `<option value="${escapeHtml(n)}">${escapeHtml(n)}${tag}</option>`;
   }).join('');
 
@@ -4384,7 +4950,191 @@ document.addEventListener('keydown',e=>{
   if(byId('ltbdEditBackdrop').classList.contains('show')){ closeLtbdEdit(); return; }
   closeTaskModal(); byId('dayDetailBackdrop').classList.remove('show'); closeSpModal(); byId('ngListBackdrop').classList.remove('show');
 });
-document.addEventListener('DOMContentLoaded',()=>{
+// ═══════════════════════════════════════════════════════════════
+// ระบบสมาชิก (ใช้เมื่อ REQUIRE_LOGIN = true) — รหัสพนักงาน + รหัสผ่าน, สมัครแล้วรอแอดมินอนุมัติ
+// ต้องรัน auth_setup.sql ใน Supabase ก่อน
+// ═══════════════════════════════════════════════════════════════
+const AUTH_KEY='mtAuthToken';
+const authState={ token:'', user:null, booted:false, timer:null };
+function authGetToken(){ try{ return localStorage.getItem(AUTH_KEY)||''; }catch(e){ return authState.token; } }
+function authSetToken(t){ authState.token=t||''; try{ t?localStorage.setItem(AUTH_KEY,t):localStorage.removeItem(AUTH_KEY); }catch(e){} }
+async function authRpc(fn,args){
+  let r;
+  try{
+    r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{method:'POST',
+      headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(args)});
+  }catch(e){ return {ok:false,error:'ติดต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'}; }
+  const txt=await r.text();
+  if(!r.ok){
+    if(r.status===404||/Could not find the function|PGRST202/.test(txt))return {ok:false,error:'ยังไม่ได้ติดตั้งระบบสมาชิกใน Supabase (ต้องรัน auth_setup.sql ก่อน)'};
+    return {ok:false,error:'เซิร์ฟเวอร์ตอบกลับผิดพลาด ('+r.status+')'};
+  }
+  try{ return JSON.parse(txt)||{ok:false,error:'ไม่มีข้อมูลตอบกลับ'}; }catch(e){ return {ok:false,error:'ข้อมูลตอบกลับผิดรูปแบบ'}; }
+}
+
+// ── หน้าจอเข้าสู่ระบบ / สมัคร ──
+function authShow(mode,msg,kind){
+  document.body.classList.add('auth-locked');
+  byId('authScreen').hidden=false;
+  authTab(mode||'login');
+  authMsg(msg||'',kind);
+}
+function authTab(mode){
+  byId('authScreen').dataset.mode=mode;
+  byId('authTabLogin').classList.toggle('on',mode==='login');
+  byId('authTabReg').classList.toggle('on',mode==='register');
+  byId('authTabLogin').setAttribute('aria-selected',mode==='login');
+  byId('authTabReg').setAttribute('aria-selected',mode==='register');
+  byId('authLoginForm').hidden=mode!=='login';
+  byId('authRegForm').hidden=mode!=='register';
+  authMsg('');
+  setTimeout(()=>{ const f=byId(mode==='login'?'authEmp':'authRegEmp'); if(f)f.focus(); },30);
+}
+function authMsg(t,kind){ const m=byId('authMsg'); m.textContent=t; m.className='auth-msg'+(kind?' '+kind:''); }
+function authBusy(form,on,label){
+  const b=form.querySelector('button[type=submit]');
+  if(!b.dataset.label)b.dataset.label=b.textContent;
+  b.disabled=on; b.textContent=on?label:b.dataset.label;
+}
+async function authDoLogin(e){
+  e.preventDefault();
+  const f=e.target, emp=byId('authEmp').value.trim(), pw=byId('authPass').value;
+  if(!emp||!pw){ authMsg('กรอกรหัสพนักงานและรหัสผ่าน','err'); return; }
+  authBusy(f,true,'กำลังเข้าสู่ระบบ…');
+  const j=await authRpc('app_login',{p_emp:emp,p_pass:pw});
+  authBusy(f,false);
+  if(!j.ok){ authMsg(j.error,j.pending?'wait':'err'); return; }
+  authSetToken(j.token); byId('authPass').value='';
+  authEnter({emp_id:j.emp_id,name:j.name,is_admin:j.is_admin});
+}
+async function authDoRegister(e){
+  e.preventDefault();
+  const f=e.target, emp=byId('authRegEmp').value.trim(), name=byId('authRegName').value.trim(),
+        pw=byId('authRegPass').value, pw2=byId('authRegPass2').value;
+  if(!emp||!name||!pw){ authMsg('กรอกให้ครบทุกช่อง','err'); return; }
+  if(pw!==pw2){ authMsg('รหัสผ่านทั้งสองช่องไม่ตรงกัน','err'); return; }
+  authBusy(f,true,'กำลังสมัคร…');
+  const j=await authRpc('app_register',{p_emp:emp,p_name:name,p_pass:pw});
+  authBusy(f,false);
+  if(!j.ok){ authMsg(j.error,'err'); return; }
+  f.reset(); authTab('login'); byId('authEmp').value=emp.toUpperCase();
+  authMsg('สมัครแล้ว รอแอดมินอนุมัติ — อนุมัติแล้วเข้าสู่ระบบด้วยรหัสนี้ได้เลย','ok');
+}
+
+// ── เข้าใช้งาน ──
+function authEnter(user){
+  authState.user=user;
+  document.body.classList.remove('auth-locked');
+  byId('authScreen').hidden=true;
+  const chip=byId('authUser');
+  chip.hidden=false;
+  byId('authUserName').textContent=user.name;
+  byId('authAdminBtn').hidden=!user.is_admin;
+  if(user.is_admin)authAdminCount();
+  if(!authState.booted){ authState.booted=true; bootApp(); }
+  clearInterval(authState.timer);
+  authState.timer=setInterval(authRecheck,5*60*1000);   // เช็คทุก 5 นาที ว่ายังไม่ถูกระงับ
+}
+async function authRecheck(){
+  if(document.hidden||!authState.token)return;
+  const j=await authRpc('app_me',{p_token:authState.token});
+  if(j.ok===false&&!/ติดต่อเซิร์ฟเวอร์ไม่ได้/.test(j.error||'')){ authSetToken(''); location.reload(); }
+}
+async function authLogout(){
+  const t=authState.token; authSetToken('');
+  if(t)await authRpc('app_logout',{p_token:t});
+  location.reload();
+}
+async function authInit(){
+  wireAuthUi();
+  const t=authGetToken();
+  if(!t){ authShow('login'); return; }
+  authState.token=t;
+  byId('authScreen').hidden=false; document.body.classList.add('auth-locked'); authMsg('กำลังตรวจสอบการเข้าใช้งาน…');
+  const j=await authRpc('app_me',{p_token:t});
+  if(j.ok){ authEnter(j); return; }
+  if(/ติดต่อเซิร์ฟเวอร์ไม่ได้/.test(j.error||'')){ authShow('login',j.error,'err'); return; }
+  authSetToken(''); authShow('login',j.error,'err');
+}
+function wireAuthUi(){
+  byId('authTabLogin').onclick=()=>authTab('login');
+  byId('authTabReg').onclick=()=>authTab('register');
+  byId('authLoginForm').onsubmit=authDoLogin;
+  byId('authRegForm').onsubmit=authDoRegister;
+}
+
+// ── เปลี่ยนรหัสผ่านตัวเอง ──
+function authOpenPw(){ byId('authPwForm').reset(); byId('authPwMsg').textContent=''; byId('authPwBackdrop').classList.add('show'); setTimeout(()=>byId('authPwOld').focus(),30); }
+function authClosePw(){ byId('authPwBackdrop').classList.remove('show'); }
+async function authSavePw(e){
+  e.preventDefault();
+  const m=byId('authPwMsg'), n1=byId('authPwNew').value, n2=byId('authPwNew2').value;
+  if(n1!==n2){ m.className='auth-msg err'; m.textContent='รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'; return; }
+  const j=await authRpc('app_change_password',{p_token:authState.token,p_old:byId('authPwOld').value,p_new:n1});
+  if(!j.ok){ m.className='auth-msg err'; m.textContent=j.error; return; }
+  m.className='auth-msg ok'; m.textContent='เปลี่ยนรหัสผ่านแล้ว';
+  setTimeout(authClosePw,900);
+}
+
+// ── จัดการผู้ใช้ (แอดมิน) ──
+let authUsers=[];
+async function authAdminCount(){
+  const j=await authRpc('app_admin_list',{p_token:authState.token});
+  if(!j.ok)return;
+  authUsers=j.users||[];
+  const n=authUsers.filter(u=>!u.approved).length, b=byId('authAdminBadge');
+  b.textContent=n; b.hidden=!n;
+}
+async function authOpenAdmin(){
+  byId('authAdminBackdrop').classList.add('show');
+  byId('authAdminList').innerHTML='<div class="sub" style="padding:14px 0;">กำลังโหลด…</div>';
+  await authRenderAdmin();
+}
+function authCloseAdmin(){ byId('authAdminBackdrop').classList.remove('show'); }
+const authFmt=d=>d?new Date(d).toLocaleString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+async function authRenderAdmin(){
+  const j=await authRpc('app_admin_list',{p_token:authState.token});
+  const box=byId('authAdminList');
+  if(!j.ok){ box.innerHTML=`<div class="auth-msg err">${escapeHtml(j.error)}</div>`; return; }
+  authUsers=j.users||[];
+  const pending=authUsers.filter(u=>!u.approved), active=authUsers.filter(u=>u.approved);
+  const me=authState.user.emp_id;
+  const row=u=>`<div class="au-row${u.approved?'':' pending'}" data-emp="${escapeHtml(u.emp_id)}">
+      <div class="au-who"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(u.emp_id)}${u.is_admin?' · แอดมิน':''}${u.emp_id===me?' · คุณ':''}</span>
+        <small>สมัคร ${authFmt(u.created_at)} · เข้าล่าสุด ${authFmt(u.last_login)}</small></div>
+      <div class="au-act">
+        ${u.approved?'':`<button type="button" class="btn-bkclose" data-a="approve">อนุมัติ</button>`}
+        ${u.emp_id===me?'':`
+          ${u.approved?`<button type="button" class="btn-secondary" data-a="revoke">ระงับ</button>`:''}
+          ${u.approved?(u.is_admin?`<button type="button" class="btn-secondary" data-a="admin_off">เลิกเป็นแอดมิน</button>`:`<button type="button" class="btn-secondary" data-a="admin_on">ตั้งเป็นแอดมิน</button>`):''}
+          <button type="button" class="btn-secondary" data-a="reset">รีเซ็ตรหัสผ่าน</button>
+          <button type="button" class="btn-danger" data-a="delete">ลบ</button>`}
+      </div>
+      <div class="au-reset" hidden><input type="text" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)" autocomplete="off"><button type="button" class="btn-primary" data-a="reset_go">บันทึก</button></div>
+    </div>`;
+  box.innerHTML=
+    `<div class="au-sec">รออนุมัติ ${pending.length} คน</div>`+(pending.length?pending.map(row).join(''):'<div class="sub au-empty">ไม่มีคนรออนุมัติ</div>')+
+    `<div class="au-sec">ใช้งานได้ ${active.length} คน</div>`+active.map(row).join('');
+  const b=byId('authAdminBadge'); b.textContent=pending.length; b.hidden=!pending.length;
+}
+document.addEventListener('click',async e=>{
+  const btn=e.target.closest&&e.target.closest('#authAdminList button[data-a]'); if(!btn)return;
+  const rowEl=btn.closest('.au-row'), emp=rowEl.dataset.emp, a=btn.dataset.a;
+  const u=authUsers.find(x=>x.emp_id===emp)||{name:emp};
+  if(a==='reset'){ const r=rowEl.querySelector('.au-reset'); r.hidden=!r.hidden; if(!r.hidden)r.querySelector('input').focus(); return; }
+  if(a==='delete'&&!confirm(`ลบบัญชี ${u.name} (${emp}) ถาวร?`))return;
+  if(a==='revoke'&&!confirm(`ระงับ ${u.name}? คนนี้จะถูกออกจากระบบทันที`))return;
+  let val=null;
+  if(a==='reset_go'){ val=rowEl.querySelector('.au-reset input').value; }
+  btn.disabled=true;
+  const j=await authRpc('app_admin_set',{p_token:authState.token,p_emp:emp,p_action:a==='reset_go'?'reset':a,p_value:val});
+  btn.disabled=false;
+  if(!j.ok){ alert(j.error); return; }
+  if(a==='reset_go')alert(`ตั้งรหัสผ่านใหม่ให้ ${u.name} แล้ว — แจ้งรหัสนี้ให้เจ้าตัว`);
+  authRenderAdmin();
+});
+
+function bootApp(){
   ensureMetaDefaults(); populateModalTimeSlots(); initTimeline();
   setupLtbdDropzone();
   // โหลดชีทงานค้างก่อน เพื่อรู้ว่างานไหนถูกปิดไปแล้ว (จะได้ไม่โชว์ในตาราง)
@@ -4402,7 +5152,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     // หน้า calendar / ltbd ไม่ auto-refresh ทุก 10 วิ (ใช้ปุ่ม Update แทน)
   },10000);
-});
+}
+document.addEventListener('DOMContentLoaded',()=>{ if(REQUIRE_LOGIN)authInit(); else bootApp(); });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
@@ -4448,5 +5199,429 @@ document.addEventListener('DOMContentLoaded',()=>{
     </div>
   </div>
 </div>
+<script id="backlogCloseJs">
+// ═══════════════════════════════════════════════════════════════
+// งานค้างบนหน้า Daily: โชว์รูปงานค้าง + ปิดงานลง Google Sheet (ผ่าน Apps Script)
+// ═══════════════════════════════════════════════════════════════
+const bkImg={ ids:{}, queue:new Set(), timer:null, state:{}, err:'' };
+try{ bkImg.ids=JSON.parse(localStorage.getItem('bkImgIds')||'{}')||{}; }catch(e){}
+let bkCtx=null;        // งานที่เปิดอยู่ใน popup รายละเอียด
+let bkClose=null;      // งานที่กำลังปิด
+const bkPending={};    // key → {state:'saving'|'error'} งานที่กำลังบันทึกลงชีทอยู่เบื้องหลัง
+
+function bkApiReady(){ return /^https:\/\/script\.google\.com\//.test(BACKLOG_API_URL); }
+async function bkApi(payload){
+  let res;
+  try{
+    res=await fetch(BACKLOG_API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,token:BACKLOG_API_TOKEN})});
+  }catch(e){
+    // เช็คต่อว่าเน็ตหลุด หรือ URL Apps Script ใช้ไม่ได้
+    if(!navigator.onLine)throw new Error('เครื่องนี้ไม่ได้ต่ออินเทอร์เน็ต');
+    let urlOk=false;
+    try{ const g=await fetch(BACKLOG_API_URL); urlOk=g.ok&&/backlog api ready/.test(await g.text()); }catch(_){}
+    throw new Error(urlOk
+      ?'ส่งข้อมูลไม่ถึง Apps Script ระหว่างทาง (เน็ตไม่เสถียร) — กดลองใหม่'
+      :'เปิด URL ของ Apps Script ไม่ได้ — deployment อาจถูก Archive / เปลี่ยน URL / ไม่ได้ตั้ง Who has access = Anyone หรือโค้ดในสคริปต์ error · ลองเปิด URL /exec ในเบราว์เซอร์ดู');
+  }
+  const txt=await res.text(); let j;
+  try{ j=JSON.parse(txt); }catch(e){ throw new Error('Apps Script ตอบกลับผิดรูปแบบ — ตรวจว่า Deploy เป็น Web app และตั้ง Who has access = Anyone'); }
+  if(!j.ok)throw new Error(j.error||'ไม่สำเร็จ');
+  return j;
+}
+function bkRowOf(key){ return (backlogData.byKey||{})[key]||null; }
+function bkPhotoPath(key){ const r=bkRowOf(key); return r?bkVal(r,'photo'):''; }
+const bkPre={};
+function bkPreload(id){ if(bkPre[id])return; bkPre[id]=1; const im=new Image(); im.src=bkImgUrl(id,800); }
+function bkImgUrl(id,w){ return `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${w}`; }
+
+// หา file id ของรูปจากที่อยู่ในชีท (รวมหลายรูปเป็นคำขอเดียว แล้วจำไว้ในเครื่อง)
+function bkQueue(path){
+  if(!bkApiReady()||!path||bkImg.ids[path]!==undefined)return;
+  bkImg.queue.add(path);
+  clearTimeout(bkImg.timer);
+  bkImg.timer=setTimeout(async()=>{
+    const paths=[...bkImg.queue]; bkImg.queue.clear();
+    paths.forEach(p=>{ bkImg.ids[p]=''; bkImg.state[p]='loading'; });   // '' = ยังไม่มี id (ไม่ถามซ้ำในรอบนี้)
+    try{
+      const j=await bkApi({action:'resolve',paths});
+      paths.forEach(p=>{ bkImg.state[p]=(j.ids&&j.ids[p])?'ok':((j.v||0)>=3?'notfound':'oldscript'); });
+      const keep={};
+      Object.keys(j.ids||{}).forEach(p=>{ if(j.ids[p])bkImg.ids[p]=j.ids[p]; });
+      Object.keys(bkImg.ids).forEach(p=>{ if(bkImg.ids[p])keep[p]=bkImg.ids[p]; });
+      try{ localStorage.setItem('bkImgIds',JSON.stringify(keep)); }catch(e){}
+      renderTimeline();
+      if(bkCtx&&byId('taskModalBackdrop').classList.contains('show'))bkPaintTaskModal(bkCtx.name,bkCtx.d);
+      const ph=byId('bkClosePhoto'); if(ph&&bkClose)ph.innerHTML=bkPhotoBlock(bkClose.d.backlogKey);
+    }catch(e){
+      console.warn('โหลดรูปงานค้างไม่ได้:',e.message);
+      bkImg.err=e.message; paths.forEach(p=>{ bkImg.state[p]='error'; delete bkImg.ids[p]; });   // ลบออกเพื่อให้ลองใหม่ได้
+      if(bkCtx&&byId('taskModalBackdrop').classList.contains('show'))bkPaintTaskModal(bkCtx.name,bkCtx.d);
+    }
+  },80);
+}
+// ถ้ารูปใน Drive ไม่ได้แชร์แบบลิงก์ → ขอรูปผ่าน Apps Script แทน
+function bkImgFallback(img){
+  if(img.dataset.fb||!bkApiReady())return; img.dataset.fb='1';
+  bkApi({action:'imgdata',id:img.dataset.id}).then(j=>{ img.src=j.data; }).catch(()=>{ img.style.display='none'; });
+}
+// รูปเล็กในช่อง PLAN ของตารางเวลา
+function bkThumb(key,small){
+  const path=bkPhotoPath(key); if(!path)return '';
+  const id=bkImg.ids[path];
+  if(!id)bkQueue(path); else bkPreload(id);   // โหลดรูปใหญ่รอไว้เลย พอกดเปิดงานจะขึ้นทันที
+  if(small)return '<span class="bk-cam" title="มีรูปงานค้าง">📷</span>';
+  if(id)return `<img class="bk-thumb" src="${bkImgUrl(id,120)}" data-id="${escapeHtml(id)}" onerror="bkImgFallback(this)" alt="" loading="lazy">`;
+  bkQueue(path);
+  return '<span class="bk-cam" title="มีรูปงานค้าง">📷</span>';
+}
+function bkPhotoBlock(key){
+  const path=bkPhotoPath(key);
+  if(!path)return '<div class="bk-photo"><div class="bk-none">งานค้างนี้ไม่มีรูปในชีท</div></div>';
+  const id=bkImg.ids[path];
+  if(id)return `<div class="bk-photo loading" style="background-image:url('${bkImgUrl(id,120)}')"><div class="bk-ld"><i class="bk-spin"></i>กำลังโหลดรูป…</div><img src="${bkImgUrl(id,800)}" data-id="${escapeHtml(id)}" onload="this.parentNode.classList.remove('loading')" onerror="bkImgFallback(this)" onclick="window.open('https://drive.google.com/file/d/${escapeHtml(id)}/view','_blank')" alt="รูปงานค้าง"></div><div class="bk-cap">${escapeHtml(path)}</div>`;
+  const st=bkImg.state[path];
+  if(st!=='error')bkQueue(path);
+  const spin=(!bkApiReady()||st==='notfound'||st==='oldscript'||st==='error')?'':'<i class="bk-spin"></i>';
+  const why=!bkApiReady()?'ยังไม่ได้ตั้งค่า BACKLOG_API_URL จึงเปิดรูปจาก Drive ไม่ได้'
+    :st==='notfound'?'หาไฟล์รูปนี้ใน Drive ไม่เจอ'
+    :st==='oldscript'?'Apps Script ที่ deploy อยู่ยังเป็นโค้ดเก่า — วาง Code.gs ตัวล่าสุด แล้ว Deploy เป็น New version'
+    :st==='error'?('ติดต่อ Apps Script ไม่ได้: '+escapeHtml(bkImg.err))
+    :'กำลังโหลดรูป…';
+  return `<div class="bk-photo"><div class="bk-none">${spin}${why}</div></div><div class="bk-cap">${escapeHtml(path)}</div>`;
+}
+
+// กล่องงานค้าง + รูป ใน popup รายละเอียดงาน
+function bkPaintTaskModal(name,d){
+  const box=byId('bkTaskBox'), btn=byId('bkCloseBtn'); if(!box||!btn)return;
+  if(!d||!d.backlogKey||typeof d.startIndex!=='number'){ box.style.display='none'; btn.style.display='none'; bkCtx=null; return; }
+  bkCtx={name,d};
+  const r=bkRowOf(d.backlogKey);
+  const info=r?`<div><span class="bk-l">Problem:</span> ${escapeHtml(bkVal(r,'problem')||'-')}</div><div><span class="bk-l">Remain:</span> ${escapeHtml(bkVal(r,'remain')||'-')}</div>`
+              :'<div class="bk-l">ยังโหลดข้อมูลจากชีทแจ้งซ่อมไม่ได้ — กด Update แล้วเปิดใหม่</div>';
+  box.innerHTML=`<div class="bk-box"><div class="bk-h">งานค้างจากชีทแจ้งซ่อม</div>${r?'<button type="button" class="btn-bkclose bk-big" onclick="bkCloseFromModal()">ปิดงานค้างนี้ (ลงผล OK / NG)</button>':''}${info}${r?bkPhotoBlock(d.backlogKey):''}</div>`;
+  box.style.display='block'; btn.style.display='none';
+}
+function bkCloseFromModal(){ if(bkCtx)openBkClose(bkCtx.name,bkCtx.d.startIndex,bkCtx.d.endIndex); }
+
+// ── popup ปิดงานค้าง ──
+function openBkClose(name,start,end){
+  const d=state.slotDetails[getSlotKey(name,'PLAN',start)];
+  if(!d||!d.backlogKey)return;
+  if(!bkApiReady()){
+    alert('ยังปิดงานค้างจากหน้านี้ไม่ได้\n\nต้องติดตั้ง Apps Script (ไฟล์ Code.gs) ในชีทแจ้งซ่อมก่อน แล้วนำ URL มาใส่ที่ BACKLOG_API_URL ในไฟล์นี้\n\nระหว่างนี้ให้ปิดงานในชีทแจ้งซ่อมตามเดิม');
+    return;
+  }
+  if(bkPending[d.backlogKey]&&bkPending[d.backlogKey].state==='saving'){ return; }   // กำลังบันทึกอยู่เบื้องหลัง
+  const r=bkRowOf(d.backlogKey);
+  if(!r){ alert('ยังโหลดข้อมูลงานค้างจากชีทแจ้งซ่อมไม่ได้\nกด 🔄 Update แล้วลองใหม่'); return; }
+  bkClose={name,start,end,d,row:r,image:'',busy:false};
+  let bd=byId('bkCloseBackdrop');
+  if(!bd){ bd=document.createElement('div'); bd.id='bkCloseBackdrop'; bd.className='modal-backdrop'; document.body.appendChild(bd); }
+  const opts=[...new Set([name,...technicians])].map(t=>`<option value="${escapeHtml(t)}">`).join('');
+  // วัน/เวลาตั้งต้น = ตามแผนในตาราง (เหมือน popup ปิดงานประจำวัน)
+  const planDate=d.date||(holidayState.active&&holidayState.date?holidayState.date:safeValue('workDate'))||toISODate(new Date());
+  const today=toISODate(new Date()); const yd=new Date(); yd.setDate(yd.getDate()-1); const yesterday=toISODate(yd);
+  const tDay=wtSlotTimes(start,end,0), tNight=wtSlotTimes(start,end,1);
+  const tDef=(typeof nameShift==='function'&&nameShift(name)==='night')?tNight:tDay;
+  bkClose.planDate=planDate;
+  bd.innerHTML=`<div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header"><div><h3 class="modal-title">ปิดงานค้าง</h3>
+      <div class="sub" style="margin:6px 0 0 0;">${escapeHtml(bkVal(r,'line')||'-')} | ${escapeHtml(bkVal(r,'mc')||'-')} | แจ้งเมื่อ ${escapeHtml(bkVal(r,'date')||'-')}</div></div>
+      <button class="close-btn" type="button" onclick="closeBkClose()">ปิด</button></div>
+    <div class="modal-body">
+      <div class="bk-box"><div><span class="bk-l">Problem:</span> ${escapeHtml(bkVal(r,'problem')||'-')}</div><div><span class="bk-l">Remain:</span> ${escapeHtml(bkVal(r,'remain')||'-')}</div><div id="bkClosePhoto">${bkPhotoBlock(d.backlogKey)}</div></div>
+      <div class="bk-sec">
+        <div class="wt-label">📅 วันที่เข้าไปซ่อม</div>
+        <div class="wt-chips" id="bkDateChips">
+          <button type="button" class="wt-chip" data-v="${planDate}">ตามแผน</button>
+          <button type="button" class="wt-chip" data-v="${today}">วันนี้</button>
+          <button type="button" class="wt-chip" data-v="${yesterday}">เมื่อวาน</button>
+        </div>
+        <input type="date" id="bkFixDate" value="${planDate}">
+        <div class="wt-label">🕐 เวลาเข้าซ่อม – ซ่อมเสร็จ</div>
+        <div class="wt-chips" id="bkTimeChips">
+          <button type="button" class="wt-chip" data-s="${tDay.s}" data-e="${tDay.e}">☀️ ตามแผนช่วงเช้า ${tDay.s}–${tDay.e}</button>
+          <button type="button" class="wt-chip" data-s="${tNight.s}" data-e="${tNight.e}">🌙 ตามแผนช่วงดึก ${tNight.s}–${tNight.e}</button>
+        </div>
+        <div class="wt-times"><select id="bkTStart">${wtTimeOptions(tDef.s)}</select><span>ถึง</span><select id="bkTEnd">${wtTimeOptions(tDef.e)}</select></div>
+        <div class="wt-dur" id="bkDur"></div>
+      </div>
+      <div class="field"><label>ผู้แก้ไขงานค้าง *</label><input type="text" id="bkFixer" list="bkFixerList" value="${escapeHtml(name)}"><datalist id="bkFixerList">${opts}</datalist></div>
+      <div class="field"><label>รูปภาพงานค้างที่เสร็จ</label>
+        <label class="bk-pick" id="bkPick"><input type="file" accept="image/*" style="display:none" onchange="bkPickImage(this)"><span id="bkPickTxt">แตะเพื่อถ่ายรูปหรือเลือกรูป</span></label></div>
+      <div class="field"><label>หมายเหตุ <span class="bk-l" style="font-weight:400;">(ถ้า NG ต้องใส่เหตุผล)</span></label>
+        <textarea id="bkNote" placeholder="เช่น เปลี่ยน Gripper ใหม่ ทดสอบแล้วปกติ / รออะไหล่"></textarea></div>
+      <div class="field"><label>ผลลัพธ์งานค้าง *</label>
+        <div class="bk-result"><button type="button" class="btn-bkclose" onclick="submitBkClose('OK')">OK ปิดงาน</button><button type="button" class="bk-ng" onclick="submitBkClose('NG')">NG ยังไม่จบ</button></div></div>
+      <div class="bk-msg" id="bkMsg"></div>
+    </div></div>`;
+  bd.classList.add('show');
+  // ปุ่มลัดวัน/เวลา + คำนวณเวลาที่ใช้
+  const dIn=byId('bkFixDate'), sIn=byId('bkTStart'), eIn=byId('bkTEnd');
+  const markD=()=>byId('bkDateChips').querySelectorAll('.wt-chip').forEach(b=>b.classList.toggle('on',b.dataset.v===dIn.value));
+  const markT=()=>byId('bkTimeChips').querySelectorAll('.wt-chip').forEach(b=>b.classList.toggle('on',b.dataset.s===sIn.value&&b.dataset.e===eIn.value));
+  const upd=()=>{ const el=byId('bkDur'), r=wtDurText(sIn.value,eIn.value);
+    el.textContent=r.min===0?'⚠️ เวลาเข้าซ่อมกับเวลาซ่อมเสร็จต้องไม่เท่ากัน':r.text; el.classList.toggle('bad',r.min===0); };
+  byId('bkDateChips').querySelectorAll('.wt-chip').forEach(b=>b.addEventListener('click',()=>{ dIn.value=b.dataset.v; markD(); }));
+  byId('bkTimeChips').querySelectorAll('.wt-chip').forEach(b=>b.addEventListener('click',()=>{ sIn.value=b.dataset.s; eIn.value=b.dataset.e; markT(); upd(); }));
+  dIn.addEventListener('change',markD); sIn.addEventListener('change',()=>{markT();upd();}); eIn.addEventListener('change',()=>{markT();upd();});
+  markD(); markT(); upd();
+}
+function closeBkClose(){ const bd=byId('bkCloseBackdrop'); if(bd)bd.classList.remove('show'); bkClose=null; }
+// ย่อรูปเหลือด้านยาว 1280px (พอสำหรับดูในชีท/AppSheet ไฟล์เล็กลง ~3-5 เท่า ส่งเร็วขึ้น)
+const BK_IMG_MAX=1280, BK_IMG_Q=0.72;
+async function bkShrink(file){
+  let src, w, h;
+  try{ src=await createImageBitmap(file,{imageOrientation:'from-image'}); w=src.width; h=src.height; }
+  catch(e){ src=await new Promise((ok,ng)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=ng; im.src=URL.createObjectURL(file); }); w=src.naturalWidth; h=src.naturalHeight; }
+  const k=Math.min(1,BK_IMG_MAX/Math.max(w,h)), cv=document.createElement('canvas');
+  cv.width=Math.round(w*k); cv.height=Math.round(h*k);
+  cv.getContext('2d').drawImage(src,0,0,cv.width,cv.height);
+  if(src.close)src.close();
+  return cv.toDataURL('image/jpeg',BK_IMG_Q);
+}
+async function bkPickImage(input){
+  const f=input.files&&input.files[0]; const c=bkClose; if(!f||!c)return;
+  const txt=byId('bkPickTxt'); txt.textContent='กำลังย่อรูป…';
+  let url;
+  try{ url=await bkShrink(f); }catch(e){ txt.textContent='เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น'; return; }
+  if(bkClose!==c)return;
+  c.image=url.split(',')[1];
+  const pick=byId('bkPick'); const old=pick.querySelector('img'); if(old)old.remove();
+  const pv=document.createElement('img'); pv.src=url; pick.insertBefore(pv,pick.firstChild);
+  // อัปโหลดเข้า Drive ทันที ระหว่างที่กรอกช่องอื่น — ตอนกดปิดงานจะส่งแค่ที่อยู่รูป
+  const key=bkVal(c.row,'idcheck')||bkVal(c.row,'id');
+  if(!key){ txt.textContent='แตะเพื่อเปลี่ยนรูป'; return; }
+  const token={}; c.uploadToken=token;
+  txt.innerHTML='<i class="bk-spin"></i>กำลังอัปโหลดรูป… (กรอกช่องอื่นต่อได้เลย)';
+  c.upload=bkApi({action:'upload',key,image:c.image,image_type:'image/jpeg'});
+  c.upload.then(u=>{ if(c.uploadToken===token&&byId('bkPickTxt'))byId('bkPickTxt').textContent='✓ อัปโหลดรูปแล้ว · แตะเพื่อเปลี่ยนรูป'; },
+               ()=>{ if(c.uploadToken===token&&byId('bkPickTxt'))byId('bkPickTxt').textContent='อัปโหลดล่วงหน้าไม่ได้ จะส่งรูปตอนกดปิดงาน · แตะเพื่อเปลี่ยนรูป'; });
+}
+function submitBkClose(result){
+  const c=bkClose; if(!c)return;
+  const msg=byId('bkMsg'), fixer=safeValue('bkFixer').trim();
+  if(!fixer){ msg.className='bk-msg err'; msg.textContent='กรุณาใส่ชื่อผู้แก้ไขงานค้าง'; return; }
+  const fixDate=safeValue('bkFixDate'), tS=safeValue('bkTStart'), tE=safeValue('bkTEnd'), note=(safeValue('bkNote')||'').trim();
+  const dur=wtDurText(tS,tE);
+  if(!fixDate){ msg.className='bk-msg err'; msg.textContent='กรุณาเลือกวันที่เข้าไปซ่อม'; return; }
+  if(dur.min===0){ msg.className='bk-msg err'; msg.textContent='เวลาเข้าซ่อมกับเวลาซ่อมเสร็จต้องไม่เท่ากัน'; return; }
+  if(result==='NG'&&!note){ msg.className='bk-msg err'; msg.textContent='NG ต้องใส่เหตุผลในช่องหมายเหตุ'; byId('bkNote').focus(); return; }
+  if(result==='OK'&&!c.image&&!confirm('ยังไม่ได้แนบรูปงานที่เสร็จ\nต้องการปิดงานโดยไม่มีรูปใช่ไหม'))return;
+  const r=c.row;
+  const job={ key:c.d.backlogKey, name:c.name, start:c.start, end:c.end, planDate:c.d.date||'', holiday:!!holidayState.active, row:r, result,
+    label:[bkVal(r,'line'),bkVal(r,'mc')].filter(Boolean).join(' ')||'งานค้าง',
+    // ข้อมูลงานสำหรับบันทึกเวลา (ตาราง work_time_logs เดียวกับงานประจำวัน)
+    log:{ plan_date:c.planDate, technician:c.name, start_slot:c.start, end_slot:c.end, is_holiday:!!(holidayState.active&&holidayState.date),
+      line:c.d.line||bkVal(r,'line')||'', machine:c.d.machine||bkVal(r,'mc')||'', job_type:c.d.jobType||'', detail:c.d.detail||bkVal(r,'problem')||'',
+      result, reason:note, work_date:fixDate, time_start:tS, time_end:tE, duration_min:dur.min },
+    actualDetail:c.d.detail||'',
+    payload:{action:'close',result,fixer,fix_date:fixDate,time_start:tS,time_end:tE,duration_min:dur.min,note,
+      id:bkVal(r,'id'),id_check:bkVal(r,'idcheck'),line:bkVal(r,'line'),mc:bkVal(r,'mc'),problem:bkVal(r,'problem'),date:bkVal(r,'date'),
+      image:c.image,image_type:'image/jpeg'},
+    upload:c.image?c.upload:null };
+  closeBkClose(); closeTaskModal();      // ปิดหน้าต่างทันที แล้วบันทึกต่อเบื้องหลัง
+  bkRunClose(job);
+}
+
+// บันทึกลงชีทเบื้องหลัง — สถานะขึ้นที่มุมขวาล่างและบนตัวงานในตาราง
+async function bkRunClose(job){
+  bkPending[job.key]={state:'saving'};
+  renderTimeline();
+  bkToast(job,'saving',job.sheet?'กำลังบันทึกเวลาเข้าซ่อม…':'กำลังบันทึกลง Google Sheet…');
+  try{
+    if(job.upload){                                           // รูปที่อัปโหลดล่วงหน้า: รอให้เสร็จ แล้วส่งแค่ที่อยู่รูป
+      bkToast(job,'saving','กำลังอัปโหลดรูป…');
+      try{ const u=await job.upload; job.payload.image_path=u.path; job.payload.image_warn=u.warn||''; job.payload.image=''; }
+      catch(e){ /* สคริปต์รุ่นเก่า/อัปโหลดพลาด → ส่งรูปไปพร้อมการปิดงานแบบเดิม */ }
+      job.upload=null;
+      bkToast(job,'saving','กำลังบันทึกลง Google Sheet…');
+    }
+    if(!job.sheet)job.sheet=await bkApi(job.payload);        // ขั้น 1: ชีทแจ้งซ่อม (ลองใหม่จะไม่เขียนชีทซ้ำ)
+    const j=job.sheet;
+    if(!job.logged){                                          // ขั้น 2: เวลา + ผล ลง Supabase แบบงานประจำวัน
+      bkToast(job,'saving','กำลังบันทึกเวลาเข้าซ่อม…');
+      await bkSaveTimeLog(job);
+      job.logged=true;
+    }
+    delete bkPending[job.key];
+    const sheetClosed=!(j.status_written===false&&String(j.status||'').trim().toUpperCase()!=='OK');
+    if(job.result==='OK'&&!sheetClosed){
+      // ชีทยังไม่นับว่าปิด → เก็บงานไว้ในตารางก่อน (ไม่ลบแผน) แล้วบอกเหตุผล
+      const why=j.version>=10
+        ?(j.status_reason==='nocol'?'สคริปต์หาคอลัมน์ "Review" ในชีทไม่เจอ'
+          :(j.status_reason==='formula'||j.status_reason==='arrayformula')?'ช่อง "Review" แถวนี้เป็นสูตร สคริปต์จึงไม่แตะ'
+          :'ใส่ Review = OK แล้ว แต่สูตรสถานะงานค้างยังไม่ให้ OK (ตรวจช่อง DATE / งานค้าง ของแถวนี้)')
+        :'Apps Script ที่ deploy อยู่เป็นเวอร์ชันเก่า (ต้องเป็นเวอร์ชัน 10)';
+      renderTimeline();
+      bkToast(job,'warn','ลงรูป/ผู้แก้ไขที่แถว '+j.row+' แล้ว แต่สถานะงานค้างยังไม่เป็น OK — '+why);
+    }else if(job.result==='OK'){
+      const table=job.holiday?'holiday_plans':'plans', r=job.row;
+      const q=`${job.planDate?`date=eq.${job.planDate}&`:''}technician=eq.${encodeURIComponent(job.name)}&start_slot=eq.${job.start}&end_slot=eq.${job.end}&backlog_key=eq.${encodeURIComponent(job.key)}`;
+      await fetch(`${SUPABASE_URL}/rest/v1/${table}?${q}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,Prefer:'return=minimal'}}).catch(()=>{});
+      if(backlogData.openKeys)backlogData.openKeys.delete(job.key);
+      if(backlogData.byKey)delete backlogData.byKey[job.key];
+      backlogData.rows=(backlogData.rows||[]).filter(x=>x!==r);
+      Object.keys(backlogData.byDate||{}).forEach(k=>{ backlogData.byDate[k]=backlogData.byDate[k].filter(x=>x!==r); });
+      if(typeof assignedKeys!=='undefined')assignedKeys.delete(job.key);
+      bkMarkClosed(job.key);
+      for(let i=job.start;i<=job.end;i++){ delete state.actualStatus[`${job.name}_${i}`]; delete state.actualReason[`${job.name}_${i}`]; }
+      try{ renderBigCal(); renderBacklogTable(); }catch(e){}   // หน้าปฏิทินงานค้าง: เอางานนี้ออกทันที
+      lastTimelineSnapshot='';
+      if(holidayState.active&&holidayState.date)loadDataFromX4(holidayState.date); else loadData();
+      const warn=(j.status_written===false&&String(j.status||'').trim().toUpperCase()!=='OK');
+      const t=`${job.log.time_start}–${job.log.time_end} (${Math.floor(job.log.duration_min/60)} ชม. ${job.log.duration_min%60} นาที)`;
+      if(j.warn)bkToast(job,'warn','ปิดงานแล้ว (แถว '+j.row+') เวลา '+t+' — '+j.warn);
+      else if(warn){
+        const why=j.status_reason==='nocol'?'สคริปต์หาคอลัมน์ "สถานะงานค้าง" ในชีทไม่เจอ'
+          :j.status_reason==='formula'?'ช่อง "สถานะงานค้าง" แถวนี้เป็นสูตร สคริปต์จึงไม่เขียนทับ'
+          :j.status_reason==='arrayformula'?'คอลัมน์ "สถานะงานค้าง" ใช้ ARRAYFORMULA สคริปต์จึงไม่เขียนทับ'
+          :'Apps Script ที่ deploy อยู่เป็นเวอร์ชันเก่า (ต้อง Deploy Code.gs ตัวล่าสุด)';
+        bkToast(job,'warn','ลงผล OK ที่แถว '+j.row+' แล้ว แต่ "สถานะงานค้าง" ยังไม่เป็น OK — '+why);
+      }
+      else bkToast(job,'ok','ปิดงานแล้ว ชีทแถว '+j.row+' · เวลา '+t);
+    }else{
+      for(let i=job.start;i<=job.end;i++){ if(state.timeline[job.name])state.timeline[job.name].ACTUAL[i]=true; state.actualStatus[`${job.name}_${i}`]='NG'; state.actualReason[`${job.name}_${i}`]=job.log.reason; }
+      renderTimeline();
+      bkToast(job,'ok','บันทึก NG ลงชีทแล้ว (แถว '+j.row+') งานยังอยู่ในตาราง');
+    }
+  }catch(e){
+    bkPending[job.key]={state:'error'};
+    renderTimeline();
+    bkToast(job,'err',(job.sheet?'ลงชีทแล้ว แต่บันทึกเวลาไม่สำเร็จ: ':'บันทึกไม่สำเร็จ: ')+e.message);
+  }
+}
+// บันทึกเวลา/ผลงานค้าง ลง Supabase แบบเดียวกับงานประจำวัน
+//  - work_time_logs: วันที่เข้าซ่อม เวลาเข้า–เสร็จ ระยะเวลา ผล หมายเหตุ (OK และ NG)
+//  - actuals: NG → ขึ้นแดงในแถว ACTUAL และอยู่ใน list NG ค้าง / OK → ลบผลเดิมของช่องนี้ (งานถูกเอาออกจากตารางแล้ว)
+async function bkSaveTimeLog(job){
+  const H={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
+  const HJ={...H,'Content-Type':'application/json'};
+  const L=job.log;
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${WT_TABLE}?on_conflict=plan_date,technician,start_slot,end_slot`,{
+    method:'POST',headers:{...HJ,Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify({...L,updated_at:new Date().toISOString()})});
+  if(!r.ok){
+    const txt=await r.text();
+    throw new Error(r.status===404||/work_time_logs/i.test(txt)?'ยังไม่มีตาราง work_time_logs ใน Supabase':txt.slice(0,160));
+  }
+  const q=`date=eq.${L.plan_date}&technician=eq.${encodeURIComponent(L.technician)}&start_slot=eq.${L.start_slot}&end_slot=eq.${L.end_slot}`;
+  if(job.result==='OK'){
+    await fetch(`${SUPABASE_URL}/rest/v1/actuals?${q}`,{method:'DELETE',headers:{...H,Prefer:'return=minimal'}}).catch(()=>{});
+    return;
+  }
+  const base={date:L.plan_date,technician:L.technician,start_slot:L.start_slot,end_slot:L.end_slot,status:'NG',reason:L.reason,detail:job.actualDetail};
+  const full={...base,line:L.line,machine:L.machine};
+  const ex=await fetch(`${SUPABASE_URL}/rest/v1/actuals?${q}&select=id`,{headers:H}).then(x=>x.ok?x.json():[]).catch(()=>[]);
+  const url=ex.length?`${SUPABASE_URL}/rest/v1/actuals?id=eq.${ex[0].id}`:`${SUPABASE_URL}/rest/v1/actuals`;
+  const send=b=>fetch(url,{method:ex.length?'PATCH':'POST',headers:{...HJ,Prefer:'return=minimal'},body:JSON.stringify(b)});
+  let a=await send(full);
+  if(!a.ok){ const t=await a.text(); if(/line|machine/i.test(t))a=await send(base); else throw new Error(t.slice(0,160)); }
+  if(!a.ok)throw new Error((await a.text()).slice(0,160));
+}
+const bkJobs={};
+function bkToast(job,state,text){
+  let box=byId('bkToasts');
+  if(!box){ box=document.createElement('div'); box.id='bkToasts'; document.body.appendChild(box); }
+  const id='bkT_'+btoa(unescape(encodeURIComponent(job.key))).replace(/[^A-Za-z0-9]/g,'').slice(0,40);
+  let el=byId(id);
+  if(!el){ el=document.createElement('div'); el.id=id; box.appendChild(el); }
+  bkJobs[id]=job; clearTimeout(el._t);
+  el.className='bk-toast '+state;
+  const icon=state==='saving'?'<i class="bk-spin"></i>':state==='ok'?'✓':state==='warn'?'!':'✕';
+  el.innerHTML=`<span class="bk-ti">${icon}</span><div class="bk-tx"><b>${escapeHtml(job.label)}</b><div>${escapeHtml(text)}</div></div>`
+    +(state==='err'?`<button type="button" onclick="bkRetry('${id}')">ลองใหม่</button>`:'')
+    +(state!=='saving'?`<button type="button" class="x" onclick="bkDismiss('${id}')" aria-label="ปิด">✕</button>`:'');
+  if(state==='ok')el._t=setTimeout(()=>bkDismiss(id),6000);
+}
+function bkRetry(id){ const j=bkJobs[id]; if(j)bkRunClose(j); }
+function bkDismiss(id){
+  const el=byId(id), j=bkJobs[id];
+  if(j&&bkPending[j.key]&&bkPending[j.key].state==='error'){ delete bkPending[j.key]; renderTimeline(); }   // ยกเลิก: งานกลับเป็นงานค้างปกติ
+  if(el)el.remove(); delete bkJobs[id];
+}
+window.addEventListener('beforeunload',e=>{
+  if(Object.values(bkPending).some(p=>p.state==='saving')){ e.preventDefault(); e.returnValue=''; }
+});
+</script>
+<script id="designLayerJs">
+// ═══════════════════════════════════════════════════════════════
+// DESIGN LAYER — เฉพาะการแสดงผล (วันที่แบบไทย / แถบกะ / หัวตารางเวลา)
+// ไม่อ่าน-ไม่เขียนข้อมูลใด ๆ ลบ <script> นี้ทิ้งได้โดยระบบเดิมทำงานครบ
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  var MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var DOW=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  var SHIFT_START=7*60+30;                       // กะเช้าเริ่ม 07:30
+  function $(id){return document.getElementById(id);}
+  function pad(n){return String(n).padStart(2,'0');}
+
+  // 1) วันที่ตัวใหญ่ — อ่านจาก #heroDate ที่ระบบเดิมเป็นคนใส่ค่า
+  function niceDate(){
+    var src=$('heroDate'), out=$('heroDateNice'); if(!src||!out)return;
+    var t=(src.textContent||'').trim(), m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+    if(!m){ out.textContent=t||'–'; return; }
+    var d=new Date(+m[1],+m[2]-1,+m[3]);
+    out.textContent=(+m[3])+' '+MONTHS[+m[2]-1]+' '+(+m[1]+543);
+    var w=document.createElement('span'); w.className='hero-dow'; w.textContent='วัน'+DOW[d.getDay()];
+    out.appendChild(w);
+  }
+
+  // 2) แถบกะ 24 ชม. + เข็ม "ตอนนี้"
+  function tickBand(){
+    var band=$('shiftBand'); if(!band)return;
+    var n=new Date(), mins=n.getHours()*60+n.getMinutes();
+    var rel=(mins-SHIFT_START+1440)%1440, pct=rel/1440*100, isDay=rel<720;
+    band.style.setProperty('--now',pct.toFixed(2)+'%');
+    var now=$('sbNow'), lb=$('sbNowLabel'), st=$('sbStatus');
+    if(lb)lb.textContent=pad(n.getHours())+':'+pad(n.getMinutes());
+    if(now){ now.classList.toggle('edge-l',pct<4); now.classList.toggle('edge-r',pct>96); }
+    if(st){
+      var left=(isDay?720:1440)-rel, h=Math.floor(left/60), mm=left%60;
+      st.innerHTML='ตอนนี้ <b>'+(isDay?'ช่วงเช้า':'ช่วงดึก')+'</b> อีก '+(h?h+' ชม. ':'')+mm+' นาทีเปลี่ยนกะ';
+    }
+    markNowColumn();
+  }
+
+  // 3) หัวตารางเวลา: แยกบรรทัดเวลาเช้า/ดึก + ขีดเหลืองที่ช่วงเวลาปัจจุบัน
+  function toMin(s){ var p=s.split(':'); return (+p[0])*60+(+p[1]||0); }
+  function decorateHead(){
+    var wrap=$('timelineWrap'); if(!wrap)return;
+    var ths=wrap.querySelectorAll('thead th');
+    for(var i=2;i<ths.length;i++){
+      var th=ths[i]; if(th.dataset.dl)continue;
+      var parts=th.innerHTML.split(/<br\s*\/?>/i).map(function(x){return x.replace(/[()]/g,'').trim();});
+      if(!parts[0])continue;
+      var r=parts[0].split('-');
+      th.dataset.dl='1'; th.dataset.s=toMin(r[0]); th.dataset.e=toMin(r[1]||r[0]);
+      th.textContent='';
+      parts.forEach(function(p,k){ var sp=document.createElement('span'); sp.className=k?'t-night':'t-day'; sp.textContent=p.replace('-','–'); th.appendChild(sp); });
+    }
+    markNowColumn();
+  }
+  function markNowColumn(){
+    var wrap=$('timelineWrap'); if(!wrap)return;
+    var n=new Date(), mins=n.getHours()*60+n.getMinutes();
+    var isDay=((mins-SHIFT_START+1440)%1440)<720, t=isDay?mins:(mins+720)%1440;
+    wrap.querySelectorAll('thead th[data-dl]').forEach(function(th){
+      var on=t>=+th.dataset.s && t<+th.dataset.e;
+      th.classList.toggle('now-col',on);
+      th.classList.toggle('now-day',on&&isDay);
+      th.classList.toggle('now-night',on&&!isDay);
+    });
+  }
+
+  function start(){
+    var src=$('heroDate');
+    if(src){ niceDate(); new MutationObserver(niceDate).observe(src,{childList:true,characterData:true,subtree:true}); }
+    var wrap=$('timelineWrap');
+    if(wrap){ decorateHead(); new MutationObserver(decorateHead).observe(wrap,{childList:true}); }
+    requestAnimationFrame(function(){ requestAnimationFrame(tickBand); });
+    setInterval(function(){ if(!document.hidden)tickBand(); },30000);
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden)tickBand(); });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start); else start();
+})();
+</script>
 </body>
 </html>
